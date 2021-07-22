@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<SDK xmlns='https://www.cdvi.ca/'>
+    <RECORDS>
+        <REC trans_id='@tid' cmd='add' sernum='@SerialNo' type='card' id='0' rec='cfg'>
+            <DATA valid='1' guid2='@CardID' label3='@DisplayName' hexv5='@FamilyNumber' hexv6='@MemberNumber' utc_time24='@ActivationDate' utc_time25='@ExpirationDate' guid26='@UserID'/>
+        </REC>
+    </RECORDS>
+</SDK>

@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LOGIN_SDK>
+    <cmd>login</cmd>
+    <login_user>@User</login_user>
+    <login_pass>@Pass</login_pass>
+</LOGIN_SDK>
