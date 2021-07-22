@@ -40,6 +40,21 @@ namespace ThreeRiversTech.Zuleger.Atrium.API
         {
             _client = new HttpClient();
             _address = address;
+            
+            // Verifying that User is 4A74FE49C3
+            // Verifying that Pass is 79D864FC25962773826D03FF6479BF33
+            var key = AtriumConnection.ByteArrayToHexString(AtriumConnection.Md5("A2200852" + "AA79BB1302BA8808"));
+            Console.WriteLine(key);
+            Console.WriteLine("User: " + AtriumConnection.ByteArrayToHexString(AtriumConnection.Rc4(Encoding.ASCII.GetBytes(key), Encoding.ASCII.GetBytes(username))));
+            Console.WriteLine("Pass: " + AtriumConnection.ByteArrayToHexString(AtriumConnection.Md5(key + password)));
+            if (AtriumConnection.ByteArrayToHexString(AtriumConnection.Md5(key + password)) == "79D864FC25962773826D03FF6479BF33")
+            {
+                Console.WriteLine("Password equals");
+            }
+            if(AtriumConnection.ByteArrayToHexString(AtriumConnection.Rc4(Encoding.ASCII.GetBytes(key), Encoding.ASCII.GetBytes(username))) == "4A74FE49C3")
+            {
+                Console.WriteLine("User equals");
+            }
 
             // Fetch Session info to establish temporary Session Key
             var httpContent = AtriumConnection.FetchXMLHttpContent(AtriumConnection.GET_SESSION);
