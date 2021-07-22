@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Net.Http;
 using System.Security.Cryptography;
@@ -10,16 +11,20 @@ namespace ThreeRiversTech.Zuleger.Atrium.API
 {
     public class AtriumConnection
     {
-        private const String GET_REQUEST_TEMPLATE = "sid=@SessionID&cmd=@Command&login_user=@LoginUser&login_pass=@LoginPass";
-
+        // XML File Templates
         private const String GET_SESSION = "./templates/login_get.xml";
         private const String GET_LOGIN = "./templates/login_attempt.xml";
         private const String GET_ADD_USER = "./templates/add_user.xml";
         private const String GET_ADD_CARD = "./templates/add_card.xml";
 
-        private const String LOGIN_URL = "/login_sdk.xml";
-        private const String DATA_URL = "/sdk.xml";
+        // String GET/POST templates
+        private const String ENC_TEMPLATE = "sid=@SessionID&post_enc=@EncryptedData&post_chk=@CheckSum";
 
+        // Atrium SDK Subdomain URLs
+        private const String LOGIN_URL = "login_sdk.xml";
+        private const String DATA_URL = "sdk.xml";
+
+        // Connection info
         private readonly HttpClient _client;
         private readonly String _address;
 
@@ -32,32 +37,18 @@ namespace ThreeRiversTech.Zuleger.Atrium.API
         // Session info
         private readonly String _sessionKey;
         private readonly String _sessionId;
+        private readonly String _userId;
+        private readonly String _username;
 
         // Other
-        private int _transactionNum = 0;
+        private int _transactionNum = 1;
 
         public AtriumConnection(String username, String password, String address)
         {
             _client = new HttpClient();
             _address = address;
-            
-            // Verifying that User is 4A74FE49C3
-            // Verifying that Pass is 79D864FC25962773826D03FF6479BF33
-            var key = AtriumConnection.ByteArrayToHexString(AtriumConnection.Md5("A2200852" + "AA79BB1302BA8808"));
-            Console.WriteLine(key);
-            Console.WriteLine("User: " + AtriumConnection.ByteArrayToHexString(AtriumConnection.Rc4(Encoding.ASCII.GetBytes(key), Encoding.ASCII.GetBytes(username))));
-            Console.WriteLine("Pass: " + AtriumConnection.ByteArrayToHexString(AtriumConnection.Md5(key + password)));
-            if (AtriumConnection.ByteArrayToHexString(AtriumConnection.Md5(key + password)) == "79D864FC25962773826D03FF6479BF33")
-            {
-                Console.WriteLine("Password equals");
-            }
-            if(AtriumConnection.ByteArrayToHexString(AtriumConnection.Rc4(Encoding.ASCII.GetBytes(key), Encoding.ASCII.GetBytes(username))) == "4A74FE49C3")
-            {
-                Console.WriteLine("User equals");
-            }
 
             // Fetch Session info to establish temporary Session Key
-            var httpContent = AtriumConnection.FetchXMLHttpContent(AtriumConnection.GET_SESSION);
             var xml = do_GET_Async(AtriumConnection.LOGIN_URL).Result;
 
             // Get device information from the response.
@@ -75,8 +66,23 @@ namespace ThreeRiversTech.Zuleger.Atrium.API
             var loginPass = AtriumConnection.ByteArrayToHexString(AtriumConnection.Md5(_sessionKey + password));
 
             // Post login information.
-            httpContent = AtriumConnection.FetchXMLHttpContent(AtriumConnection.GET_LOGIN, "@User", loginUser, "@Pass", loginPass);
-            do_POST_Async(AtriumConnection.LOGIN_URL, httpContent).Wait();
+            var parameters = new Dictionary<String, String>
+            {
+                { "sid", _sessionId },
+                { "cmd", "login" },
+                { "login_user", loginUser },
+                { "login_pass", loginPass }
+            };
+            var req = do_POST_Async(AtriumConnection.LOGIN_URL , parameters);
+            req.Wait();
+            xml = req.Result;
+
+            // Update session ID
+            _sessionId = xml.Element("CONNECTION").Attribute("session").Value;
+
+            // Get user info
+            _userId = xml.Element("SDK_CFG").Attribute("user_id").Value;
+            _username = xml.Element("SDK_CFG").Attribute("username").Value;
 
             // Officially logged in.
         }
@@ -84,7 +90,7 @@ namespace ThreeRiversTech.Zuleger.Atrium.API
         // Insert user into atrium controller associated with AtriumConnection object.
         public void InsertUser(String firstName, String lastName, Guid id, DateTime actDate, DateTime expDate)
         {
-            var httpContent = AtriumConnection.FetchXMLHttpContent(
+            var content = FetchAndEncryptXML(
                 AtriumConnection.GET_ADD_USER,
                 "@tid", _transactionNum++.ToString(),
                 "@SerialNo", _serialNo,
@@ -94,13 +100,13 @@ namespace ThreeRiversTech.Zuleger.Atrium.API
                 "@ActivationDate", Convert.ToString(((DateTimeOffset)actDate).ToUnixTimeSeconds(), 16),
                 "@ExpirationDate", Convert.ToString(((DateTimeOffset)expDate).ToUnixTimeSeconds(), 16)
             );
-            do_POST_Async(AtriumConnection.DATA_URL, httpContent).Wait();
+            do_POST_Async(AtriumConnection.DATA_URL, content, setSessionCookie: true, encryptedExchange: true).Wait();
         }
 
         // Insert card into atrium controller associated with AtriumConnection object.
         public void InsertCard(String displayName, Guid cardId, Guid userId, int famNum, int memNum, DateTime actDate, DateTime expDate)
         {
-            var httpContent = AtriumConnection.FetchXMLHttpContent(
+            var content = FetchAndEncryptXML(
                 AtriumConnection.GET_ADD_CARD,
                 "@tid", _transactionNum++.ToString(),
                 "@SerialNo", _serialNo,
@@ -112,7 +118,7 @@ namespace ThreeRiversTech.Zuleger.Atrium.API
                 "@ActivationDate", Convert.ToString(((DateTimeOffset)actDate).ToUnixTimeSeconds(), 16),
                 "@ExpirationDate", Convert.ToString(((DateTimeOffset)expDate).ToUnixTimeSeconds(), 16)
             );
-           do_POST_Async(AtriumConnection.DATA_URL, httpContent).Wait();
+           do_POST_Async(AtriumConnection.DATA_URL, content, setSessionCookie: true, encryptedExchange: true).Wait();
         }
 
         // Checks to see if the 'err' attributer is 'ok'. Throws exception if not.
@@ -125,9 +131,13 @@ namespace ThreeRiversTech.Zuleger.Atrium.API
         }
 
         // Performs a POST request to the connection associated with the AtriumConnection object
-        private async Task<XElement> do_POST_Async(String subdomain, StringContent httpContent)
+        private async Task<XElement> do_POST_Async(String subdomain, StringContent httpContent, bool setSessionCookie=false)
         {
-            
+            if (setSessionCookie)
+            {
+                httpContent.Headers.Add("Cookie", $"Session={_sessionId}-{AtriumConnection.PadLeft(_userId, '0', 2)};");
+                Console.WriteLine(httpContent.Headers);
+            }
             var response = await _client.PostAsync(_address + subdomain, httpContent);
             var responseString = await response.Content.ReadAsStringAsync();
             Console.WriteLine("RESPONSE:\n" + responseString + "\n");
@@ -137,14 +147,81 @@ namespace ThreeRiversTech.Zuleger.Atrium.API
         }
 
         // Performs a POST request to the connection associated with the AtriumConnection object
+        private async Task<XElement> do_POST_Async(String subdomain, Dictionary<String, String> parameters, bool setSessionCookie = false, bool encryptedExchange = false)
+        {
+            var encodedContent = new FormUrlEncodedContent(parameters);
+            if(setSessionCookie)
+            {
+                encodedContent.Headers.Add("Cookie", $"Session=\"{_sessionId}-{AtriumConnection.PadLeft(_userId, '0', 2)}\";");
+                Console.WriteLine(encodedContent.Headers);
+            }
+            var response = await _client.PostAsync(_address + subdomain, encodedContent);
+            var responseString = await response.Content.ReadAsStringAsync();
+            if (encryptedExchange)
+            {
+                if(!responseString.Contains("&post_enc"))
+                {
+                    throw new HttpRequestException(responseString);
+                }
+                var postEnc = responseString.Split("&post_enc=")[1].Split("&")[0];
+                responseString = Encoding.ASCII.GetString(AtriumConnection.Rc4(Encoding.ASCII.GetBytes(_sessionKey), Encoding.ASCII.GetBytes(postEnc)));
+            }
+            Console.WriteLine("RESPONSE:\n" + responseString + "\n");
+            var xml = XElement.Parse(responseString);
+            check_Err(xml);
+            return xml;
+        }
+
+        // Performs a POST request to the connection associated with the AtriumConnection object
         private async Task<XElement> do_GET_Async(String subdomain)
         {
+            Console.WriteLine("GET: " + _address + subdomain);
             var response = await _client.GetAsync(_address + subdomain);
             var responseString = await response.Content.ReadAsStringAsync();
             Console.WriteLine("RESPONSE:\n" + responseString + "\n");
             var xml = XElement.Parse(responseString);
             check_Err(xml);
             return xml;
+        }
+
+        // Fetches XML File and converts it to a StringContent to be used as an HttpContent file.
+        // If args are entered, then every even index in args should be the replacement key and every odd should be the replacement value.
+        private StringContent FetchXMLAsHttpContent(String fileName, params String[] args)
+        {
+            var fileContent = File.ReadAllText(fileName, Encoding.ASCII);
+            for(int i = 0; i < args.Length; i += 2)
+            {
+                fileContent = fileContent.Replace(args[i], args[i+1]);
+            }
+
+            Console.WriteLine("REQUEST: " + fileContent);
+
+            return new StringContent(
+                fileContent,
+                Encoding.ASCII,
+                "text/xml"
+            );
+        }
+
+        private Dictionary<String, String> FetchAndEncryptXML(String fileName, params String[] args)
+        {
+            Dictionary<String, String> parameters = new Dictionary<String, String>();
+            var fileContent = File.ReadAllText(fileName, Encoding.ASCII);
+            for (int i = 0; i < args.Length; i += 2)
+            {
+                fileContent = fileContent.Replace(args[i], args[i + 1]);
+            }
+
+            Console.WriteLine("REQUEST (unecrypted): " + fileContent);
+
+            var postEnc = AtriumConnection.ByteArrayToHexString(AtriumConnection.Rc4(Encoding.ASCII.GetBytes(_sessionKey), Encoding.ASCII.GetBytes(fileContent)));
+            var postChk = AtriumConnection.CheckSum(_sessionKey + fileContent);
+            parameters.Add("post_enc", postEnc);
+            parameters.Add("post_chk", postChk);
+
+            Console.WriteLine($"REQUEST (encrypted): post_enc={parameters["post_enc"]}&post_chk={parameters["post_chk"]}");
+
+            return parameters;
         }
 
         // Rc4 encryption algorithm
@@ -189,30 +266,32 @@ namespace ThreeRiversTech.Zuleger.Atrium.API
         private static byte[] Md5(String text)
         {
             byte[] hash;
-            using(MD5 md5 = MD5.Create())
+            using (MD5 md5 = MD5.Create())
             {
                 hash = md5.ComputeHash(Encoding.ASCII.GetBytes(text));
             }
             return hash;
         }
 
-        // Fetches XML File and converts it to a StringContent to be used as an HttpContent file.
-        // If args are entered, then every even index in args should be the replacement key and every odd should be the replacement value.
-        private static StringContent FetchXMLHttpContent(String fileName, params String[] args)
+        private static String CheckSum(String str)
         {
-            var fileContent = File.ReadAllText(fileName, Encoding.ASCII);
-            for(int i = 0; i < args.Length; i += 2)
+            var chk = 0; 
+            for (int i = 0; i < str.Length; i++) 
             {
-                fileContent = fileContent.Replace(args[i], args[i+1]);
+                chk += str[i];
             }
+            var chkSumString = (chk & 0xFFFF).ToString("X");
+            chkSumString = AtriumConnection.PadLeft(chkSumString, '0', 4);
+            return chkSumString;
+        }
 
-            Console.WriteLine(fileContent);
-
-            return new StringContent(
-                File.ReadAllText(fileName, Encoding.ASCII),
-                Encoding.ASCII,
-                "text/xml"
-            );
+        private static String PadLeft(String s, char c, int length)
+        {
+            while(s.Length < length)
+            {
+                s = c + s;
+            }
+            return s;
         }
 
         // Converts a byte array to a hexadecimal string
@@ -226,6 +305,11 @@ namespace ThreeRiversTech.Zuleger.Atrium.API
         public class AnswerNotOkException : Exception
         {
             public AnswerNotOkException() : base("HTTP Response did not result in err='ok'.") { }
+        }
+
+        public class HttpRequestException : Exception
+        {
+            public HttpRequestException(String responseString) : base("Request failed. " + responseString) { }
         }
     }
 }

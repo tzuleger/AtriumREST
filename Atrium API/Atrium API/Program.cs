@@ -9,7 +9,7 @@ namespace ThreeRiversTech.Zuleger.Atrium.API
 
         public static void Main(String[] args)
         {
-            var atriumConnection = new AtriumConnection("admin", "admin", "http://69.70.57.94:8083/");
+            var atriumConnection = new AtriumConnection("testuser1", "testuser1", "http://69.70.57.94:8083/");
 
             var userId = GenerateRandomId();
             var cardId = GenerateRandomId();
