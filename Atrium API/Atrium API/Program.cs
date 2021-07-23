@@ -9,20 +9,24 @@ namespace ThreeRiversTech.Zuleger.Atrium.API
 
         public static void Main(String[] args)
         {
-            AtriumConnection.MaxAttempts = 1;
+            AtriumConnection.MaxAttempts = 10;
+            AtriumConnection.DelayBetweenAttempts = 30;
             var atriumConnection = new AtriumConnection("admin", "admin", "http://69.70.57.94:8083/");
 
             var userId = GenerateRandomId();
             var cardId = GenerateRandomId();
-            var objectId = atriumConnection.InsertUser("Terry", "Crews", userId, DateTime.Now.AddDays(-13), DateTime.Now.AddYears(2));
-            Console.WriteLine("oid: " + objectId);
-            //atriumConnection.InsertCard("Terry Crews Card", cardId, userId, objectId 0x7fffff, DateTime.Now.AddDays(-13), DateTime.Now.AddYears(2));
-            // var users = atriumConnection.GetUsersByName("Terry", "Crews");
-
-            // foreach(var user in users)
-            // {
-            //     Console.WriteLine("User: " + user);
-            // }
+            //var objectId = atriumConnection.InsertUser("Terry", "Crews", userId, DateTime.Now.AddDays(-13), DateTime.Now.AddYears(2));
+            //Console.WriteLine("oid: " + objectId);
+            //atriumConnection.InsertCard("Terry Crews Card", cardId, userId, objectId, 0x7fffff, DateTime.Now.AddDays(-13), DateTime.Now.AddYears(2));
+            var users = atriumConnection.GetUsersByName("Terry", "Crews", endIdx: 50);
+            Console.WriteLine(atriumConnection.ResponseText);
+            foreach(var user in users)
+            {
+                foreach(var kvp in user)
+                {
+                    Console.WriteLine(kvp.Key + ": " + kvp.Value);
+                }
+            }
         }
 
         private static Guid GenerateRandomId()

@@ -5,6 +5,7 @@ using System.Linq;
 using System.Net.Http;
 using System.Security.Cryptography;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using System.Xml.Linq;
 
@@ -15,14 +16,27 @@ namespace ThreeRiversTech.Zuleger.Atrium.API
     /// </summary>
     public class AtriumConnection
     {
-        /// <summary> 
-        /// Maximum number of attempts to establish a session. (by default: 10. Maximum amount that can be set is 50.) 
+        /// <summary>
+        /// Maximum number of attempts to establish a session. (by default: 10. Maximum amount that can be set is 50.)
         /// </summary>
         public static int MaxAttempts { get; set; } = 10;
         /// <summary>
-        /// The time in seconds to wait for the next attempt to log into the controller. (by default: 10 seconds or 10,000 milliseconds)
+        /// The time in seconds to wait for the next attempt to log into the controller. (by default: 10 seconds)
         /// </summary>
-        public static int DelayBetweenAttempts { get; set; } = 10000;
+        public static int DelayBetweenAttempts { get; set; } = 10;
+
+        private static XNamespace XmlNameSpace = "https://www.cdvi.ca/";
+
+        // Elements used when interacting with data inside Atrium Controller
+        private static XName XML_EL_RECORDS = AtriumConnection.XmlNameSpace + "RECORDS";
+        private static XName XML_EL_RECORD = AtriumConnection.XmlNameSpace + "REC";
+        private static XName XML_EL_DATA = AtriumConnection.XmlNameSpace + "DATA";
+
+        // Elements used when logging in
+        private static XName XML_EL_CONNECTION = "CONNECTION";
+        private static XName XML_EL_DEVICE = "DEVICE";
+        private static XName XML_EL_SDK_CFG = "SDK_CFG";
+
 
         // XML File Templates
         private const String GET_SESSION = "./templates/login_get.xml";
@@ -55,7 +69,18 @@ namespace ThreeRiversTech.Zuleger.Atrium.API
         private readonly String _username;
 
         // Other
+        /// <summary>
+        /// Stores the Request XML data to the last POST request made.
+        /// </summary>
+        public String RequestText { get; set; } = "No request made.";
+
+        /// <summary>
+        /// Stores the Response String from the last POST request made.
+        /// </summary>
+        public String ResponseText { get; set; } = "No response received.";
+
         private int _transactionNum = 1;
+        
 
         /// <summary>
         /// Creates an AtriumConnection object connected to the specified address under the specified username and password.
@@ -70,16 +95,16 @@ namespace ThreeRiversTech.Zuleger.Atrium.API
 
             // Fetch Session info to establish temporary Session Key
             var xml = do_GET_Async(AtriumConnection.LOGIN_URL).Result;
-            CheckAnswer(xml);
+            CheckAnswer(xml, AtriumConnection.XML_EL_CONNECTION);
 
             // Get device information from the response.
-            _serialNo = xml.Element("DEVICE").Attribute("serial").Value;
-            _product = xml.Element("DEVICE").Attribute("product").Value;
-            _label = xml.Element("DEVICE").Attribute("mdl_label").Value;
-            _version = xml.Element("DEVICE").Attribute("version").Value;
+            _serialNo = xml.Element(AtriumConnection.XML_EL_DEVICE).Attribute("serial").Value;
+            _product = xml.Element(AtriumConnection.XML_EL_DEVICE).Attribute("product").Value;
+            _label = xml.Element(AtriumConnection.XML_EL_DEVICE).Attribute("mdl_label").Value;
+            _version = xml.Element(AtriumConnection.XML_EL_DEVICE).Attribute("version").Value;
 
             // Get session id from the response.
-            _sessionId = xml.Element("CONNECTION").Attribute("session").Value;
+            _sessionId = xml.Element(AtriumConnection.XML_EL_CONNECTION).Attribute("session").Value;
 
             // Use MD5 and RC4 to get Session Key. Use Session Key to get loginUser and loginPass.
             _sessionKey = AtriumConnection.ByteArrayToHexString(AtriumConnection.Md5(_serialNo + _sessionId));
@@ -100,24 +125,24 @@ namespace ThreeRiversTech.Zuleger.Atrium.API
                 var req = do_POST_Async(AtriumConnection.LOGIN_URL, parameters);
                 req.Wait();
                 xml = req.Result;
-                if (CheckAnswer(xml)) // If "ok" then break the loop, otherwise, keep trying. (Sessions may not be available).
+                if (CheckAnswer(xml, AtriumConnection.XML_EL_CONNECTION, throwException:false)) // If "ok" then break the loop, otherwise, keep trying. (Sessions may not be available).
                 {
                     break;
                 }
                 else
                 {
-                    Task.Delay(DelayBetweenAttempts);
+                    Thread.Sleep(DelayBetweenAttempts * 1000);
                     i--;
                 }
             }
 
             // Update session ID
-            _sessionId = xml.Element("CONNECTION").Attribute("session").Value;
+            _sessionId = xml.Element(AtriumConnection.XML_EL_CONNECTION).Attribute("session").Value;
 
 
             // Get user info
-            _userId = xml.Element("SDK_CFG").Attribute("user_id").Value;
-            _username = xml.Element("SDK_CFG").Attribute("username").Value;
+            _userId = xml.Element(AtriumConnection.XML_EL_SDK_CFG).Attribute("user_id").Value;
+            _username = xml.Element(AtriumConnection.XML_EL_SDK_CFG).Attribute("username").Value;
 
             if(_userId == "-1")
             {
@@ -136,7 +161,7 @@ namespace ThreeRiversTech.Zuleger.Atrium.API
         /// <param name="id">User GUID that is to be attached to the user.</param>
         /// <param name="actDate">Activation date of the User.</param>
         /// <param name="expDate">Expiration date of the User.</param>
-        /// <returns>String object that is of real type int representing the Object ID as assigned by the Atrium Controller when inserted.</returns>
+        /// <returns>String object that is of real type int representing the Object ID as assigned by the Atrium Controller when user is inserted.</returns>
         public String InsertUser(String firstName, String lastName, Guid id, DateTime actDate, DateTime expDate)
         {
             var content = FetchAndEncryptXML(
@@ -152,22 +177,11 @@ namespace ThreeRiversTech.Zuleger.Atrium.API
             var req = do_POST_Async(AtriumConnection.DATA_URL, content, setSessionCookie: true, encryptedExchange: true);
             req.Wait();
             var xml = req.Result;
-            check_Err_Rec(xml);
             Console.WriteLine(xml);
-            Console.WriteLine(xml.Name);
-            Console.WriteLine(xml.Elements("RECORDS xmlns=\"https://www.cdvi.ca/\"").Count());
-            Console.WriteLine(xml.Element("REC"));
-            var insertedRecords = from e in xml.Elements("RECORDS") select e.Element("REC");
-            if(insertedRecords != null)
-            {
-                check_Err_Data(insertedRecords);
-                Console.WriteLine(insertedRecords.First());
-                return insertedRecords.First().Element("DATA").Attribute("id").Value;
-            }
-            else
-            {
-                return null;
-            }
+            var insertedRecords = from e in xml.Elements(AtriumConnection.XML_EL_RECORDS) 
+                                  select e.Element(AtriumConnection.XML_EL_RECORD);
+            CheckAllAnswers(insertedRecords, AtriumConnection.XML_EL_DATA);
+            return insertedRecords.First().Element(AtriumConnection.XML_EL_DATA).Attribute("id").Value;
         }
 
         /// <summary>
@@ -189,27 +203,27 @@ namespace ThreeRiversTech.Zuleger.Atrium.API
             var req = do_POST_Async(AtriumConnection.DATA_URL, content, setSessionCookie: true, encryptedExchange: true);
             req.Wait();
             var xml = req.Result;
-            check_Err_Rec(xml);
 
-            var records = from e in xml.Elements("RECORDS").Elements("REC")
-                          where
-                          (e.Element("DATA").Attribute("label3").Value == firstName)
-                          && (e.Element("DATA").Attribute("label4").Value == lastName)
+            var checkRecords = from e in xml.Elements(AtriumConnection.XML_EL_RECORDS) 
+                               select e.Element(AtriumConnection.XML_EL_RECORD);
+            CheckAllAnswers(checkRecords, AtriumConnection.XML_EL_DATA);
+
+            var records = from e in xml.Elements(AtriumConnection.XML_EL_RECORDS).Elements(AtriumConnection.XML_EL_RECORD).Elements(AtriumConnection.XML_EL_DATA)
                           select new Dictionary<String, String>
                           {
-                              { "objectID", e.Element("DATA").Attribute("id").Value },
-                              { "isValid", e.Element("DATA").Attribute("valid").Value },
-                              { "firstName", e.Element("DATA").Attribute("label3").Value },
-                              { "lastName", e.Element("DATA").Attribute("label4").Value },
-                              { "actDate", e.Element("DATA").Attribute("utc_time22").Value },
-                              { "expDate", e.Element("DATA").Attribute("utc_time23").Value },
+                              { "objectID", e.Attribute("id").Value },
+                              { "isValid", e.Attribute("valid").Value },
+                              { "firstName", e.Attribute("label3").Value },
+                              { "lastName", e.Attribute("label4").Value },
+                              { "actDate", e.Attribute("utc_time22").Value },
+                              { "expDate", e.Attribute("utc_time23").Value },
                           };
 
             return records.ToList();
         }
 
         /// <summary>
-        /// 
+        ///
         /// </summary>
         /// <param name="objectId"></param>
         /// <param name="firstName"></param>
@@ -232,7 +246,8 @@ namespace ThreeRiversTech.Zuleger.Atrium.API
         /// <param name="cardNum">Number of the card that is to be used.</param>
         /// <param name="actDate">Activation Date of the card.</param>
         /// <param name="expDate">Expiration Date of the card.</param>
-        public void InsertCard(String displayName, Guid cardId, Guid userId, String objectId, int cardNum, DateTime actDate, DateTime expDate)
+        /// <returns>String object that is of real type int representing the Object ID as assigned by the Atrium Controller when card is inserted.</returns>
+        public String InsertCard(String displayName, Guid cardId, Guid userId, String objectId, int cardNum, DateTime actDate, DateTime expDate)
         {
             var content = FetchAndEncryptXML(
                 AtriumConnection.GET_ADD_CARD,
@@ -246,23 +261,26 @@ namespace ThreeRiversTech.Zuleger.Atrium.API
                 "@ActivationDate", Convert.ToString(((DateTimeOffset)actDate).ToUnixTimeSeconds(), 16),
                 "@ExpirationDate", Convert.ToString(((DateTimeOffset)expDate).ToUnixTimeSeconds(), 16)
             );
-           var req = do_POST_Async(AtriumConnection.DATA_URL, content, setSessionCookie: true, encryptedExchange: true);
-           req.Wait();
-           var xml = req.Result;
-           check_Err_Rec(xml);
+            var req = do_POST_Async(AtriumConnection.DATA_URL, content, setSessionCookie: true, encryptedExchange: true);
+            req.Wait();
+            var xml = req.Result;
+            Console.WriteLine(xml);
+            var insertedRecords = from e in xml.Elements(AtriumConnection.XML_EL_RECORDS) select e.Element(AtriumConnection.XML_EL_RECORD);
+            CheckAllAnswers(insertedRecords, AtriumConnection.XML_EL_DATA);
+            return insertedRecords.First().Element(AtriumConnection.XML_EL_DATA).Attribute("id").Value;
         }
 
         /// <summary>
         /// Checks an element in an XML Response String that it has an "ok" answer.
         /// </summary>
         /// <param name="xml">XElement that is to be checked for the "ok"</param>
-        /// <param name="elementName">Optional: Subelement name to check inside of xml (by default: "CONNECTION")</param>
+        /// <param name="elementName">Subelement name to check inside of xml</param>
+        /// <param name="attr">Optional: Attribute that the "ok" should be under. (by default: "err")</param>
         /// <param name="throwException">Optional: If true, throws an exception. Otherwise, returns a boolean indicating success or not. (by default: true)</param>
         /// <returns>Boolean value indicating that "ok" is in the response string.</returns>
-        private bool CheckAnswer(XElement xml, String elementName="CONNECTION", bool throwException=true)
+        private bool CheckAnswer(XElement xml, XName elementName, String attr="err", bool throwException=true)
         {
             var e = xml.Element(elementName);
-            var attr = e.Attribute("err") != null ? "err" : e.Attribute("res") != null ? "res" : null;
             if(attr == null)
             {
                 throw new AttributeDoesNotExistException(xml, attr);
@@ -286,43 +304,19 @@ namespace ThreeRiversTech.Zuleger.Atrium.API
         /// Checks a set of elements in an XML Response String that it has an "ok" answer.
         /// </summary>
         /// <param name="xmlElements">Enumerable XML elements that are typically of "REC" type.</param>
-        /// <param name="elementName">Optional: Subelement name to check inside of each element in xmlElements. (by default: "DATA")</param>
+        /// <param name="elementName">Subelement name to check inside of xml</param>
         /// <param name="throwException">Optional: If true, throws an exception. Otherwise, returns a boolean indicating success or not. (by default: true)</param>
         /// <returns>Boolean value indicating that "ok" is in the response string.</returns>
-        private bool CheckAllAnswers(IEnumerable<XElement> xmlElements, String elementName="DATA", bool throwException=true)
+        private bool CheckAllAnswers(IEnumerable<XElement> xmlElements, XName elementName, String attr = "res", bool throwException = true)
         {
-            foreach(var el in xmlElements)
+            foreach (var el in xmlElements)
             {
-                if(!CheckAnswer(el, elementName, throwException))
+                if (!CheckAnswer(el, elementName, attr, throwException))
                 {
                     return false;
                 }
             }
             return true;
-        }
-
-        private void check_Err_Rec(XElement xml)
-        {
-            var records = from e in xml.Elements("RECORDS") select e.Element("REC");
-
-            foreach(var record in records)
-            {
-                if(record.Attribute("res").Value != "ok")
-                {
-                    throw new AnswerNotOkException(record.Attribute("res").Value);
-                }
-            }
-        }
-
-        private void check_Err_Data(IEnumerable<XElement> records)
-        {
-            foreach (var record in records)
-            {
-                if (record.Attribute("res").Value != "ok")
-                {
-                    throw new AnswerNotOkException(record.Attribute("res").Value);
-                }
-            }
         }
 
         // Performs a POST request to the connection associated with the AtriumConnection object
@@ -359,6 +353,8 @@ namespace ThreeRiversTech.Zuleger.Atrium.API
                 sb.AppendLine(el.ToString());
             }
             _transactionNum++;
+
+            ResponseText = xml.ToString();
             return xml;
         }
 
@@ -370,10 +366,13 @@ namespace ThreeRiversTech.Zuleger.Atrium.API
         /// <returns>An asynchronous task that returns an XElement of the response. (XML Response)</returns>
         private async Task<XElement> do_GET_Async(String subdomain)
         {
+            RequestText = "GET " + _address + subdomain;
             var response = await _client.GetAsync(_address + subdomain);
             var responseString = await response.Content.ReadAsStringAsync();
             var xml = XElement.Parse(responseString);
             _transactionNum++;
+
+            ResponseText = xml.ToString();
             return xml;
         }
 
@@ -381,7 +380,7 @@ namespace ThreeRiversTech.Zuleger.Atrium.API
         /// Fetches an XML File and substitutes provided arguments and converts it to an HttpContent object.
         /// </summary>
         /// <param name="fileName">File name of the XML template to be used.</param>
-        /// <param name="args">Variable arguments of String objects that are used to substitute arguments in the XML template. 
+        /// <param name="args">Variable arguments of String objects that are used to substitute arguments in the XML template.
         /// The size of the amount of Strings to pass should be divisible by two where every even argument is what should be replaced by the odd argument.</param>
         /// <returns>StringContent item that is to be used in the next POST request.</returns>
         private StringContent FetchXMLAsHttpContent(String fileName, params String[] args)
@@ -391,6 +390,8 @@ namespace ThreeRiversTech.Zuleger.Atrium.API
             {
                 fileContent = fileContent.Replace(args[i], args[i+1]);
             }
+
+            RequestText = fileContent;
 
             return new StringContent(
                 fileContent,
@@ -403,7 +404,7 @@ namespace ThreeRiversTech.Zuleger.Atrium.API
         /// Fetches an XML File and substitutes provided arguments, encrypts it under the RC4 Encryption Algorithm, then creates an encrypted request to be sent.
         /// </summary>
         /// <param name="fileName">File name of the XML template to use.</param>
-        /// <param name="args">Variable arguments of String objects that are used to substitute arguments in the XML template. 
+        /// <param name="args">Variable arguments of String objects that are used to substitute arguments in the XML template.
         /// The size of the amount of Strings to pass should be divisible by two where every even argument is what should be replaced by the odd argument.</param>
         /// <returns>A Dictionary of parameters that are to be used in a parameterized POST request.</returns>
         private Dictionary<String, String> FetchAndEncryptXML(String fileName, params String[] args)
@@ -414,6 +415,8 @@ namespace ThreeRiversTech.Zuleger.Atrium.API
             {
                 fileContent = fileContent.Replace(args[i], args[i + 1]);
             }
+
+            RequestText = fileContent;
 
             var postEnc = AtriumConnection.ByteArrayToHexString(AtriumConnection.Rc4(Encoding.ASCII.GetBytes(_sessionKey), Encoding.ASCII.GetBytes(fileContent)));
             var postChk = AtriumConnection.CheckSum(fileContent);
@@ -583,7 +586,7 @@ namespace ThreeRiversTech.Zuleger.Atrium.API
         /// </summary>
         public class AttributeDoesNotExistException : Exception
         {
-            public String XmlString { get; set; }
+            public String XmlString { get; private set; }
             public AttributeDoesNotExistException(XElement xml, String attr) : base($"Attribute \"{attr}\" does not exist.") { XmlString = xml.ToString(); }
         }
     }
