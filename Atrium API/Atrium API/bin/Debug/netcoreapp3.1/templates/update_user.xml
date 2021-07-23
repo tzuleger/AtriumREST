@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<SDK xmlns='https://www.cdvi.ca/'>
+    <RECORDS>
+        <REC trans_id='@tid' cmd='write' sernum='@SerialNo' type='user' id='@ObjectID' rec='cfg'>
+            <DATA label3='@FirstName' label4='@LastName' utc_time22='@ActivationDate' utc_time23='@ExpirationDate'/>
+        </REC>
+    </RECORDS>
+</SDK>

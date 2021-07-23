@@ -9,18 +9,20 @@ namespace ThreeRiversTech.Zuleger.Atrium.API
 
         public static void Main(String[] args)
         {
-            var atriumConnection = new AtriumConnection("testuser1", "testuser1", "http://69.70.57.94:8083/");
+            AtriumConnection.MaxAttempts = 1;
+            var atriumConnection = new AtriumConnection("admin", "admin", "http://69.70.57.94:8083/");
 
             var userId = GenerateRandomId();
             var cardId = GenerateRandomId();
-            atriumConnection.InsertUser("John", "Doe", userId, DateTime.Now.AddDays(-13), DateTime.Now.AddYears(2));
-            //atriumConnection.InsertCard("John Doe Card", cardId, userId, 0x7fffff, DateTime.Now.AddDays(-13), DateTime.Now.AddYears(2));
-            var users = atriumConnection.GetUsersByName("John", "Doe");
+            var objectId = atriumConnection.InsertUser("Terry", "Crews", userId, DateTime.Now.AddDays(-13), DateTime.Now.AddYears(2));
+            Console.WriteLine("oid: " + objectId);
+            //atriumConnection.InsertCard("Terry Crews Card", cardId, userId, objectId 0x7fffff, DateTime.Now.AddDays(-13), DateTime.Now.AddYears(2));
+            // var users = atriumConnection.GetUsersByName("Terry", "Crews");
 
-            foreach(var user in users)
-            {
-                Console.WriteLine("User: " + user);
-            }
+            // foreach(var user in users)
+            // {
+            //     Console.WriteLine("User: " + user);
+            // }
         }
 
         private static Guid GenerateRandomId()
