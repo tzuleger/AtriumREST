@@ -14,7 +14,13 @@ namespace ThreeRiversTech.Zuleger.Atrium.API
             var userId = GenerateRandomId();
             var cardId = GenerateRandomId();
             atriumConnection.InsertUser("John", "Doe", userId, DateTime.Now.AddDays(-13), DateTime.Now.AddYears(2));
-            atriumConnection.InsertCard("John Doe Card", cardId, userId, 80, 4000, DateTime.Now.AddDays(-13), DateTime.Now.AddYears(2));
+            //atriumConnection.InsertCard("John Doe Card", cardId, userId, 0x7fffff, DateTime.Now.AddDays(-13), DateTime.Now.AddYears(2));
+            var users = atriumConnection.GetUsersByName("John", "Doe");
+
+            foreach(var user in users)
+            {
+                Console.WriteLine("User: " + user);
+            }
         }
 
         private static Guid GenerateRandomId()

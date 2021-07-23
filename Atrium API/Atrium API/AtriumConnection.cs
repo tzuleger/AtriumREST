@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Net.Http;
 using System.Security.Cryptography;
 using System.Text;
@@ -16,6 +17,7 @@ namespace ThreeRiversTech.Zuleger.Atrium.API
         private const String GET_LOGIN = "./templates/login_attempt.xml";
         private const String GET_ADD_USER = "./templates/add_user.xml";
         private const String GET_ADD_CARD = "./templates/add_card.xml";
+        private const String READ_USER = "./templates/read_user.xml";
 
         // String GET/POST templates
         private const String ENC_TEMPLATE = "sid=@SessionID&post_enc=@EncryptedData&post_chk=@CheckSum";
@@ -50,6 +52,7 @@ namespace ThreeRiversTech.Zuleger.Atrium.API
 
             // Fetch Session info to establish temporary Session Key
             var xml = do_GET_Async(AtriumConnection.LOGIN_URL).Result;
+            check_Err_Connection(xml);
 
             // Get device information from the response.
             _serialNo = xml.Element("DEVICE").Attribute("serial").Value;
@@ -66,19 +69,32 @@ namespace ThreeRiversTech.Zuleger.Atrium.API
             var loginPass = AtriumConnection.ByteArrayToHexString(AtriumConnection.Md5(_sessionKey + password));
 
             // Post login information.
-            var parameters = new Dictionary<String, String>
+            AnswerNotOkException e = null;
+            do
             {
-                { "sid", _sessionId },
-                { "cmd", "login" },
-                { "login_user", loginUser },
-                { "login_pass", loginPass }
-            };
-            var req = do_POST_Async(AtriumConnection.LOGIN_URL , parameters);
-            req.Wait();
-            xml = req.Result;
+                try
+                {
+                    var parameters = new Dictionary<String, String>
+                    {
+                        { "sid", _sessionId },
+                        { "cmd", "login" },
+                        { "login_user", loginUser },
+                        { "login_pass", loginPass }
+                    };
+                    var req = do_POST_Async(AtriumConnection.LOGIN_URL, parameters);
+                    req.Wait();
+                    xml = req.Result;
+                    check_Err_Connection(xml);
+                }
+                catch(AnswerNotOkException exc)
+                {
+                    e = exc;
+                }
+            } while (e != null && e.StatusCode != -1);
 
             // Update session ID
             _sessionId = xml.Element("CONNECTION").Attribute("session").Value;
+
 
             // Get user info
             _userId = xml.Element("SDK_CFG").Attribute("user_id").Value;
@@ -92,7 +108,7 @@ namespace ThreeRiversTech.Zuleger.Atrium.API
         {
             var content = FetchAndEncryptXML(
                 AtriumConnection.GET_ADD_USER,
-                "@tid", _transactionNum++.ToString(),
+                "@tid", _transactionNum.ToString(),
                 "@SerialNo", _serialNo,
                 "@FirstName", firstName,
                 "@LastName", lastName,
@@ -100,33 +116,91 @@ namespace ThreeRiversTech.Zuleger.Atrium.API
                 "@ActivationDate", Convert.ToString(((DateTimeOffset)actDate).ToUnixTimeSeconds(), 16),
                 "@ExpirationDate", Convert.ToString(((DateTimeOffset)expDate).ToUnixTimeSeconds(), 16)
             );
-            do_POST_Async(AtriumConnection.DATA_URL, content, setSessionCookie: true, encryptedExchange: true).Wait();
+            var req = do_POST_Async(AtriumConnection.DATA_URL, content, setSessionCookie: true, encryptedExchange: true);
+            req.Wait();
+            var xml = req.Result;
+            check_Err_Rec(xml);
+        }
+
+        public List<Dictionary<String, String>> GetUsersByName(String firstName, String lastName)
+        {
+            var content = FetchAndEncryptXML(AtriumConnection.READ_USER, 
+                "@tid", _transactionNum.ToString(), 
+                "@serialNo", _serialNo,
+                "@min", "0",
+                "@max", "1000"
+            );
+            var req = do_POST_Async(AtriumConnection.DATA_URL, content, setSessionCookie: true, encryptedExchange: true);
+            req.Wait();
+            var xml = req.Result;
+            check_Err_Rec(xml);
+            Console.WriteLine(xml);
+
+            var records = from e in xml.Elements("RECORDS").Elements("REC")
+                          where 
+                          (e.Element("DATA").Attribute("label3").Value == firstName) 
+                          && (e.Element("DATA").Attribute("label4").Value == lastName) 
+                          select new Dictionary<String, String> 
+                          {
+                              { "isValid", e.Element("DATA").Attribute("valid").Value },
+                              { "firstName", e.Element("DATA").Attribute("label3").Value },
+                              { "lastName", e.Element("DATA").Attribute("label4").Value },
+                              { "guid", e.Element("DATA").Attribute("guid2").Value },
+                              { "actDate", e.Element("DATA").Attribute("utc_time22").Value },
+                              { "expDate", e.Element("DATA").Attribute("utc_time23").Value },
+                          };
+
+            return records.ToList();
+        }
+
+        public void UpdateUser(String firstName, String lastName, DateTime actDate, DateTime expDate)
+        {
+
         }
 
         // Insert card into atrium controller associated with AtriumConnection object.
-        public void InsertCard(String displayName, Guid cardId, Guid userId, int famNum, int memNum, DateTime actDate, DateTime expDate)
+        public void InsertCard(String displayName, Guid cardId, Guid userId, int memNum, DateTime actDate, DateTime expDate)
         {
             var content = FetchAndEncryptXML(
                 AtriumConnection.GET_ADD_CARD,
-                "@tid", _transactionNum++.ToString(),
+                "@tid", _transactionNum.ToString(),
                 "@SerialNo", _serialNo,
                 "@DisplayName", displayName,
                 "@CardID", cardId.ToString(),
                 "@UserID", userId.ToString(),
-                "@FamilyNumber", Convert.ToString(famNum, 16),
                 "@MemberNumber", Convert.ToString(memNum, 16),
                 "@ActivationDate", Convert.ToString(((DateTimeOffset)actDate).ToUnixTimeSeconds(), 16),
                 "@ExpirationDate", Convert.ToString(((DateTimeOffset)expDate).ToUnixTimeSeconds(), 16)
             );
-           do_POST_Async(AtriumConnection.DATA_URL, content, setSessionCookie: true, encryptedExchange: true).Wait();
+           var req = do_POST_Async(AtriumConnection.DATA_URL, content, setSessionCookie: true, encryptedExchange: true);
+           req.Wait();
+           var xml = req.Result;
+           check_Err_Rec(xml);
         }
 
         // Checks to see if the 'err' attributer is 'ok'. Throws exception if not.
-        private void check_Err(XElement xml)
+        private void check_Err_Connection(XElement xml)
         {
+            if(xml.Element("CONNECTION").Attribute("err").Value == "err_alloc_fail")
+            {
+                throw new AnswerNotOkException("No Session Available", -1);
+            }
             if(xml.Element("CONNECTION").Attribute("err").Value != "ok")
             {
-                throw new AnswerNotOkException();
+                throw new AnswerNotOkException("Unknown error message: " + xml.Element("CONNECTION").Attribute("res").Value);
+            }
+        }
+
+        private void check_Err_Rec(XElement xml)
+        {
+            var records = from e in xml.Elements("RECORDS") select e.Element("REC");
+
+            foreach(var record in records)
+            {
+                if(record.Attribute("res").Value != "ok")
+                {
+                    throw new AnswerNotOkException(record.Attribute("res").Value);
+                }
             }
         }
 
@@ -135,14 +209,12 @@ namespace ThreeRiversTech.Zuleger.Atrium.API
         {
             if (setSessionCookie)
             {
-                httpContent.Headers.Add("Cookie", $"Session={_sessionId}-{AtriumConnection.PadLeft(_userId, '0', 2)};");
-                Console.WriteLine(httpContent.Headers);
+                httpContent.Headers.Add("Cookie", $"Session={_sessionId}-{AtriumConnection.PadLeft(_userId, '0', 2)}");
             }
             var response = await _client.PostAsync(_address + subdomain, httpContent);
             var responseString = await response.Content.ReadAsStringAsync();
-            Console.WriteLine("RESPONSE:\n" + responseString + "\n");
             var xml = XElement.Parse(responseString);
-            check_Err(xml);
+            _transactionNum++;
             return xml;
         }
 
@@ -152,35 +224,36 @@ namespace ThreeRiversTech.Zuleger.Atrium.API
             var encodedContent = new FormUrlEncodedContent(parameters);
             if(setSessionCookie)
             {
-                encodedContent.Headers.Add("Cookie", $"Session=\"{_sessionId}-{AtriumConnection.PadLeft(_userId, '0', 2)}\";");
-                Console.WriteLine(encodedContent.Headers);
+                encodedContent.Headers.Add("Cookie", $"Session={_sessionId}-{AtriumConnection.PadLeft(_userId, '0', 2)}");
             }
             var response = await _client.PostAsync(_address + subdomain, encodedContent);
             var responseString = await response.Content.ReadAsStringAsync();
             if (encryptedExchange)
             {
-                if(!responseString.Contains("&post_enc"))
+                if(!responseString.Contains("post_enc="))
                 {
                     throw new HttpRequestException(responseString);
                 }
-                var postEnc = responseString.Split("&post_enc=")[1].Split("&")[0];
-                responseString = Encoding.ASCII.GetString(AtriumConnection.Rc4(Encoding.ASCII.GetBytes(_sessionKey), Encoding.ASCII.GetBytes(postEnc)));
+                var postEnc = responseString.Split("post_enc=")[1].Split("&")[0];
+                responseString = Encoding.ASCII.GetString(AtriumConnection.Rc4(Encoding.ASCII.GetBytes(_sessionKey), HexStringToByteArray(postEnc)));
             }
-            Console.WriteLine("RESPONSE:\n" + responseString + "\n");
             var xml = XElement.Parse(responseString);
-            check_Err(xml);
+            StringBuilder sb = new StringBuilder();
+            foreach (var el in xml.Nodes())
+            {
+                sb.AppendLine(el.ToString());
+            }
+            _transactionNum++;
             return xml;
         }
 
         // Performs a POST request to the connection associated with the AtriumConnection object
         private async Task<XElement> do_GET_Async(String subdomain)
         {
-            Console.WriteLine("GET: " + _address + subdomain);
             var response = await _client.GetAsync(_address + subdomain);
             var responseString = await response.Content.ReadAsStringAsync();
-            Console.WriteLine("RESPONSE:\n" + responseString + "\n");
             var xml = XElement.Parse(responseString);
-            check_Err(xml);
+            _transactionNum++;
             return xml;
         }
 
@@ -193,8 +266,6 @@ namespace ThreeRiversTech.Zuleger.Atrium.API
             {
                 fileContent = fileContent.Replace(args[i], args[i+1]);
             }
-
-            Console.WriteLine("REQUEST: " + fileContent);
 
             return new StringContent(
                 fileContent,
@@ -212,14 +283,11 @@ namespace ThreeRiversTech.Zuleger.Atrium.API
                 fileContent = fileContent.Replace(args[i], args[i + 1]);
             }
 
-            Console.WriteLine("REQUEST (unecrypted): " + fileContent);
-
             var postEnc = AtriumConnection.ByteArrayToHexString(AtriumConnection.Rc4(Encoding.ASCII.GetBytes(_sessionKey), Encoding.ASCII.GetBytes(fileContent)));
-            var postChk = AtriumConnection.CheckSum(_sessionKey + fileContent);
+            var postChk = AtriumConnection.CheckSum(fileContent);
+            parameters.Add("sid", _sessionId);
             parameters.Add("post_enc", postEnc);
             parameters.Add("post_chk", postChk);
-
-            Console.WriteLine($"REQUEST (encrypted): post_enc={parameters["post_enc"]}&post_chk={parameters["post_chk"]}");
 
             return parameters;
         }
@@ -275,7 +343,7 @@ namespace ThreeRiversTech.Zuleger.Atrium.API
 
         private static String CheckSum(String str)
         {
-            var chk = 0; 
+            int chk = 0; 
             for (int i = 0; i < str.Length; i++) 
             {
                 chk += str[i];
@@ -300,11 +368,21 @@ namespace ThreeRiversTech.Zuleger.Atrium.API
           return BitConverter.ToString(bytes).Replace("-","");
         }
 
+        public static byte[] HexStringToByteArray(String hex)
+        {
+            return Enumerable.Range(0, hex.Length)
+                             .Where(x => x % 2 == 0)
+                             .Select(x => Convert.ToByte(hex.Substring(x, 2), 16))
+                             .ToArray();
+        }
+
         // Custom Exceptions
 
         public class AnswerNotOkException : Exception
         {
-            public AnswerNotOkException() : base("HTTP Response did not result in err='ok'.") { }
+            public int StatusCode { get; }
+            public AnswerNotOkException(String msg) : base($"HTTP Response did not result in err='ok'.\n\"{msg}\"") { }
+            public AnswerNotOkException(String msg, int statusCode) : base($"HTTP Response did not result in err='ok'.\n\"{msg}\"") { StatusCode = statusCode; }
         }
 
         public class HttpRequestException : Exception
