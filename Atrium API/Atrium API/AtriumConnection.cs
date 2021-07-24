@@ -219,7 +219,7 @@ namespace ThreeRiversTech.Zuleger.Atrium.API
         {
             var content = FetchAndEncryptXML(AtriumConnection.READ_USER,
                 "@tid", _transactionNum.ToString(),
-                "@serialNo", _serialNo,
+                "@SerialNo", _serialNo,
                 "@min", startIdx.ToString(),
                 "@max", endIdx.ToString()
             );
@@ -325,7 +325,7 @@ namespace ThreeRiversTech.Zuleger.Atrium.API
         {
             var content = FetchAndEncryptXML(AtriumConnection.READ_CARD,
                 "@tid", _transactionNum.ToString(),
-                "@serialNo", _serialNo,
+                "@SerialNo", _serialNo,
                 "@min", startIdx.ToString(),
                 "@max", endIdx.ToString()
             );
