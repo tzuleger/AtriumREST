@@ -45,14 +45,13 @@ namespace ThreeRiversTech.Zuleger.Atrium.API
 
             Console.WriteLine($"Inserted card for user. Request Text:\n{controller.RequestText}\n\nResponse Text:\n{controller.ResponseText}");
 
-            // Grab all Users with the First Name of "Test User" and Last Name of "via Atrium API".
+            // Grab user with the First Name of "Test User" and Last Name of "via Atrium API".
             Dictionary<String, String> user = controller.GetUserByName("Test User", "via Atrium API");
 
             DateTime date = DateTime.Now.AddDays(24);
             bool cardUpdated = false;
             bool userUpdated = false;
 
-            // Since we are confident there is only one user with the first name"Test User" and lastname "via Atrium API", then update the zeroth index of users.
             userUpdated = controller.UpdateUser(user["objectID"], "TEST USER", "VIA ATRIUM API", date, date.AddYears(1).AddDays(7));
             if (userUpdated) // If the user is successfully updated.
             {
