@@ -43,6 +43,8 @@ namespace ThreeRiversTech.Zuleger.Atrium.API
                 DateTime.Now.AddYears(2) // Expiration Date
             );
 
+            Console.WriteLine($"Inserted card for user. Request Text:\n{controller.RequestText}\n\nResponse Text:\n{controller.ResponseText}");
+
             // Grab all Users with the First Name of "Test User" and Last Name of "via Atrium API".
             Dictionary<String, String> user = controller.GetUserByName("Test User", "via Atrium API");
 
