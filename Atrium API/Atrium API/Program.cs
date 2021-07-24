@@ -57,7 +57,7 @@ namespace ThreeRiversTech.Zuleger.Atrium.API
             {
                 // Then let's do the same to the User's respective card.
                 Dictionary<String, String> card = controller.GetCardByUserID(user["userID"]);
-                cardUpdated = controller.UpdateCard(card["objectID"], "Test User via Atrium API Card", date, date.AddYears(1));
+                cardUpdated = controller.UpdateCard(card["objectID"], "Test User via Atrium API Card", date, date.AddYears(1).AddDays(7));
             }
 
             // Finally, print to the User (of the program) the results if the User and Card has been updated successfully.
