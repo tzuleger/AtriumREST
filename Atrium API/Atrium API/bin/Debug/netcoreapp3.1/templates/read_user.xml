@@ -1,7 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <SDK xmlns='https://www.cdvi.ca/'>
     <RECORDS>
-        <REC trans_id='@tid' cmd='read' sernum='@serialNo' type='user' id_min='@min' id_max='@max' rec='cfg'>
-        </REC>
+        <REC trans_id='@tid' cmd='read' sernum='@serialNo' type='user' id_min='@min' id_max='@max' rec='cfg'></REC>
     </RECORDS>
 </SDK>
