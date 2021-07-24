@@ -6,3 +6,11 @@ E:\.NET\Atrium API\Atrium API\obj\Release\netcoreapp3.1\Atrium API.AssemblyInfo.
 E:\.NET\Atrium API\Atrium API\obj\Release\netcoreapp3.1\Atrium API.csproj.CoreCompileInputs.cache
 E:\.NET\Atrium API\Atrium API\obj\Release\netcoreapp3.1\Atrium API.dll
 E:\.NET\Atrium API\Atrium API\obj\Release\netcoreapp3.1\Atrium API.pdb
+E:\GitHub\Atrium-API\Atrium API\Atrium API\bin\Release\netcoreapp3.1\Atrium API.deps.json
+E:\GitHub\Atrium-API\Atrium API\Atrium API\bin\Release\netcoreapp3.1\Atrium API.dll
+E:\GitHub\Atrium-API\Atrium API\Atrium API\bin\Release\netcoreapp3.1\Atrium API.pdb
+E:\GitHub\Atrium-API\Atrium API\Atrium API\obj\Release\netcoreapp3.1\Atrium API.AssemblyInfoInputs.cache
+E:\GitHub\Atrium-API\Atrium API\Atrium API\obj\Release\netcoreapp3.1\Atrium API.AssemblyInfo.cs
+E:\GitHub\Atrium-API\Atrium API\Atrium API\obj\Release\netcoreapp3.1\Atrium API.csproj.CoreCompileInputs.cache
+E:\GitHub\Atrium-API\Atrium API\Atrium API\obj\Release\netcoreapp3.1\Atrium API.dll
+E:\GitHub\Atrium-API\Atrium API\Atrium API\obj\Release\netcoreapp3.1\Atrium API.pdb
