@@ -11,10 +11,7 @@ E:\.NET\Atrium API\Atrium API\bin\Debug\netcoreapp3.1\Atrium API.exe
 E:\.NET\Atrium API\Atrium API\bin\Debug\netcoreapp3.1\Atrium API.runtimeconfig.json
 E:\.NET\Atrium API\Atrium API\bin\Debug\netcoreapp3.1\Atrium API.runtimeconfig.dev.json
 E:\.NET\Atrium API\Atrium API\obj\Debug\netcoreapp3.1\Atrium API.genruntimeconfig.cache
-C:\Users\Travis\Documents\GitHub\Atrium-API\Atrium API\Atrium API\bin\Debug\netcoreapp3.1\Atrium API.exe
 C:\Users\Travis\Documents\GitHub\Atrium-API\Atrium API\Atrium API\bin\Debug\netcoreapp3.1\Atrium API.deps.json
-C:\Users\Travis\Documents\GitHub\Atrium-API\Atrium API\Atrium API\bin\Debug\netcoreapp3.1\Atrium API.runtimeconfig.json
-C:\Users\Travis\Documents\GitHub\Atrium-API\Atrium API\Atrium API\bin\Debug\netcoreapp3.1\Atrium API.runtimeconfig.dev.json
 C:\Users\Travis\Documents\GitHub\Atrium-API\Atrium API\Atrium API\bin\Debug\netcoreapp3.1\Atrium API.dll
 C:\Users\Travis\Documents\GitHub\Atrium-API\Atrium API\Atrium API\bin\Debug\netcoreapp3.1\Atrium API.pdb
 C:\Users\Travis\Documents\GitHub\Atrium-API\Atrium API\Atrium API\obj\Debug\netcoreapp3.1\Atrium API.csprojAssemblyReference.cache
@@ -23,7 +20,6 @@ C:\Users\Travis\Documents\GitHub\Atrium-API\Atrium API\Atrium API\obj\Debug\netc
 C:\Users\Travis\Documents\GitHub\Atrium-API\Atrium API\Atrium API\obj\Debug\netcoreapp3.1\Atrium API.csproj.CoreCompileInputs.cache
 C:\Users\Travis\Documents\GitHub\Atrium-API\Atrium API\Atrium API\obj\Debug\netcoreapp3.1\Atrium API.dll
 C:\Users\Travis\Documents\GitHub\Atrium-API\Atrium API\Atrium API\obj\Debug\netcoreapp3.1\Atrium API.pdb
-C:\Users\Travis\Documents\GitHub\Atrium-API\Atrium API\Atrium API\obj\Debug\netcoreapp3.1\Atrium API.genruntimeconfig.cache
 E:\GitHub\Atrium-API\Atrium API\Atrium API\bin\Debug\netcoreapp3.1\Atrium API.deps.json
 E:\GitHub\Atrium-API\Atrium API\Atrium API\bin\Debug\netcoreapp3.1\Atrium API.dll
 E:\GitHub\Atrium-API\Atrium API\Atrium API\bin\Debug\netcoreapp3.1\Atrium API.pdb
@@ -33,3 +29,4 @@ E:\GitHub\Atrium-API\Atrium API\Atrium API\obj\Debug\netcoreapp3.1\Atrium API.As
 E:\GitHub\Atrium-API\Atrium API\Atrium API\obj\Debug\netcoreapp3.1\Atrium API.csproj.CoreCompileInputs.cache
 E:\GitHub\Atrium-API\Atrium API\Atrium API\obj\Debug\netcoreapp3.1\Atrium API.dll
 E:\GitHub\Atrium-API\Atrium API\Atrium API\obj\Debug\netcoreapp3.1\Atrium API.pdb
+C:\Users\Travis\Documents\GitHub\Atrium-API\Atrium API\Atrium API\bin\Debug\netcoreapp3.1\Atrium API.xml

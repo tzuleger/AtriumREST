@@ -1,0 +1,3 @@
+C:\Users\Travis\Documents\GitHub\Atrium-API\Atrium API\Atrium API\obj\Release\net452\Atrium API.AssemblyInfoInputs.cache
+C:\Users\Travis\Documents\GitHub\Atrium-API\Atrium API\Atrium API\obj\Release\net452\Atrium API.AssemblyInfo.cs
+C:\Users\Travis\Documents\GitHub\Atrium-API\Atrium API\Atrium API\obj\Release\net452\Atrium API.csproj.CoreCompileInputs.cache

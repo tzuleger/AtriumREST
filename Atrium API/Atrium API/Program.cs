@@ -26,7 +26,8 @@ namespace ThreeRiversTech.Zuleger.Atrium.API
                 "via Atrium API", // Last Name
                 userId, // User GUID
                 DateTime.Now.AddDays(-13), // Activation Date
-                DateTime.Now.AddYears(2) // Expiration Date
+                DateTime.Now.AddYears(2), // Expiration Date
+                AtriumController.ACCESS_LEVELS()
             );
 
             // See generated XML by fetching RequestText and ResponseText parameters.
@@ -52,7 +53,14 @@ namespace ThreeRiversTech.Zuleger.Atrium.API
             bool cardUpdated = false;
             bool userUpdated = false;
 
-            userUpdated = controller.UpdateUser(user["objectID"], "TEST USER", "VIA ATRIUM API", date, date.AddYears(1).AddDays(7));
+            userUpdated = controller.UpdateUser(
+                user["objectID"],
+                "TEST USER",
+                "VIA ATRIUM API",
+                date,
+                date.AddYears(1).AddDays(7),
+                AtriumController.ACCESS_LEVELS()
+            );
             if (userUpdated) // If the user is successfully updated.
             {
                 // Then let's do the same to the User's respective card.

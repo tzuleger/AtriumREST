@@ -54,6 +54,17 @@
             Generates a random Guid (128-bit ID) in the format of "########-####-####-####-############"
             </summary>
         </member>
+        <member name="M:ThreeRiversTech.Zuleger.Atrium.API.AtriumController.ACCESS_LEVELS(System.Int32,System.Int32,System.Int32,System.Int32,System.Int32)">
+            <summary>
+            Constructs an integer array of the 5 integer arguments. If an argument is not provided, then that Access Level is ignored.
+            </summary>
+            <param name="al1">Integer that represents the Object ID for an Access Level. By default: -1 for no access level</param>
+            <param name="al2">Integer that represents the Object ID for an Access Level. By default: -1 for no access level</param>
+            <param name="al3">Integer that represents the Object ID for an Access Level. By default: -1 for no access level</param>
+            <param name="al4">Integer that represents the Object ID for an Access Level. By default: -1 for no access level</param>
+            <param name="al5">Integer that represents the Object ID for an Access Level. By default: -1 for no access level</param>
+            <returns></returns>
+        </member>
         <member name="M:ThreeRiversTech.Zuleger.Atrium.API.AtriumController.#ctor(System.String,System.String,System.String)">
             <summary>
             Creates an AtriumConnection object connected to the specified address under the specified username and password.
@@ -62,7 +73,7 @@
             <param name="password">Password to log into Atrium under specified username</param>
             <param name="address">Atrium Controller Address to connect to</param>
         </member>
-        <member name="M:ThreeRiversTech.Zuleger.Atrium.API.AtriumController.InsertUser(System.String,System.String,System.Guid,System.DateTime,System.DateTime)">
+        <member name="M:ThreeRiversTech.Zuleger.Atrium.API.AtriumController.InsertUser(System.String,System.String,System.Guid,System.DateTime,System.DateTime,System.Int32[])">
             <summary>
             Inserts a new User into the Atrium Controller with the provided information.
             </summary>
@@ -71,7 +82,18 @@
             <param name="id">User GUID that is to be attached to the user.</param>
             <param name="actDate">Activation date of the User.</param>
             <param name="expDate">Expiration date of the User.</param>
+            <param name="accessLevels">Array of 5 integers between 0-9,999 (inclusive) that represent the Object ID for each Access Level.</param>
             <returns>String object that is of real type int representing the Object ID as assigned by the Atrium Controller when user is inserted.</returns>
+        </member>
+        <member name="M:ThreeRiversTech.Zuleger.Atrium.API.AtriumController.GetAllUsers(System.Int32,System.Int32)">
+            <summary>
+            Retrieves all Users on the Atrium Controller.
+            </summary>
+            <param name="startIdx">Optional: Start index of the objects to search through as defined in the Atrium Controller. (by default: 1) 0 represents Admin.</param>
+            <param name="endIdx">Optional: End index of the objects to search through as defined in the Atrium Controller. (by default: 5000)</param>
+            <returns>Dictionary where Key is FirstName space LastName (e.g. "John Doe")
+            and value is the full Dictionary of information on the respective User. 
+            If multiple records exist with the same Key, then the first User is the only one that stays.</returns>
         </member>
         <member name="M:ThreeRiversTech.Zuleger.Atrium.API.AtriumController.GetAllUsersByName(System.String,System.String,System.Int32,System.Int32)">
             <summary>
@@ -81,7 +103,7 @@
             <param name="lastName">Last name of the User to search for. If null, then only searches by First name. One must be provided.</param>
             <param name="startIdx">Optional: Start index of the objects to search through as defined in the Atrium Controller. (by default: 1) 0 represents Admin.</param>
             <param name="endIdx">Optional: End index of the objects to search through as defined in the Atrium Controller. (by default: 5000)</param>
-            <returns>List of Dictionaries holding Key Value Pairs of String to Strings where the Key is {userID, objectID, isValid, firstName, lastName, actDate, expDate}.</returns>
+            <returns>List of Dictionaries holding Key Value Pairs of String to Strings where the Key is {userID, objectID, isValid, firstName, lastName, actDate, expDate, accessLevel{1-5}}.</returns>
         </member>
         <member name="M:ThreeRiversTech.Zuleger.Atrium.API.AtriumController.GetUserByName(System.String,System.String,System.Int32,System.Int32)">
             <summary>
@@ -89,12 +111,13 @@
             If multiple users exist with the same name, then the first User that appears in Object ID order (ascending) is returned.
             If no user is found, then null is returned.
             </summary>
-            <param name="UserID">Guid of the User that attached cards are being searched for.</param>
+            <param name="firstName">First name of the User to search for. If null, then only searches by Last name. One must be provided.</param>
+            <param name="lastName">Last name of the User to search for. If null, then only searches by First name. One must be provided.</param>
             <param name="startIdx">Optional: Start index of the objects to search through as defined in the Atrium Controller. (by default: 1) 0 represents Admin.</param>
             <param name="endIdx">Optional: End index of the objects to search through as defined in the Atrium Controller. (by default: 5000)</param>
             <returns>Dictionary holding Key Value Pairs of String to Strings where the Key is {objectID, isValid, displayName, actDate, expDate}.</returns>
         </member>
-        <member name="M:ThreeRiversTech.Zuleger.Atrium.API.AtriumController.UpdateUser(System.String,System.String,System.String,System.DateTime,System.DateTime)">
+        <member name="M:ThreeRiversTech.Zuleger.Atrium.API.AtriumController.UpdateUser(System.String,System.String,System.String,System.DateTime,System.DateTime,System.Int32[])">
             <summary>
             Updates a User, specified by the Atrium Controller's defined Object ID, to a new First Name, Last Name, Activation Date, and Expiration Date.
             </summary>
@@ -103,6 +126,7 @@
             <param name="lastName">New last name of the User to update.</param>
             <param name="actDate">New expiration date of the User to update.</param>
             <param name="expDate">New activation date of the User to update.</param>
+            <param name="accessLevels">Array of 5 integers between 0-9,999 (inclusive) that represent the Object ID for each Access Level.</param>
             <returns>Boolean indicating whether the user was successfully updated or not.</returns>
         </member>
         <member name="M:ThreeRiversTech.Zuleger.Atrium.API.AtriumController.InsertCard(System.String,System.Guid,System.Guid,System.String,System.Int32,System.DateTime,System.DateTime)">
@@ -118,11 +142,21 @@
             <param name="expDate">Expiration Date of the card.</param>
             <returns>String object that is of real type int representing the Object ID as assigned by the Atrium Controller when card is inserted.</returns>
         </member>
+        <member name="M:ThreeRiversTech.Zuleger.Atrium.API.AtriumController.GetAllCards(System.Int32,System.Int32)">
+            <summary>
+            Retrieves all Cards on the Atrium Controller.
+            </summary>
+            <param name="startIdx">Optional: Start index of the objects to search through as defined in the Atrium Controller. (by default: 1) 0 represents Admin.</param>
+            <param name="endIdx">Optional: End index of the objects to search through as defined in the Atrium Controller. (by default: 5000)</param>
+            <returns>Dictionary where Key is userObjectID
+            and value is the full Dictionary of information on the respective User. 
+            If multiple records exist with the same Key, then the first Card is the only one that stays.</returns>
+        </member>
         <member name="M:ThreeRiversTech.Zuleger.Atrium.API.AtriumController.GetAllCardsByUserID(System.String,System.Int32,System.Int32)">
             <summary>
             Retrieves all cards on the Atrium Controller referenced by the UserID attached to the card. If no cards are found, then null is returned.
             </summary>
-            <param name="UserID">Guid of the User that attached cards are being searched for.</param>
+            <param name="userID">Guid of the User that attached cards are being searched for.</param>
             <param name="startIdx">Optional: Start index of the objects to search through as defined in the Atrium Controller. (by default: 1) 0 represents Admin.</param>
             <param name="endIdx">Optional: End index of the objects to search through as defined in the Atrium Controller. (by default: 5000)</param>
             <returns>A list of Dictionaries holding Key Value Pairs of String to Strings where the Key is {objectID, isValid, displayName, actDate, expDate}.</returns>
@@ -133,7 +167,7 @@
             If a UserID has multiple cards attached, then the first Card that appears in Object ID order (ascending) is returned.
             If no card is found, then null is returned.
             </summary>
-            <param name="UserID">Guid of the User that attached cards are being searched for.</param>
+            <param name="userID">Guid of the User that attached cards are being searched for.</param>
             <param name="startIdx">Optional: Start index of the objects to search through as defined in the Atrium Controller. (by default: 1) 0 represents Admin.</param>
             <param name="endIdx">Optional: End index of the objects to search through as defined in the Atrium Controller. (by default: 5000)</param>
             <returns>Dictionary holding Key Value Pairs of String to Strings where the Key is {objectID, isValid, displayName, actDate, expDate}.</returns>
@@ -143,8 +177,7 @@
             Updates a User, specified by the Atrium Controller's defined Object ID, to a new First Name, Last Name, Activation Date, and Expiration Date.
             </summary>
             <param name="objectId">Object ID, as defined by the Atrium Controller, of what User to update.</param>
-            <param name="firstName">New first name of the User to update.</param>
-            <param name="lastName">New last name of the User to update.</param>
+            <param name="displayName">The new name to replace current Display Name on the card.</param>
             <param name="actDate">New expiration date of the User to update.</param>
             <param name="expDate">New activation date of the User to update.</param>
             <returns>Boolean indicating whether the card was successfully updated or not.</returns>
@@ -165,6 +198,7 @@
             </summary>
             <param name="xmlElements">Enumerable XML elements that are typically of "REC" type.</param>
             <param name="elementName">Subelement name to check inside of xml</param>
+            <param name="attr">Expected attribute that displays the response/answer message. (by default: "res")</param>
             <param name="throwException">Optional: If true, throws an exception. Otherwise, returns a boolean indicating success or not. (by default: true)</param>
             <returns>Boolean value indicating that "ok" is in the response string.</returns>
         </member>
@@ -259,20 +293,54 @@
             Thrown when an Atrium Answer failed to interpret the XML request correctly.
             </summary>
         </member>
+        <member name="P:ThreeRiversTech.Zuleger.Atrium.API.AtriumController.AnswerNotOkException.Message">
+            <summary>
+            Set when AnswerNotOkException is thrown and is determined by what the Response message is.
+            </summary>
+        </member>
+        <member name="M:ThreeRiversTech.Zuleger.Atrium.API.AtriumController.AnswerNotOkException.#ctor(System.String)">
+            <summary>
+            Thrown when an Answer from a Response is not "ok".
+            </summary>
+            <param name="msg">Message to be shown in base Message.</param>
+        </member>
         <member name="T:ThreeRiversTech.Zuleger.Atrium.API.AtriumController.HttpRequestException">
             <summary>
             Thrown when an HTTP Request fails, usually when some encryption went wrong.
             </summary>
+        </member>
+        <member name="M:ThreeRiversTech.Zuleger.Atrium.API.AtriumController.HttpRequestException.#ctor(System.String)">
+            <summary>
+            Thrown when an HTTP Request is made using Encryption but the Response did not contain expected Encryption variables.
+            </summary>
+            <param name="responseString"></param>
         </member>
         <member name="T:ThreeRiversTech.Zuleger.Atrium.API.AtriumController.FailedToLoginException">
             <summary>
             Thrown when the UserID returned from the second Atrium Controller Answer is -1.
             </summary>
         </member>
+        <member name="M:ThreeRiversTech.Zuleger.Atrium.API.AtriumController.FailedToLoginException.#ctor">
+            <summary>
+            Thrown when a login fails where it gets past all phases but the User ID returned is "-1".
+            </summary>
+        </member>
         <member name="T:ThreeRiversTech.Zuleger.Atrium.API.AtriumController.AttributeDoesNotExistException">
             <summary>
             Thrown when an Attribute does not exist inside of an XML Element.
             </summary>
+        </member>
+        <member name="P:ThreeRiversTech.Zuleger.Atrium.API.AtriumController.AttributeDoesNotExistException.XmlString">
+            <summary>
+            Returns the XML output that triggered the Exception.
+            </summary>
+        </member>
+        <member name="M:ThreeRiversTech.Zuleger.Atrium.API.AtriumController.AttributeDoesNotExistException.#ctor(System.Xml.Linq.XElement,System.String)">
+            <summary>
+            Thrown when an Attribute does not exist inside of an XML request/response.
+            </summary>
+            <param name="xml">The XML documentation element that should contain the attribute.</param>
+            <param name="attr">The attribute that was searched for in the XML.</param>
         </member>
     </members>
 </doc>
