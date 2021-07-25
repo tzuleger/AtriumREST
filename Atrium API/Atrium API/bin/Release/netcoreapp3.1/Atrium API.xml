@@ -1,0 +1,278 @@
+<?xml version="1.0"?>
+<doc>
+    <assembly>
+        <name>Atrium API</name>
+    </assembly>
+    <members>
+        <member name="T:ThreeRiversTech.Zuleger.Atrium.API.AtriumController">
+            <summary>
+            Used to communicate with an Atrium Controller using Atrium SDK and HTTP.
+            </summary>
+        </member>
+        <member name="P:ThreeRiversTech.Zuleger.Atrium.API.AtriumController.MaxAttempts">
+            <summary>
+            Maximum number of attempts to establish a session. (by default: 10. Maximum amount that can be set is 50.)
+            </summary>
+        </member>
+        <member name="P:ThreeRiversTech.Zuleger.Atrium.API.AtriumController.DelayBetweenAttempts">
+            <summary>
+            The time in seconds to wait for the next attempt to log into the controller. (by default: 10 seconds)
+            </summary>
+        </member>
+        <member name="P:ThreeRiversTech.Zuleger.Atrium.API.AtriumController.RequestText">
+            <summary>
+            Stores the Request XML data to the last POST request made.
+            </summary>
+        </member>
+        <member name="P:ThreeRiversTech.Zuleger.Atrium.API.AtriumController.ResponseText">
+            <summary>
+            Stores the Response String from the last POST request made.
+            </summary>
+        </member>
+        <member name="P:ThreeRiversTech.Zuleger.Atrium.API.AtriumController.SerialNumber">
+            <summary>
+            Serial number of the Atrium Controller that the AtriumConnection object is connected to.
+            </summary>
+        </member>
+        <member name="P:ThreeRiversTech.Zuleger.Atrium.API.AtriumController.ProductName">
+            <summary>
+            Product name of the Atrium Controller that the AtriumConnection object is connected to.
+            </summary>
+        </member>
+        <member name="P:ThreeRiversTech.Zuleger.Atrium.API.AtriumController.ProductLabel">
+            <summary>
+            Product label of the Atrium Controller that the AtriumConnection object is connected to.
+            </summary>
+        </member>
+        <member name="P:ThreeRiversTech.Zuleger.Atrium.API.AtriumController.ProductVersion">
+            <summary>
+            Product version of the Atrium Controller that the AtriumConnection object is connected to.
+            </summary>
+        </member>
+        <member name="P:ThreeRiversTech.Zuleger.Atrium.API.AtriumController.GenerateGuid">
+            <summary>
+            Generates a random Guid (128-bit ID) in the format of "########-####-####-####-############"
+            </summary>
+        </member>
+        <member name="M:ThreeRiversTech.Zuleger.Atrium.API.AtriumController.#ctor(System.String,System.String,System.String)">
+            <summary>
+            Creates an AtriumConnection object connected to the specified address under the specified username and password.
+            </summary>
+            <param name="username">Username to log in as.</param>
+            <param name="password">Password to log into Atrium under specified username</param>
+            <param name="address">Atrium Controller Address to connect to</param>
+        </member>
+        <member name="M:ThreeRiversTech.Zuleger.Atrium.API.AtriumController.InsertUser(System.String,System.String,System.Guid,System.DateTime,System.DateTime)">
+            <summary>
+            Inserts a new User into the Atrium Controller with the provided information.
+            </summary>
+            <param name="firstName">First name of the user to be inserted.</param>
+            <param name="lastName">Last name of the user to be inserted.</param>
+            <param name="id">User GUID that is to be attached to the user.</param>
+            <param name="actDate">Activation date of the User.</param>
+            <param name="expDate">Expiration date of the User.</param>
+            <returns>String object that is of real type int representing the Object ID as assigned by the Atrium Controller when user is inserted.</returns>
+        </member>
+        <member name="M:ThreeRiversTech.Zuleger.Atrium.API.AtriumController.GetAllUsersByName(System.String,System.String,System.Int32,System.Int32)">
+            <summary>
+            Retrieves all users on the Atrium Controller referenced by First Name and Last Name being equal (case insensitive).
+            </summary>
+            <param name="firstName">First name of the User to search for. If null, then only searches by Last name. One must be provided.</param>
+            <param name="lastName">Last name of the User to search for. If null, then only searches by First name. One must be provided.</param>
+            <param name="startIdx">Optional: Start index of the objects to search through as defined in the Atrium Controller. (by default: 1) 0 represents Admin.</param>
+            <param name="endIdx">Optional: End index of the objects to search through as defined in the Atrium Controller. (by default: 5000)</param>
+            <returns>List of Dictionaries holding Key Value Pairs of String to Strings where the Key is {userID, objectID, isValid, firstName, lastName, actDate, expDate}.</returns>
+        </member>
+        <member name="M:ThreeRiversTech.Zuleger.Atrium.API.AtriumController.GetUserByName(System.String,System.String,System.Int32,System.Int32)">
+            <summary>
+            Retrieves a user on the Atrium Controller referenced by the First Name and Last Name being equal. (case insensitive)
+            If multiple users exist with the same name, then the first User that appears in Object ID order (ascending) is returned.
+            If no user is found, then null is returned.
+            </summary>
+            <param name="UserID">Guid of the User that attached cards are being searched for.</param>
+            <param name="startIdx">Optional: Start index of the objects to search through as defined in the Atrium Controller. (by default: 1) 0 represents Admin.</param>
+            <param name="endIdx">Optional: End index of the objects to search through as defined in the Atrium Controller. (by default: 5000)</param>
+            <returns>Dictionary holding Key Value Pairs of String to Strings where the Key is {objectID, isValid, displayName, actDate, expDate}.</returns>
+        </member>
+        <member name="M:ThreeRiversTech.Zuleger.Atrium.API.AtriumController.UpdateUser(System.String,System.String,System.String,System.DateTime,System.DateTime)">
+            <summary>
+            Updates a User, specified by the Atrium Controller's defined Object ID, to a new First Name, Last Name, Activation Date, and Expiration Date.
+            </summary>
+            <param name="objectId">Object ID, as defined by the Atrium Controller, of what User to update.</param>
+            <param name="firstName">New first name of the User to update.</param>
+            <param name="lastName">New last name of the User to update.</param>
+            <param name="actDate">New expiration date of the User to update.</param>
+            <param name="expDate">New activation date of the User to update.</param>
+            <returns>Boolean indicating whether the user was successfully updated or not.</returns>
+        </member>
+        <member name="M:ThreeRiversTech.Zuleger.Atrium.API.AtriumController.InsertCard(System.String,System.Guid,System.Guid,System.String,System.Int32,System.DateTime,System.DateTime)">
+            <summary>
+            Inserts a new Card into Atrium under the provided information.
+            </summary>
+            <param name="displayName">Display Name that the card should be under.</param>
+            <param name="cardId">Card GUID that the card should be under.</param>
+            <param name="userId">User GUID that the card is attached to.</param>
+            <param name="objectId">Atrium ObjectID that the Card should be attached to.</param>
+            <param name="cardNum">Number of the card that is to be used.</param>
+            <param name="actDate">Activation Date of the card.</param>
+            <param name="expDate">Expiration Date of the card.</param>
+            <returns>String object that is of real type int representing the Object ID as assigned by the Atrium Controller when card is inserted.</returns>
+        </member>
+        <member name="M:ThreeRiversTech.Zuleger.Atrium.API.AtriumController.GetAllCardsByUserID(System.String,System.Int32,System.Int32)">
+            <summary>
+            Retrieves all cards on the Atrium Controller referenced by the UserID attached to the card. If no cards are found, then null is returned.
+            </summary>
+            <param name="UserID">Guid of the User that attached cards are being searched for.</param>
+            <param name="startIdx">Optional: Start index of the objects to search through as defined in the Atrium Controller. (by default: 1) 0 represents Admin.</param>
+            <param name="endIdx">Optional: End index of the objects to search through as defined in the Atrium Controller. (by default: 5000)</param>
+            <returns>A list of Dictionaries holding Key Value Pairs of String to Strings where the Key is {objectID, isValid, displayName, actDate, expDate}.</returns>
+        </member>
+        <member name="M:ThreeRiversTech.Zuleger.Atrium.API.AtriumController.GetCardByUserID(System.String,System.Int32,System.Int32)">
+            <summary>
+            Retrieves a card on the Atrium Controller referenced by the UserID attached to the card. 
+            If a UserID has multiple cards attached, then the first Card that appears in Object ID order (ascending) is returned.
+            If no card is found, then null is returned.
+            </summary>
+            <param name="UserID">Guid of the User that attached cards are being searched for.</param>
+            <param name="startIdx">Optional: Start index of the objects to search through as defined in the Atrium Controller. (by default: 1) 0 represents Admin.</param>
+            <param name="endIdx">Optional: End index of the objects to search through as defined in the Atrium Controller. (by default: 5000)</param>
+            <returns>Dictionary holding Key Value Pairs of String to Strings where the Key is {objectID, isValid, displayName, actDate, expDate}.</returns>
+        </member>
+        <member name="M:ThreeRiversTech.Zuleger.Atrium.API.AtriumController.UpdateCard(System.String,System.String,System.DateTime,System.DateTime)">
+            <summary>
+            Updates a User, specified by the Atrium Controller's defined Object ID, to a new First Name, Last Name, Activation Date, and Expiration Date.
+            </summary>
+            <param name="objectId">Object ID, as defined by the Atrium Controller, of what User to update.</param>
+            <param name="firstName">New first name of the User to update.</param>
+            <param name="lastName">New last name of the User to update.</param>
+            <param name="actDate">New expiration date of the User to update.</param>
+            <param name="expDate">New activation date of the User to update.</param>
+            <returns>Boolean indicating whether the card was successfully updated or not.</returns>
+        </member>
+        <member name="M:ThreeRiversTech.Zuleger.Atrium.API.AtriumController.CheckAnswer(System.Xml.Linq.XElement,System.Xml.Linq.XName,System.String,System.Boolean)">
+            <summary>
+            Checks an element in an XML Response String that it has an "ok" answer.
+            </summary>
+            <param name="xml">XElement that is to be checked for the "ok"</param>
+            <param name="elementName">Subelement name to check inside of xml</param>
+            <param name="attr">Optional: Attribute that the "ok" should be under. (by default: "err")</param>
+            <param name="throwException">Optional: If true, throws an exception. Otherwise, returns a boolean indicating success or not. (by default: true)</param>
+            <returns>Boolean value indicating that "ok" is in the response string.</returns>
+        </member>
+        <member name="M:ThreeRiversTech.Zuleger.Atrium.API.AtriumController.CheckAllAnswers(System.Collections.Generic.IEnumerable{System.Xml.Linq.XElement},System.Xml.Linq.XName,System.String,System.Boolean)">
+            <summary>
+            Checks a set of elements in an XML Response String that it has an "ok" answer.
+            </summary>
+            <param name="xmlElements">Enumerable XML elements that are typically of "REC" type.</param>
+            <param name="elementName">Subelement name to check inside of xml</param>
+            <param name="throwException">Optional: If true, throws an exception. Otherwise, returns a boolean indicating success or not. (by default: true)</param>
+            <returns>Boolean value indicating that "ok" is in the response string.</returns>
+        </member>
+        <member name="M:ThreeRiversTech.Zuleger.Atrium.API.AtriumController.DoPOSTAsync(System.String,System.Collections.Generic.Dictionary{System.String,System.String},System.Boolean,System.Boolean)">
+            <summary>
+            Performs a POST request to the specified Subdomain (under the Address provided from construction) with specific parameters to send.
+            </summary>
+            <param name="subdomain">The subdomain that the GET request is to be sent.</param>
+            <param name="parameters">Dictionary of parameters that are to be sent with the POST request.</param>
+            <param name="setSessionCookie">Optional: If true, sets a Cookie that stores the SessionID. (by default: false)</param>
+            <param name="encryptedExchange">Optional: If true, expects the response to be encrypted and decrypts it upon reception. (by default: false)</param>
+            <returns>An asynchronous task that returns an XElement of the response. (XML Response)</returns>
+        </member>
+        <member name="M:ThreeRiversTech.Zuleger.Atrium.API.AtriumController.DoGETAsync(System.String)">
+            <summary>
+            Performs a GET request to the specified Subdomain (under the Address provided from construction)
+            </summary>
+            <param name="subdomain">The subdomain that the GET request is to be sent.</param>
+            <returns>An asynchronous task that returns an XElement of the response. (XML Response)</returns>
+        </member>
+        <member name="M:ThreeRiversTech.Zuleger.Atrium.API.AtriumController.FetchXMLAsHttpContent(System.String,System.String[])">
+            <summary>
+            Fetches an XML File and substitutes provided arguments and converts it to an HttpContent object.
+            </summary>
+            <param name="fileName">File name of the XML template to be used.</param>
+            <param name="args">Variable arguments of String objects that are used to substitute arguments in the XML template.
+            The size of the amount of Strings to pass should be divisible by two where every even argument is what should be replaced by the odd argument.</param>
+            <returns>StringContent item that is to be used in the next POST request.</returns>
+        </member>
+        <member name="M:ThreeRiversTech.Zuleger.Atrium.API.AtriumController.FetchAndEncryptXML(System.String,System.String[])">
+            <summary>
+            Fetches an XML File and substitutes provided arguments, encrypts it under the RC4 Encryption Algorithm, then creates an encrypted request to be sent.
+            </summary>
+            <param name="fileName">File name of the XML template to use.</param>
+            <param name="args">Variable arguments of String objects that are used to substitute arguments in the XML template.
+            The size of the amount of Strings to pass should be divisible by two where every even argument is what should be replaced by the odd argument.</param>
+            <returns>A Dictionary of parameters that are to be used in a parameterized POST request.</returns>
+        </member>
+        <member name="M:ThreeRiversTech.Zuleger.Atrium.API.AtriumController.Rc4(System.Byte[],System.Byte[])">
+            <summary>
+            Performs RC4 encryption/decryption on a specified byte array with a specified byte array as the key.
+            </summary>
+            <param name="pwd">Key that is used to encrypt/decrypt the data.</param>
+            <param name="data">Data that is to be encrypted/decrypted</param>
+            <returns>Byte array that represents the ciphertext of data after encryption/decryption.</returns>
+        </member>
+        <member name="M:ThreeRiversTech.Zuleger.Atrium.API.AtriumController.Md5(System.String)">
+            <summary>
+            Performs an MD5 Hash algorithm on a String.
+            </summary>
+            <param name="text">String to perform the MD5 hash on.</param>
+            <returns>A byte array that is the result of hashing text.</returns>
+        </member>
+        <member name="M:ThreeRiversTech.Zuleger.Atrium.API.AtriumController.CheckSum(System.String)">
+            <summary>
+            Counts the character codes of every character in given String to create a CheckSum.
+            </summary>
+            <param name="str">String to be checksummed.</param>
+            <returns>A 16 bit Hexadecimal String that is built from the checksum of str.</returns>
+        </member>
+        <member name="M:ThreeRiversTech.Zuleger.Atrium.API.AtriumController.PadLeft(System.String,System.Char,System.Int32)">
+            <summary>
+            Pads a string with a provided specific character to a provided total length.
+            </summary>
+            <param name="s">String that is to be padded.</param>
+            <param name="c">Character that is used when padding s.</param>
+            <param name="length">Total length of what s should be.</param>
+            <returns>String s padded with c to the desired length.</returns>
+        </member>
+        <member name="M:ThreeRiversTech.Zuleger.Atrium.API.AtriumController.ByteArrayToHexString(System.Byte[])">
+            <summary>
+            Converts an array of bytes to a hexadecimal string.
+            </summary>
+            <param name="bytes">Byte array to be converted to hexadecimal string</param>
+            <returns>A hexadecimal String as interpreted by the bytes.</returns>
+        </member>
+        <member name="M:ThreeRiversTech.Zuleger.Atrium.API.AtriumController.HexStringToByteArray(System.String)">
+            <summary>
+            Converts a hexadecimal String to an array of bytes.
+            </summary>
+            <param name="hex">Hexadecimal string to convert into a byte array.</param>
+            <returns>Byte array that was converted from the hexadecimal string.</returns>
+        </member>
+        <member name="M:ThreeRiversTech.Zuleger.Atrium.API.AtriumController.GenerateRandomId">
+            <summary>
+            
+            </summary>
+            <returns></returns>
+        </member>
+        <member name="T:ThreeRiversTech.Zuleger.Atrium.API.AtriumController.AnswerNotOkException">
+            <summary>
+            Thrown when an Atrium Answer failed to interpret the XML request correctly.
+            </summary>
+        </member>
+        <member name="T:ThreeRiversTech.Zuleger.Atrium.API.AtriumController.HttpRequestException">
+            <summary>
+            Thrown when an HTTP Request fails, usually when some encryption went wrong.
+            </summary>
+        </member>
+        <member name="T:ThreeRiversTech.Zuleger.Atrium.API.AtriumController.FailedToLoginException">
+            <summary>
+            Thrown when the UserID returned from the second Atrium Controller Answer is -1.
+            </summary>
+        </member>
+        <member name="T:ThreeRiversTech.Zuleger.Atrium.API.AtriumController.AttributeDoesNotExistException">
+            <summary>
+            Thrown when an Attribute does not exist inside of an XML Element.
+            </summary>
+        </member>
+    </members>
+</doc>

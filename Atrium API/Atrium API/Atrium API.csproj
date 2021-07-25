@@ -8,4 +8,8 @@
     <StartupObject />
   </PropertyGroup>
 
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
+    <DocumentationFile>E:\GitHub\Atrium-API\Atrium API\Atrium API\Atrium API.xml</DocumentationFile>
+  </PropertyGroup>
+
 </Project>
