@@ -51,7 +51,8 @@
         </member>
         <member name="P:ThreeRiversTech.Zuleger.Atrium.API.AtriumController.GenerateGuid">
             <summary>
-            Generates a random Guid (128-bit ID) in the format of "########-####-####-####-############"
+            Generates a random Guid (128-bit ID) in the format of "########-####-####-####-############".
+            This should never be the same string when called.
             </summary>
         </member>
         <member name="M:ThreeRiversTech.Zuleger.Atrium.API.AtriumController.ACCESS_LEVELS(System.Int32,System.Int32,System.Int32,System.Int32,System.Int32)">
@@ -92,7 +93,7 @@
             <param name="startIdx">Optional: Start index of the objects to search through as defined in the Atrium Controller. (by default: 1) 0 represents Admin.</param>
             <param name="endIdx">Optional: End index of the objects to search through as defined in the Atrium Controller. (by default: 5000)</param>
             <returns>Dictionary where Key is FirstName space LastName (e.g. "John Doe")
-            and value is the full Dictionary of information on the respective User. 
+            and value is the full Dictionary of information on the respective User.
             If multiple records exist with the same Key, then the first User is the only one that stays.</returns>
         </member>
         <member name="M:ThreeRiversTech.Zuleger.Atrium.API.AtriumController.GetAllUsersByName(System.String,System.String,System.Int32,System.Int32)">
@@ -149,7 +150,7 @@
             <param name="startIdx">Optional: Start index of the objects to search through as defined in the Atrium Controller. (by default: 1) 0 represents Admin.</param>
             <param name="endIdx">Optional: End index of the objects to search through as defined in the Atrium Controller. (by default: 5000)</param>
             <returns>Dictionary where Key is userObjectID
-            and value is the full Dictionary of information on the respective User. 
+            and value is the full Dictionary of information on the respective User.
             If multiple records exist with the same Key, then the first Card is the only one that stays.</returns>
         </member>
         <member name="M:ThreeRiversTech.Zuleger.Atrium.API.AtriumController.GetAllCardsByUserID(System.String,System.Int32,System.Int32)">
@@ -163,7 +164,7 @@
         </member>
         <member name="M:ThreeRiversTech.Zuleger.Atrium.API.AtriumController.GetCardByUserID(System.String,System.Int32,System.Int32)">
             <summary>
-            Retrieves a card on the Atrium Controller referenced by the UserID attached to the card. 
+            Retrieves a card on the Atrium Controller referenced by the UserID attached to the card.
             If a UserID has multiple cards attached, then the first Card that appears in Object ID order (ascending) is returned.
             If no card is found, then null is returned.
             </summary>
@@ -283,10 +284,10 @@
             <returns>Byte array that was converted from the hexadecimal string.</returns>
         </member>
         <member name="M:ThreeRiversTech.Zuleger.Atrium.API.AtriumController.GenerateRandomId">
-            <summary>
+             <summary>
             
-            </summary>
-            <returns></returns>
+             </summary>
+             <returns></returns>
         </member>
         <member name="T:ThreeRiversTech.Zuleger.Atrium.API.AtriumController.AnswerNotOkException">
             <summary>

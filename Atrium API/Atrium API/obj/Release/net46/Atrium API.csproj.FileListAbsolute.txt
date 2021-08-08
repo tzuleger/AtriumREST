@@ -1,0 +1,15 @@
+C:\Users\Travis\Documents\GitHub\Atrium-API\Atrium API\Atrium API\bin\Release\net46\Atrium API.pdb
+C:\Users\Travis\Documents\GitHub\Atrium-API\Atrium API\Atrium API\bin\Release\net46\Atrium API.xml
+C:\Users\Travis\Documents\GitHub\Atrium-API\Atrium API\Atrium API\bin\Release\net46\System.Net.Http.dll
+C:\Users\Travis\Documents\GitHub\Atrium-API\Atrium API\Atrium API\bin\Release\net46\System.Security.Cryptography.Algorithms.dll
+C:\Users\Travis\Documents\GitHub\Atrium-API\Atrium API\Atrium API\bin\Release\net46\System.Security.Cryptography.Encoding.dll
+C:\Users\Travis\Documents\GitHub\Atrium-API\Atrium API\Atrium API\bin\Release\net46\System.Security.Cryptography.Primitives.dll
+C:\Users\Travis\Documents\GitHub\Atrium-API\Atrium API\Atrium API\bin\Release\net46\System.Security.Cryptography.X509Certificates.dll
+C:\Users\Travis\Documents\GitHub\Atrium-API\Atrium API\Atrium API\obj\Release\net46\Atrium API.AssemblyInfoInputs.cache
+C:\Users\Travis\Documents\GitHub\Atrium-API\Atrium API\Atrium API\obj\Release\net46\Atrium API.AssemblyInfo.cs
+C:\Users\Travis\Documents\GitHub\Atrium-API\Atrium API\Atrium API\obj\Release\net46\Atrium API.csproj.CoreCompileInputs.cache
+C:\Users\Travis\Documents\GitHub\Atrium-API\Atrium API\Atrium API\obj\Release\net46\Atrium API.csproj.CopyComplete
+C:\Users\Travis\Documents\GitHub\Atrium-API\Atrium API\Atrium API\obj\Release\net46\Atrium API.pdb
+C:\Users\Travis\Documents\GitHub\Atrium-API\Atrium API\Atrium API\obj\Release\net46\Atrium API.csprojAssemblyReference.cache
+C:\Users\Travis\Documents\GitHub\Atrium-API\Atrium API\Atrium API\bin\Release\net46\Atrium API.dll
+C:\Users\Travis\Documents\GitHub\Atrium-API\Atrium API\Atrium API\obj\Release\net46\Atrium API.dll

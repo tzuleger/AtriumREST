@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Net.Http;
 using System.Security.Cryptography;
 using System.Text;
 using System.Threading;
@@ -99,7 +100,8 @@ namespace ThreeRiversTech.Zuleger.Atrium.API
         public String ProductVersion { get => _version; }
 
         /// <summary>
-        /// Generates a random Guid (128-bit ID) in the format of "########-####-####-####-############"
+        /// Generates a random Guid (128-bit ID) in the format of "########-####-####-####-############".
+        /// This should never be the same string when called.
         /// </summary>
         public Guid GenerateGuid { get => AtriumController.GenerateRandomId(); }
 
@@ -135,13 +137,13 @@ namespace ThreeRiversTech.Zuleger.Atrium.API
             CheckAnswer(xml, AtriumController.XML_EL_CONNECTION);
 
             // Get device information from the response.
-            _serialNo = xml.Element(AtriumController.XML_EL_DEVICE).Attribute("serial").Value;
-            _product = xml.Element(AtriumController.XML_EL_DEVICE).Attribute("product").Value;
-            _label = xml.Element(AtriumController.XML_EL_DEVICE).Attribute("mdl_label").Value;
-            _version = xml.Element(AtriumController.XML_EL_DEVICE).Attribute("version").Value;
+            _serialNo = xml.Element(AtriumController.XML_EL_DEVICE).Attribute("serial")?.Value;
+            _product = xml.Element(AtriumController.XML_EL_DEVICE).Attribute("product")?.Value;
+            _label = xml.Element(AtriumController.XML_EL_DEVICE).Attribute("mdl_label")?.Value;
+            _version = xml.Element(AtriumController.XML_EL_DEVICE).Attribute("version")?.Value;
 
             // Get session id from the response.
-            _sessionId = xml.Element(AtriumController.XML_EL_CONNECTION).Attribute("session").Value;
+            _sessionId = xml.Element(AtriumController.XML_EL_CONNECTION).Attribute("session")?.Value;
 
             // Use MD5 and RC4 to get Session Key. Use Session Key to get loginUser and loginPass.
             _sessionKey = AtriumController.ByteArrayToHexString(AtriumController.Md5(_serialNo + _sessionId));
@@ -174,11 +176,11 @@ namespace ThreeRiversTech.Zuleger.Atrium.API
             }
 
             // Update session ID
-            _sessionId = xml.Element(AtriumController.XML_EL_CONNECTION).Attribute("session").Value;
+            _sessionId = xml.Element(AtriumController.XML_EL_CONNECTION).Attribute("session")?.Value;
 
 
             // Get user info
-            _userId = xml.Element(AtriumController.XML_EL_SDK_CFG).Attribute("user_id").Value;
+            _userId = xml.Element(AtriumController.XML_EL_SDK_CFG).Attribute("user_id")?.Value;
 
             if(_userId == "-1")
             {
@@ -219,10 +221,10 @@ namespace ThreeRiversTech.Zuleger.Atrium.API
             var req = DoPOSTAsync(AtriumController.DATA_URL, content, setSessionCookie: true, encryptedExchange: true);
             req.Wait();
             var xml = req.Result;
-            var insertedRecords = from e in xml.Elements(AtriumController.XML_EL_RECORDS) 
+            var insertedRecords = from e in xml.Elements(AtriumController.XML_EL_RECORDS)
                                   select e.Element(AtriumController.XML_EL_RECORD);
             CheckAllAnswers(insertedRecords, AtriumController.XML_EL_DATA);
-            return insertedRecords.First().Element(AtriumController.XML_EL_DATA).Attribute("id").Value;
+            return insertedRecords.First().Element(AtriumController.XML_EL_DATA).Attribute("id")?.Value;
         }
 
         /// <summary>
@@ -231,7 +233,7 @@ namespace ThreeRiversTech.Zuleger.Atrium.API
         /// <param name="startIdx">Optional: Start index of the objects to search through as defined in the Atrium Controller. (by default: 1) 0 represents Admin.</param>
         /// <param name="endIdx">Optional: End index of the objects to search through as defined in the Atrium Controller. (by default: 5000)</param>
         /// <returns>Dictionary where Key is FirstName space LastName (e.g. "John Doe")
-        /// and value is the full Dictionary of information on the respective User. 
+        /// and value is the full Dictionary of information on the respective User.
         /// If multiple records exist with the same Key, then the first User is the only one that stays.</returns>
         public Dictionary<String, Dictionary<String, String>> GetAllUsers(int startIdx=1, int endIdx=5000)
         {
@@ -250,21 +252,21 @@ namespace ThreeRiversTech.Zuleger.Atrium.API
             CheckAllAnswers(checkRecords, AtriumController.XML_EL_DATA);
 
             var listRecords = from e in xml.Elements(AtriumController.XML_EL_RECORDS).Elements(AtriumController.XML_EL_RECORD).Elements(AtriumController.XML_EL_DATA)
-                          where e.Attribute("obj_status").Value == "used"
+                          where e.Attribute("obj_status")?.Value == "used"
                           select new Dictionary<String, String>
                           {
-                              { "userID", e.Attribute("guid2").Value },
-                              { "objectID", e.Attribute("id").Value },
-                              { "isValid", e.Attribute("valid").Value },
-                              { "firstName", e.Attribute("label3").Value },
-                              { "lastName", e.Attribute("label4").Value },
-                              { "actDate", e.Attribute("utc_time22").Value },
-                              { "expDate", e.Attribute("utc_time23").Value },
-                              { "accessLevel1", e.Attribute("word24_0").Value },
-                              { "accessLevel2", e.Attribute("word24_1").Value },
-                              { "accessLevel3", e.Attribute("word24_2").Value },
-                              { "accessLevel4", e.Attribute("word24_3").Value },
-                              { "accessLevel5", e.Attribute("word24_4").Value }
+                              { "userID", e.Attribute("guid2")?.Value },
+                              { "objectID", e.Attribute("id")?.Value },
+                              { "isValid", e.Attribute("valid")?.Value },
+                              { "firstName", e.Attribute("label3")?.Value },
+                              { "lastName", e.Attribute("label4")?.Value },
+                              { "actDate", e.Attribute("utc_time22")?.Value },
+                              { "expDate", e.Attribute("utc_time23")?.Value },
+                              { "accessLevel1", e.Attribute("word24_0")?.Value },
+                              { "accessLevel2", e.Attribute("word24_1")?.Value },
+                              { "accessLevel3", e.Attribute("word24_2")?.Value },
+                              { "accessLevel4", e.Attribute("word24_3")?.Value },
+                              { "accessLevel5", e.Attribute("word24_4")?.Value }
                           };
 
             var records = new Dictionary<String, Dictionary<String, String>>();
@@ -304,28 +306,28 @@ namespace ThreeRiversTech.Zuleger.Atrium.API
             req.Wait();
             var xml = req.Result;
 
-            var checkRecords = from e in xml.Elements(AtriumController.XML_EL_RECORDS) 
+            var checkRecords = from e in xml.Elements(AtriumController.XML_EL_RECORDS)
                                select e.Element(AtriumController.XML_EL_RECORD);
             CheckAllAnswers(checkRecords, AtriumController.XML_EL_DATA);
 
             var records = from e in xml.Elements(AtriumController.XML_EL_RECORDS).Elements(AtriumController.XML_EL_RECORD).Elements(AtriumController.XML_EL_DATA)
-                          where e.Attribute("obj_status").Value == "used" &&
-                                e.Attribute("label3").Value.ToLower() == firstName.ToLower() &&
-                                e.Attribute("label4").Value.ToLower() == lastName.ToLower()
+                          where e.Attribute("obj_status")?.Value == "used" &&
+                                e.Attribute("label3")?.Value.ToLower() == firstName.ToLower() &&
+                                e.Attribute("label4")?.Value.ToLower() == lastName.ToLower()
                           select new Dictionary<String, String>
                           {
-                              { "userID", e.Attribute("guid2").Value },
-                              { "objectID", e.Attribute("id").Value },
-                              { "isValid", e.Attribute("valid").Value },
-                              { "firstName", e.Attribute("label3").Value },
-                              { "lastName", e.Attribute("label4").Value },
-                              { "actDate", e.Attribute("utc_time22").Value },
-                              { "expDate", e.Attribute("utc_time23").Value },
-                              { "accessLevel1", e.Attribute("word24_0").Value },
-                              { "accessLevel2", e.Attribute("word24_1").Value },
-                              { "accessLevel3", e.Attribute("word24_2").Value },
-                              { "accessLevel4", e.Attribute("word24_3").Value },
-                              { "accessLevel5", e.Attribute("word24_4").Value }
+                              { "userID", e.Attribute("guid2")?.Value },
+                              { "objectID", e.Attribute("id")?.Value },
+                              { "isValid", e.Attribute("valid")?.Value },
+                              { "firstName", e.Attribute("label3")?.Value },
+                              { "lastName", e.Attribute("label4")?.Value },
+                              { "actDate", e.Attribute("utc_time22")?.Value },
+                              { "expDate", e.Attribute("utc_time23")?.Value },
+                              { "accessLevel1", e.Attribute("word24_0")?.Value },
+                              { "accessLevel2", e.Attribute("word24_1")?.Value },
+                              { "accessLevel3", e.Attribute("word24_2")?.Value },
+                              { "accessLevel4", e.Attribute("word24_3")?.Value },
+                              { "accessLevel5", e.Attribute("word24_4")?.Value }
                           };
 
             return records.Count() > 0 ? records.ToList() : null;
@@ -410,7 +412,7 @@ namespace ThreeRiversTech.Zuleger.Atrium.API
             var req = DoPOSTAsync(AtriumController.DATA_URL, content, setSessionCookie: true, encryptedExchange: true);
             req.Wait();
             var xml = req.Result;
-            var insertedRecords = from e in xml.Elements(AtriumController.XML_EL_RECORDS) 
+            var insertedRecords = from e in xml.Elements(AtriumController.XML_EL_RECORDS)
                                   select e.Element(AtriumController.XML_EL_RECORD);
             CheckAllAnswers(insertedRecords, AtriumController.XML_EL_DATA);
             return insertedRecords?.First()?.Element(AtriumController.XML_EL_DATA)?.Attribute("id")?.Value;
@@ -422,7 +424,7 @@ namespace ThreeRiversTech.Zuleger.Atrium.API
         /// <param name="startIdx">Optional: Start index of the objects to search through as defined in the Atrium Controller. (by default: 1) 0 represents Admin.</param>
         /// <param name="endIdx">Optional: End index of the objects to search through as defined in the Atrium Controller. (by default: 5000)</param>
         /// <returns>Dictionary where Key is userObjectID
-        /// and value is the full Dictionary of information on the respective User. 
+        /// and value is the full Dictionary of information on the respective User.
         /// If multiple records exist with the same Key, then the first Card is the only one that stays.</returns>
         public Dictionary<String, Dictionary<String, String>> GetAllCards(int startIdx = 1, int endIdx = 5000)
         {
@@ -441,24 +443,23 @@ namespace ThreeRiversTech.Zuleger.Atrium.API
             CheckAllAnswers(checkRecords, AtriumController.XML_EL_DATA);
 
             var listRecords = from e in xml.Elements(AtriumController.XML_EL_RECORDS).Elements(AtriumController.XML_EL_RECORD).Elements(AtriumController.XML_EL_DATA)
-                          where e.Attribute("obj_status").Value == "used"
+                          where e.Attribute("obj_status")?.Value == "used"
                           select new Dictionary<String, String>
                           {
-                              { "objectID", e.Attribute("id").Value },
-                              { "userObjectID", e.Attribute("dword4").Value },
-                              { "isValid", e.Attribute("valid").Value },
-                              { "displayName", e.Attribute("label3").Value },
-                              { "cardNumber", e.Attribute("hexv5").Value },
-                              { "actDate", e.Attribute("utc_time22").Value },
-                              { "expDate", e.Attribute("utc_time23").Value },
+                              { "objectID", e.Attribute("id")?.Value },
+                              { "userObjectID", e.Attribute("dword4")?.Value },
+                              { "isValid", e.Attribute("valid")?.Value },
+                              { "displayName", e.Attribute("label3")?.Value },
+                              { "cardNumber", e.Attribute("hexv5")?.Value },
+                              { "actDate", e.Attribute("utc_time22")?.Value },
+                              { "expDate", e.Attribute("utc_time23")?.Value },
                           };
             var records = new Dictionary<String, Dictionary<String, String>>();
             foreach(var record in listRecords)
             {
-                if(records.ContainsKey(record["userObjectID"] + "-" + record["objectID"]))
+                if(records.ContainsKey(record["userObjectID"]) && records["userObjectID"].ContainsKey("Count"))
                 {
-                    records[record["userObjectID"] + "-" + record["objectID"]]["Count"] 
-                        = Int32.Parse(records[record["userObjectID"] + "-" + record["objectID"]]["Count"]+1).ToString();
+                    records[record["userObjectID"]]["Count"] = (Int32.Parse(records[record["userObjectID"]]["Count"])+1).ToString();
                 }
                 else
                 {
@@ -494,22 +495,22 @@ namespace ThreeRiversTech.Zuleger.Atrium.API
             CheckAllAnswers(checkRecords, AtriumController.XML_EL_DATA);
 
             var records = from e in xml.Elements(AtriumController.XML_EL_RECORDS).Elements(AtriumController.XML_EL_RECORD).Elements(AtriumController.XML_EL_DATA)
-                          where e.Attribute("obj_status").Value == "used" &&
-                                e.Attribute("guid26").Value.ToLower() == userID
+                          where e.Attribute("obj_status")?.Value == "used" &&
+                                e.Attribute("guid26")?.Value.ToLower() == userID
                           select new Dictionary<String, String>
                           {
-                              { "objectID", e.Attribute("id").Value },
-                              { "isValid", e.Attribute("valid").Value },
-                              { "displayName", e.Attribute("label3").Value },
-                              { "actDate", e.Attribute("utc_time22").Value },
-                              { "expDate", e.Attribute("utc_time23").Value },
+                              { "objectID", e.Attribute("id")?.Value },
+                              { "isValid", e.Attribute("valid")?.Value },
+                              { "displayName", e.Attribute("label3")?.Value },
+                              { "actDate", e.Attribute("utc_time22")?.Value },
+                              { "expDate", e.Attribute("utc_time23")?.Value },
                           };
 
             return records.Count() > 0 ? records.ToList() : null;
         }
 
         /// <summary>
-        /// Retrieves a card on the Atrium Controller referenced by the UserID attached to the card. 
+        /// Retrieves a card on the Atrium Controller referenced by the UserID attached to the card.
         /// If a UserID has multiple cards attached, then the first Card that appears in Object ID order (ascending) is returned.
         /// If no card is found, then null is returned.
         /// </summary>
@@ -567,7 +568,7 @@ namespace ThreeRiversTech.Zuleger.Atrium.API
             var res = e.Attribute(attr);
             if(res.Value != "ok")
             {
-                if(throwException)
+                if (throwException)
                 {
                     throw new AnswerNotOkException(res.Value);
                 }
@@ -622,7 +623,8 @@ namespace ThreeRiversTech.Zuleger.Atrium.API
                 {
                     throw new HttpRequestException(responseString);
                 }
-                var postEnc = responseString.Split("post_enc=")[1].Split("&")[0];
+                var postEnc = responseString.Replace("post_enc=", "");
+                postEnc = postEnc.Substring(0, postEnc.IndexOf("&"));
                 responseString = Encoding.ASCII.GetString(AtriumController.Rc4(Encoding.ASCII.GetBytes(_sessionKey), HexStringToByteArray(postEnc)));
             }
             var xml = XElement.Parse(responseString);
@@ -821,7 +823,7 @@ namespace ThreeRiversTech.Zuleger.Atrium.API
         }
 
         /// <summary>
-        /// 
+        ///
         /// </summary>
         /// <returns></returns>
         private static Guid GenerateRandomId()

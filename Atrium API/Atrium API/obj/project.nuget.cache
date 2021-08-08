@@ -1,8 +1,16 @@
 {
   "version": 2,
-  "dgSpecHash": "SdK86KV1NovUkxcUwuNHnJ10q6MNRkTISFxnmA2rP8zMcMqp5cqpHUJDSnBKoG5vCwQhrZKhIfFC5RTJuRphEQ==",
+  "dgSpecHash": "acRk06938Mhj/oZcyo6qhVrgEpGPbpqx3onbJnMYDiUvGU9p7Ngm9eojeJ4iaokLb9hBTaBaUY0LzyCeFBARKg==",
   "success": true,
   "projectFilePath": "C:\\Users\\Travis\\Documents\\GitHub\\Atrium-API\\Atrium API\\Atrium API\\Atrium API.csproj",
-  "expectedPackageFiles": [],
+  "expectedPackageFiles": [
+    "C:\\Users\\Travis\\.nuget\\packages\\ilmerge\\3.0.41\\ilmerge.3.0.41.nupkg.sha512",
+    "C:\\Users\\Travis\\.nuget\\packages\\system.net.http\\4.3.4\\system.net.http.4.3.4.nupkg.sha512",
+    "C:\\Users\\Travis\\.nuget\\packages\\system.runtime\\4.3.1\\system.runtime.4.3.1.nupkg.sha512",
+    "C:\\Users\\Travis\\.nuget\\packages\\system.security.cryptography.algorithms\\4.3.0\\system.security.cryptography.algorithms.4.3.0.nupkg.sha512",
+    "C:\\Users\\Travis\\.nuget\\packages\\system.security.cryptography.encoding\\4.3.0\\system.security.cryptography.encoding.4.3.0.nupkg.sha512",
+    "C:\\Users\\Travis\\.nuget\\packages\\system.security.cryptography.primitives\\4.3.0\\system.security.cryptography.primitives.4.3.0.nupkg.sha512",
+    "C:\\Users\\Travis\\.nuget\\packages\\system.security.cryptography.x509certificates\\4.3.0\\system.security.cryptography.x509certificates.4.3.0.nupkg.sha512"
+  ],
   "logs": []
 }

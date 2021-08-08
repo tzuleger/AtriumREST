@@ -16,4 +16,10 @@
   <PropertyGroup>
     <MSBuildAllProjects>$(MSBuildAllProjects);$(MSBuildThisFileFullPath)</MSBuildAllProjects>
   </PropertyGroup>
+  <ImportGroup Condition=" '$(ExcludeRestorePackageImports)' != 'true' ">
+    <Import Project="$(NuGetPackageRoot)ilmerge\3.0.41\build\ILMerge.props" Condition="Exists('$(NuGetPackageRoot)ilmerge\3.0.41\build\ILMerge.props')" />
+  </ImportGroup>
+  <PropertyGroup Condition=" '$(ExcludeRestorePackageImports)' != 'true' ">
+    <PkgILMerge Condition=" '$(PkgILMerge)' == '' ">C:\Users\Travis\.nuget\packages\ilmerge\3.0.41</PkgILMerge>
+  </PropertyGroup>
 </Project>
