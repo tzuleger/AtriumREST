@@ -243,7 +243,7 @@ namespace ThreeRiversTech.Zuleger.Atrium.API
             var req = DoPOSTAsync(AtriumController.DATA_URL, content, setSessionCookie: true, encryptedExchange: true);
             req.Wait();
             var xml = req.Result;
-            var insertedRecords = from e 
+            var insertedRecords = from e
                                   in xml.Elements(AtriumController.XML_EL_RECORDS)
                                   select e.Element(AtriumController.XML_EL_RECORD);
             CheckAllAnswers(insertedRecords, AtriumController.XML_EL_DATA);
@@ -258,24 +258,24 @@ namespace ThreeRiversTech.Zuleger.Atrium.API
         public String InsertUser(User user)
         {
             return InsertUser(
-                user.FirstName, 
-                user.LastName, 
-                user.ObjectGuid, 
-                user.ActivationDate, 
-                user.ExpirationDate, 
+                user.FirstName,
+                user.LastName,
+                user.ObjectGuid,
+                user.ActivationDate,
+                user.ExpirationDate,
                 user.AccessLevelObjectIds);
         }
 
         /// <summary>
         /// Gets all Users that exist in the Atrium database in increments. Best used when the number of Users in the database is unknown.
         /// Larger increments increases speed through HTTP but could be worse if the number of records that actually exist are on the short end of the increment.
-        /// (e.g. 1034 records exist with a 1000 increment would force two HTTP requests searching for 2000 total records. 
+        /// (e.g. 1034 records exist with a 1000 increment would force two HTTP requests searching for 2000 total records.
         /// An increment of 1035 or better would be best here)
         /// By default 100.
         /// </summary>
-        /// <param name="increment">Increment of users to grab. 
+        /// <param name="increment">Increment of users to grab.
         /// Larger numbers increases speed through HTTP but could be worse if the number of records that actually exist are on the short end of the increment.
-        /// (e.g. 1034 records exist with a 1000 increment would force two HTTP requests searching for 2000 total records. 
+        /// (e.g. 1034 records exist with a 1000 increment would force two HTTP requests searching for 2000 total records.
         /// An increment of 1035 or better would be best here)
         /// By default 100.</param>
         /// <returns></returns>
@@ -307,12 +307,12 @@ namespace ThreeRiversTech.Zuleger.Atrium.API
             req.Wait();
             var xml = req.Result;
 
-            var checkRecords = from e 
+            var checkRecords = from e
                                in xml.Elements(AtriumController.XML_EL_RECORDS)
                                select e.Element(AtriumController.XML_EL_RECORD);
             CheckAllAnswers(checkRecords, AtriumController.XML_EL_DATA);
 
-            var listRecords = from e 
+            var listRecords = from e
                               in xml.Elements(AtriumController.XML_EL_RECORDS)
                                            .Elements(AtriumController.XML_EL_RECORD)
                                            .Elements(AtriumController.XML_EL_DATA)
@@ -330,13 +330,13 @@ namespace ThreeRiversTech.Zuleger.Atrium.API
                                   ExpirationDate = new DateTime(1970, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc)
                                                     .AddSeconds(Convert.ToInt32(e.Attribute("utc_time23")?.Value, 16))
                                                     .ToLocalTime(),
-                                  AccessLevelObjectIds = new int[] 
-                                  { 
+                                  AccessLevelObjectIds = new int[]
+                                  {
                                       Int32.Parse(e.Attribute("word24_0")?.Value),
                                       Int32.Parse(e.Attribute("word24_1")?.Value),
                                       Int32.Parse(e.Attribute("word24_2")?.Value),
                                       Int32.Parse(e.Attribute("word24_3")?.Value),
-                                      Int32.Parse(e.Attribute("word24_4")?.Value) 
+                                      Int32.Parse(e.Attribute("word24_4")?.Value)
                                   }
                               };
 
@@ -373,7 +373,7 @@ namespace ThreeRiversTech.Zuleger.Atrium.API
             var req = DoPOSTAsync(AtriumController.DATA_URL, content, setSessionCookie: true, encryptedExchange: true);
             req.Wait();
             var xml = req.Result;
-            var updatedRecords = from e 
+            var updatedRecords = from e
                                  in xml.Elements(AtriumController.XML_EL_RECORDS)
                                  select e.Element(AtriumController.XML_EL_RECORD);
             return CheckAllAnswers(updatedRecords, AtriumController.XML_EL_DATA, throwException: false);
@@ -408,7 +408,7 @@ namespace ThreeRiversTech.Zuleger.Atrium.API
             var req = DoPOSTAsync(AtriumController.DATA_URL, content, setSessionCookie: true, encryptedExchange: true);
             req.Wait();
             var xml = req.Result;
-            var insertedRecords = from e 
+            var insertedRecords = from e
                                   in xml.Elements(AtriumController.XML_EL_RECORDS)
                                   select e.Element(AtriumController.XML_EL_RECORD);
             CheckAllAnswers(insertedRecords, AtriumController.XML_EL_DATA);
@@ -423,25 +423,25 @@ namespace ThreeRiversTech.Zuleger.Atrium.API
         public String InsertCard(Card card)
         {
             return InsertCard(
-                card.DisplayName, 
-                card.ObjectGuid, 
-                card.EntityRelationshipGuid.Value, 
+                card.DisplayName,
+                card.ObjectGuid,
+                card.EntityRelationshipGuid.Value,
                 card.EntityRelationshipId,
-                card.CardNumber, 
-                card.ActivationDate, 
+                card.CardNumber,
+                card.ActivationDate,
                 card.ExpirationDate);
         }
 
         /// <summary>
         /// Gets all Users that exist in the Atrium database in increments. Best used when the number of Users in the database is unknown.
         /// Larger increments increases speed through HTTP but could be worse if the number of records that actually exist are on the short end of the increment.
-        /// (e.g. 1034 records exist with a 1000 increment would force two HTTP requests searching for 2000 total records. 
+        /// (e.g. 1034 records exist with a 1000 increment would force two HTTP requests searching for 2000 total records.
         /// An increment of 1035 or better would be best here)
         /// By default 100.
         /// </summary>
-        /// <param name="increment">Increment of users to grab. 
+        /// <param name="increment">Increment of users to grab.
         /// Larger numbers increases speed through HTTP but could be worse if the number of records that actually exist are on the short end of the increment.
-        /// (e.g. 1034 records exist with a 1000 increment would force two HTTP requests searching for 2000 total records. 
+        /// (e.g. 1034 records exist with a 1000 increment would force two HTTP requests searching for 2000 total records.
         /// An increment of 1035 or better would be best here)
         /// By default 100.</param>
         /// <returns></returns>
@@ -473,12 +473,12 @@ namespace ThreeRiversTech.Zuleger.Atrium.API
             req.Wait();
             var xml = req.Result;
 
-            var checkRecords = from e 
+            var checkRecords = from e
                                in xml.Elements(AtriumController.XML_EL_RECORDS)
                                select e.Element(AtriumController.XML_EL_RECORD);
             CheckAllAnswers(checkRecords, AtriumController.XML_EL_DATA);
 
-            var listRecords = from e 
+            var listRecords = from e
                               in xml.Elements(AtriumController.XML_EL_RECORDS)
                                            .Elements(AtriumController.XML_EL_RECORD)
                                            .Elements(AtriumController.XML_EL_DATA)
@@ -498,7 +498,7 @@ namespace ThreeRiversTech.Zuleger.Atrium.API
                                                     .AddSeconds(Convert.ToInt32(e.Attribute("utc_time23")?.Value, 16))
                                                     .ToLocalTime()
                               };
-            
+
             return listRecords.ToList();
         }
 
@@ -529,14 +529,9 @@ namespace ThreeRiversTech.Zuleger.Atrium.API
             return CheckAllAnswers(updatedRecords, AtriumController.XML_EL_DATA, throwException: false);
         }
 
-        /// <summary>
-        /// Checks an element in an XML Response String that it has an "ok" answer.
-        /// </summary>
-        /// <param name="xml">XElement that is to be checked for the "ok"</param>
-        /// <param name="elementName">Subelement name to check inside of xml</param>
-        /// <param name="attr">Optional: Attribute that the "ok" should be under. (by default: "err")</param>
-        /// <param name="throwException">Optional: If true, throws an exception. Otherwise, returns a boolean indicating success or not. (by default: true)</param>
-        /// <returns>Boolean value indicating that "ok" is in the response string.</returns>
+
+
+        // Checks an element in an XML Response String that it has an "ok" answer.
         private bool CheckAnswer(XElement xml, XName elementName, String attr="err", bool throwException=true)
         {
             var e = xml.Element(elementName);
@@ -559,14 +554,7 @@ namespace ThreeRiversTech.Zuleger.Atrium.API
             return true;
         }
 
-        /// <summary>
-        /// Checks a set of elements in an XML Response String that it has an "ok" answer.
-        /// </summary>
-        /// <param name="xmlElements">Enumerable XML elements that are typically of "REC" type.</param>
-        /// <param name="elementName">Subelement name to check inside of xml</param>
-        /// <param name="attr">Expected attribute that displays the response/answer message. (by default: "res")</param>
-        /// <param name="throwException">Optional: If true, throws an exception. Otherwise, returns a boolean indicating success or not. (by default: true)</param>
-        /// <returns>Boolean value indicating that "ok" is in the response string.</returns>
+        // Checks a set of elements in an XML Response String that it has an "ok" answer.
         private bool CheckAllAnswers(IEnumerable<XElement> xmlElements, XName elementName, String attr = "res", bool throwException = true)
         {
             foreach (var el in xmlElements)
@@ -579,14 +567,7 @@ namespace ThreeRiversTech.Zuleger.Atrium.API
             return true;
         }
 
-        /// <summary>
-        /// Performs a POST request to the specified Subdomain (under the Address provided from construction) with specific parameters to send.
-        /// </summary>
-        /// <param name="subdomain">The subdomain that the GET request is to be sent.</param>
-        /// <param name="parameters">Dictionary of parameters that are to be sent with the POST request.</param>
-        /// <param name="setSessionCookie">Optional: If true, sets a Cookie that stores the SessionID. (by default: false)</param>
-        /// <param name="encryptedExchange">Optional: If true, expects the response to be encrypted and decrypts it upon reception. (by default: false)</param>
-        /// <returns>An asynchronous task that returns an XElement of the response. (XML Response)</returns>
+        // Performs a POST request to the specified Subdomain (under the Address provided from construction) with specific parameters to send.
         private async Task<XElement> DoPOSTAsync(String subdomain, Dictionary<String, String> parameters, bool setSessionCookie = false, bool encryptedExchange = false)
         {
             var encodedContent = new FormUrlEncodedContent(parameters);
@@ -618,13 +599,7 @@ namespace ThreeRiversTech.Zuleger.Atrium.API
             return xml;
         }
 
-        // Performs a POST request to the connection associated with the AtriumConnection object
-        /// <summary>
-        /// Performs a GET request to the specified Subdomain (under the Address provided from construction)
-        /// </summary>
-        /// <param name="subdomain">The subdomain that the GET request is to be sent.</param>
-        /// <returns>An asynchronous task that returns an XElement of the response. (XML Response)</returns>
-        private async Task<XElement> DoGETAsync(String subdomain)
+        // Performs a GET request to the specified Subdomain (under the Address provided from construction)
         {
             RequestText = "GET " + _address + subdomain;
             var response = await _client.GetAsync(_address + subdomain);
@@ -636,13 +611,7 @@ namespace ThreeRiversTech.Zuleger.Atrium.API
             return xml;
         }
 
-        /// <summary>
-        /// Fetches an XML File and substitutes provided arguments and converts it to an HttpContent object.
-        /// </summary>
-        /// <param name="fileName">File name of the XML template to be used.</param>
-        /// <param name="args">Variable arguments of String objects that are used to substitute arguments in the XML template.
-        /// The size of the amount of Strings to pass should be divisible by two where every even argument is what should be replaced by the odd argument.</param>
-        /// <returns>StringContent item that is to be used in the next POST request.</returns>
+        // Fetches an XML File and substitutes provided arguments and converts it to an HttpContent object.
         private StringContent FetchXMLAsHttpContent(String xml, params String[] args)
         {
             var fileContent = xml;
@@ -660,13 +629,7 @@ namespace ThreeRiversTech.Zuleger.Atrium.API
             );
         }
 
-        /// <summary>
-        /// Fetches an XML File and substitutes provided arguments, encrypts it under the RC4 Encryption Algorithm, then creates an encrypted request to be sent.
-        /// </summary>
-        /// <param name="xml">XML template to use.</param>
-        /// <param name="args">Variable arguments of String objects that are used to substitute arguments in the XML template.
-        /// The size of the amount of Strings to pass should be divisible by two where every even argument is what should be replaced by the odd argument.</param>
-        /// <returns>A Dictionary of parameters that are to be used in a parameterized POST request.</returns>
+        // Fetches an XML template and substitutes provided arguments, encrypts it under the RC4 Encryption Algorithm, then creates an encrypted request to be sent.
         private Dictionary<String, String> FetchAndEncryptXML(String xml, params String[] args)
         {
             Dictionary<String, String> parameters = new Dictionary<String, String>();
@@ -687,12 +650,7 @@ namespace ThreeRiversTech.Zuleger.Atrium.API
             return parameters;
         }
 
-        /// <summary>
-        /// Performs RC4 encryption/decryption on a specified byte array with a specified byte array as the key.
-        /// </summary>
-        /// <param name="pwd">Key that is used to encrypt/decrypt the data.</param>
-        /// <param name="data">Data that is to be encrypted/decrypted</param>
-        /// <returns>Byte array that represents the ciphertext of data after encryption/decryption.</returns>
+        // Performs RC4 encryption/decryption on a specified byte array with a specified byte array as the key.
         private static byte[] Rc4(byte[] pwd, byte[] data)
         {
             int a, i, j, k, tmp;
@@ -730,11 +688,7 @@ namespace ThreeRiversTech.Zuleger.Atrium.API
             return cipher;
         }
 
-        /// <summary>
-        /// Performs an MD5 Hash algorithm on a String.
-        /// </summary>
-        /// <param name="text">String to perform the MD5 hash on.</param>
-        /// <returns>A byte array that is the result of hashing text.</returns>
+        // Performs an MD5 Hash algorithm on a String.
         private static byte[] Md5(String text)
         {
             byte[] hash;
@@ -745,11 +699,7 @@ namespace ThreeRiversTech.Zuleger.Atrium.API
             return hash;
         }
 
-        /// <summary>
-        /// Counts the character codes of every character in given String to create a CheckSum.
-        /// </summary>
-        /// <param name="str">String to be checksummed.</param>
-        /// <returns>A 16 bit Hexadecimal String that is built from the checksum of str.</returns>
+        // Counts the character codes of every character in given String to create a CheckSum.
         private static String CheckSum(String str)
         {
             int chk = 0;
@@ -762,13 +712,7 @@ namespace ThreeRiversTech.Zuleger.Atrium.API
             return chkSumString;
         }
 
-        /// <summary>
-        /// Pads a string with a provided specific character to a provided total length.
-        /// </summary>
-        /// <param name="s">String that is to be padded.</param>
-        /// <param name="c">Character that is used when padding s.</param>
-        /// <param name="length">Total length of what s should be.</param>
-        /// <returns>String s padded with c to the desired length.</returns>
+        // Pads a string to the left with a provided specific character to a provided total length.
         private static String PadLeft(String s, char c, int length)
         {
             while(s.Length < length)
@@ -778,21 +722,13 @@ namespace ThreeRiversTech.Zuleger.Atrium.API
             return s;
         }
 
-        /// <summary>
-        /// Converts an array of bytes to a hexadecimal string.
-        /// </summary>
-        /// <param name="bytes">Byte array to be converted to hexadecimal string</param>
-        /// <returns>A hexadecimal String as interpreted by the bytes.</returns>
+        // Converts an array of bytes to a hexadecimal string.
         private static string ByteArrayToHexString(byte[] bytes)
         {
           return BitConverter.ToString(bytes).Replace("-","");
         }
 
-        /// <summary>
-        /// Converts a hexadecimal String to an array of bytes.
-        /// </summary>
-        /// <param name="hex">Hexadecimal string to convert into a byte array.</param>
-        /// <returns>Byte array that was converted from the hexadecimal string.</returns>
+        ///Converts a hexadecimal String to an array of bytes.
         private static byte[] HexStringToByteArray(String hex)
         {
             return Enumerable.Range(0, hex.Length)
@@ -801,10 +737,7 @@ namespace ThreeRiversTech.Zuleger.Atrium.API
                              .ToArray();
         }
 
-        /// <summary>
-        ///
-        /// </summary>
-        /// <returns></returns>
+        // Generates a random GUID with format of "########-####-####-####-############"
         private static Guid GenerateRandomId()
         {
             byte[] buf = new byte[16];
