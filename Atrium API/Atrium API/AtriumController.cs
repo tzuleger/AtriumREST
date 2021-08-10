@@ -9,6 +9,8 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Xml.Linq;
 
+using ThreeRiversTech.Zuleger.Atrium.API.Objects;
+
 namespace ThreeRiversTech.Zuleger.Atrium.API
 {
     /// <summary>
@@ -39,12 +41,12 @@ namespace ThreeRiversTech.Zuleger.Atrium.API
         private static XName XML_EL_SDK_CFG = "SDK_CFG";
 
         // XML File Templates
-        private const String ADD_USER = "./templates/add_user.xml";
-        private const String ADD_CARD = "./templates/add_card.xml";
-        private const String UPDATE_USER = "./templates/update_user.xml";
-        private const String UPDATE_CARD = "./templates/update_card.xml";
-        private const String READ_USER = "./templates/read_user.xml";
-        private const String READ_CARD = "./templates/read_card.xml";
+        private const String ADD_USER = "<?xml version=\"1.0\" encoding=\"utf-8\"?><SDK xmlns='https://www.cdvi.ca/'><RECORDS><REC trans_id='@tid' cmd='add' sernum='@SerialNo' type='user' id='0' rec='cfg'><DATA valid='1' guid2='@UserID' label3='@FirstName' label4='@LastName' utc_time22='@ActivationDate' utc_time23='@ExpirationDate' word24_0='@AccessLevel1' word24_1='@AccessLevel2' word24_2='@AccessLevel3' word24_3='@AccessLevel4' word24_4='@AccessLevel5'/></REC></RECORDS></SDK>";
+        private const String ADD_CARD = "<?xml version=\"1.0\" encoding=\"utf-8\"?><SDK xmlns='https://www.cdvi.ca/'><RECORDS><REC trans_id='@tid' cmd='add' sernum='@SerialNo' type='card' id='0' rec='cfg'><DATA valid='1' dword4='@ObjectID' guid2='@CardID' label3='@DisplayName' hexv5='@MemberNumber' utc_time24='@ActivationDate' utc_time25='@ExpirationDate' guid26='@UserID'/></REC></RECORDS></SDK>";
+        private const String UPDATE_USER = "<?xml version=\"1.0\" encoding=\"utf-8\"?><SDK xmlns='https://www.cdvi.ca/'><RECORDS><REC trans_id='@tid' cmd='write' sernum='@SerialNo' type='user' id='@ObjectID' rec='cfg'><DATA label3='@FirstName' label4='@LastName' utc_time22='@ActivationDate' utc_time23='@ExpirationDate'/></REC></RECORDS></SDK>";
+        private const String UPDATE_CARD = "<?xml version=\"1.0\" encoding=\"utf-8\"?><SDK xmlns='https://www.cdvi.ca/'><RECORDS><REC trans_id='@tid' cmd='write' sernum='@SerialNo' type='user' id='@ObjectID' rec='cfg'><DATA label3='@DisplayName' utc_time22='@ActivationDate' utc_time23='@ExpirationDate'/></REC><RECORDS></SDK>";
+        private const String READ_USER = "<?xml version=\"1.0\" encoding=\"utf-8\"?><SDK xmlns='https://www.cdvi.ca/'><RECORDS><REC trans_id='@tid' cmd='read' sernum='@SerialNo' type='user' id_min='@min' id_max='@max' rec='cfg'></REC></RECORDS></SDK>";
+        private const String READ_CARD = "<?xml version=\"1.0\" encoding=\"utf-8\"?><SDK xmlns='https://www.cdvi.ca/'><RECORDS><REC trans_id='@tid' cmd='read' sernum='@SerialNo' type='card' id='0' rec='cfg'></REC></RECORDS></SDK>";
 
         // For Random Guid generation.
         private static Random _random = new Random();
@@ -119,6 +121,26 @@ namespace ThreeRiversTech.Zuleger.Atrium.API
         public static int[] ACCESS_LEVELS(int al1=-1, int al2=-1, int al3=-1, int al4=-1, int al5=-1)
         {
             return new int[] { al1, al2, al3, al4, al5 };
+        }
+
+        /// <summary>
+        /// Converts two 32-bit integers into one 26-bit integer. Specifically used for converting a Family Number and Member Number into
+        /// it's 26-bit variant, where the Family Number is the upper 10 bits and the Member Number is the lower 16 bits.
+        /// </summary>
+        /// <param name="familyNumber">10-bit Int32 that corresponds to the Family Number on the card.</param>
+        /// <param name="memberNumber">16-bit Int32 that corresponds to the Member Number that belongs to the related family.</param>
+        /// <returns>26-bit integer directly converted from the family number bits concatenated with the member number bits.
+        /// If family number or member number is less than 0, then -1 is returned.</returns>
+        public static int To26BitCardNumber(int familyNumber, int memberNumber)
+        {
+            if(familyNumber < 0 || memberNumber < 0)
+            {
+                return -1;
+            }
+            String famNumBits = AtriumController.PadLeft(Convert.ToString(familyNumber, 2), '0', 10);
+            String memNumBits = AtriumController.PadLeft(Convert.ToString(memberNumber, 2), '0', 16);
+
+            return Convert.ToInt32(famNumBits + memNumBits, 2);
         }
 
         /// <summary>
@@ -221,80 +243,59 @@ namespace ThreeRiversTech.Zuleger.Atrium.API
             var req = DoPOSTAsync(AtriumController.DATA_URL, content, setSessionCookie: true, encryptedExchange: true);
             req.Wait();
             var xml = req.Result;
-            var insertedRecords = from e in xml.Elements(AtriumController.XML_EL_RECORDS)
+            var insertedRecords = from e 
+                                  in xml.Elements(AtriumController.XML_EL_RECORDS)
                                   select e.Element(AtriumController.XML_EL_RECORD);
             CheckAllAnswers(insertedRecords, AtriumController.XML_EL_DATA);
             return insertedRecords.First().Element(AtriumController.XML_EL_DATA).Attribute("id")?.Value;
         }
 
         /// <summary>
-        /// Retrieves all Users on the Atrium Controller.
+        /// Inserts a User C# object into the Atrium Controller's database.
         /// </summary>
-        /// <param name="startIdx">Optional: Start index of the objects to search through as defined in the Atrium Controller. (by default: 1) 0 represents Admin.</param>
-        /// <param name="endIdx">Optional: End index of the objects to search through as defined in the Atrium Controller. (by default: 5000)</param>
-        /// <returns>Dictionary where Key is FirstName space LastName (e.g. "John Doe")
-        /// and value is the full Dictionary of information on the respective User.
-        /// If multiple records exist with the same Key, then the first User is the only one that stays.</returns>
-        public Dictionary<String, Dictionary<String, String>> GetAllUsers(int startIdx=1, int endIdx=5000)
+        /// <param name="user">The User object to insert into the Atrium database.</param>
+        /// <returns>String object that is of real type int representing the Object ID as assigned by the Atrium Controller when user is inserted.</returns>
+        public String InsertUser(User user)
         {
-            var content = FetchAndEncryptXML(AtriumController.READ_USER,
-                "@tid", _transactionNum.ToString(),
-                "@SerialNo", _serialNo,
-                "@min", startIdx.ToString(),
-                "@max", endIdx.ToString()
-            );
-            var req = DoPOSTAsync(AtriumController.DATA_URL, content, setSessionCookie: true, encryptedExchange: true);
-            req.Wait();
-            var xml = req.Result;
+            return InsertUser(
+                user.FirstName, 
+                user.LastName, 
+                user.ObjectGuid, 
+                user.ActivationDate, 
+                user.ExpirationDate, 
+                user.AccessLevelObjectIds);
+        }
 
-            var checkRecords = from e in xml.Elements(AtriumController.XML_EL_RECORDS)
-                               select e.Element(AtriumController.XML_EL_RECORD);
-            CheckAllAnswers(checkRecords, AtriumController.XML_EL_DATA);
+        /// <summary>
+        /// Gets all Users that exist in the Atrium database in increments. Best used when the number of Users in the database is unknown.
+        /// Larger increments increases speed through HTTP but could be worse if the number of records that actually exist are on the short end of the increment.
+        /// (e.g. 1034 records exist with a 1000 increment would force two HTTP requests searching for 2000 total records. 
+        /// An increment of 1035 or better would be best here)
+        /// By default 100.
+        /// </summary>
+        /// <param name="increment">Increment of users to grab. 
+        /// Larger numbers increases speed through HTTP but could be worse if the number of records that actually exist are on the short end of the increment.
+        /// (e.g. 1034 records exist with a 1000 increment would force two HTTP requests searching for 2000 total records. 
+        /// An increment of 1035 or better would be best here)
+        /// By default 100.</param>
+        /// <returns></returns>
+        public List<User> GetAllUsers(int increment=100)
+        {
+            int sIdx = 1;
+            int eIdx = increment;
 
-            var listRecords = from e in xml.Elements(AtriumController.XML_EL_RECORDS).Elements(AtriumController.XML_EL_RECORD).Elements(AtriumController.XML_EL_DATA)
-                          where e.Attribute("obj_status")?.Value == "used"
-                          select new Dictionary<String, String>
-                          {
-                              { "userID", e.Attribute("guid2")?.Value },
-                              { "objectID", e.Attribute("id")?.Value },
-                              { "isValid", e.Attribute("valid")?.Value },
-                              { "firstName", e.Attribute("label3")?.Value },
-                              { "lastName", e.Attribute("label4")?.Value },
-                              { "actDate", e.Attribute("utc_time22")?.Value },
-                              { "expDate", e.Attribute("utc_time23")?.Value },
-                              { "accessLevel1", e.Attribute("word24_0")?.Value },
-                              { "accessLevel2", e.Attribute("word24_1")?.Value },
-                              { "accessLevel3", e.Attribute("word24_2")?.Value },
-                              { "accessLevel4", e.Attribute("word24_3")?.Value },
-                              { "accessLevel5", e.Attribute("word24_4")?.Value }
-                          };
-
-            var records = new Dictionary<String, Dictionary<String, String>>();
-            foreach(var record in listRecords)
+            List<User> users = GetAllUsersByIndex(sIdx, eIdx);
+            while (users != null && users.Count >= eIdx)
             {
-                if(records.ContainsKey(record["firstName"] + " " + record["lastName"]))
-                {
-                    records[record["firstName"] + " " + record["lastName"]]["Count"]
-                        = (Int32.Parse(records[record["firstName"] + " " + record["lastName"]]["Count"])+1).ToString();
-                }
-                else
-                {
-                    record.Add("Count", "1");
-                    records.Add(record["firstName"] + " " + record["lastName"], record);
-                }
+                sIdx += increment;
+                eIdx += increment;
+                users.AddRange(GetAllUsersByIndex(sIdx, eIdx));
             }
-            return records.Count() > 0 ? records : null;
+
+            return users;
         }
 
-        /// <summary>
-        /// Retrieves all users on the Atrium Controller referenced by First Name and Last Name being equal (case insensitive).
-        /// </summary>
-        /// <param name="firstName">First name of the User to search for. If null, then only searches by Last name. One must be provided.</param>
-        /// <param name="lastName">Last name of the User to search for. If null, then only searches by First name. One must be provided.</param>
-        /// <param name="startIdx">Optional: Start index of the objects to search through as defined in the Atrium Controller. (by default: 1) 0 represents Admin.</param>
-        /// <param name="endIdx">Optional: End index of the objects to search through as defined in the Atrium Controller. (by default: 5000)</param>
-        /// <returns>List of Dictionaries holding Key Value Pairs of String to Strings where the Key is {userID, objectID, isValid, firstName, lastName, actDate, expDate, accessLevel{1-5}}.</returns>
-        public List<Dictionary<String, String>> GetAllUsersByName(String firstName, String lastName, int startIdx=1, int endIdx=5000)
+        private List<User> GetAllUsersByIndex(int startIdx, int endIdx)
         {
             var content = FetchAndEncryptXML(AtriumController.READ_USER,
                 "@tid", _transactionNum.ToString(),
@@ -306,46 +307,40 @@ namespace ThreeRiversTech.Zuleger.Atrium.API
             req.Wait();
             var xml = req.Result;
 
-            var checkRecords = from e in xml.Elements(AtriumController.XML_EL_RECORDS)
+            var checkRecords = from e 
+                               in xml.Elements(AtriumController.XML_EL_RECORDS)
                                select e.Element(AtriumController.XML_EL_RECORD);
             CheckAllAnswers(checkRecords, AtriumController.XML_EL_DATA);
 
-            var records = from e in xml.Elements(AtriumController.XML_EL_RECORDS).Elements(AtriumController.XML_EL_RECORD).Elements(AtriumController.XML_EL_DATA)
-                          where e.Attribute("obj_status")?.Value == "used" &&
-                                e.Attribute("label3")?.Value.ToLower() == firstName.ToLower() &&
-                                e.Attribute("label4")?.Value.ToLower() == lastName.ToLower()
-                          select new Dictionary<String, String>
-                          {
-                              { "userID", e.Attribute("guid2")?.Value },
-                              { "objectID", e.Attribute("id")?.Value },
-                              { "isValid", e.Attribute("valid")?.Value },
-                              { "firstName", e.Attribute("label3")?.Value },
-                              { "lastName", e.Attribute("label4")?.Value },
-                              { "actDate", e.Attribute("utc_time22")?.Value },
-                              { "expDate", e.Attribute("utc_time23")?.Value },
-                              { "accessLevel1", e.Attribute("word24_0")?.Value },
-                              { "accessLevel2", e.Attribute("word24_1")?.Value },
-                              { "accessLevel3", e.Attribute("word24_2")?.Value },
-                              { "accessLevel4", e.Attribute("word24_3")?.Value },
-                              { "accessLevel5", e.Attribute("word24_4")?.Value }
-                          };
+            var listRecords = from e 
+                              in xml.Elements(AtriumController.XML_EL_RECORDS)
+                                           .Elements(AtriumController.XML_EL_RECORD)
+                                           .Elements(AtriumController.XML_EL_DATA)
+                              where e.Attribute("obj_status")?.Value == "used"
+                              select new User
+                              {
+                                  ObjectGuid = Guid.Parse(e.Attribute("guid2")?.Value),
+                                  ObjectId = e.Attribute("id")?.Value,
+                                  IsValid = e.Attribute("valid")?.Value == "1",
+                                  FirstName = e.Attribute("label3")?.Value,
+                                  LastName = e.Attribute("label4")?.Value,
+                                  ActivationDate = new DateTime(1970, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc)
+                                                    .AddSeconds(Convert.ToInt32(e.Attribute("utc_time22")?.Value, 16))
+                                                    .ToLocalTime(),
+                                  ExpirationDate = new DateTime(1970, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc)
+                                                    .AddSeconds(Convert.ToInt32(e.Attribute("utc_time23")?.Value, 16))
+                                                    .ToLocalTime(),
+                                  AccessLevelObjectIds = new int[] 
+                                  { 
+                                      Int32.Parse(e.Attribute("word24_0")?.Value),
+                                      Int32.Parse(e.Attribute("word24_1")?.Value),
+                                      Int32.Parse(e.Attribute("word24_2")?.Value),
+                                      Int32.Parse(e.Attribute("word24_3")?.Value),
+                                      Int32.Parse(e.Attribute("word24_4")?.Value) 
+                                  }
+                              };
 
-            return records.Count() > 0 ? records.ToList() : null;
-        }
-
-        /// <summary>
-        /// Retrieves a user on the Atrium Controller referenced by the First Name and Last Name being equal. (case insensitive)
-        /// If multiple users exist with the same name, then the first User that appears in Object ID order (ascending) is returned.
-        /// If no user is found, then null is returned.
-        /// </summary>
-        /// <param name="firstName">First name of the User to search for. If null, then only searches by Last name. One must be provided.</param>
-        /// <param name="lastName">Last name of the User to search for. If null, then only searches by First name. One must be provided.</param>
-        /// <param name="startIdx">Optional: Start index of the objects to search through as defined in the Atrium Controller. (by default: 1) 0 represents Admin.</param>
-        /// <param name="endIdx">Optional: End index of the objects to search through as defined in the Atrium Controller. (by default: 5000)</param>
-        /// <returns>Dictionary holding Key Value Pairs of String to Strings where the Key is {objectID, isValid, displayName, actDate, expDate}.</returns>
-        public Dictionary<String, String> GetUserByName(String firstName, String lastName, int startIdx = 1, int endIdx = 5000)
-        {
-            return this.GetAllUsersByName(firstName, lastName, startIdx, endIdx)?.First();
+            return listRecords.ToList();
         }
 
         /// <summary>
@@ -378,7 +373,8 @@ namespace ThreeRiversTech.Zuleger.Atrium.API
             var req = DoPOSTAsync(AtriumController.DATA_URL, content, setSessionCookie: true, encryptedExchange: true);
             req.Wait();
             var xml = req.Result;
-            var updatedRecords = from e in xml.Elements(AtriumController.XML_EL_RECORDS)
+            var updatedRecords = from e 
+                                 in xml.Elements(AtriumController.XML_EL_RECORDS)
                                  select e.Element(AtriumController.XML_EL_RECORD);
             return CheckAllAnswers(updatedRecords, AtriumController.XML_EL_DATA, throwException: false);
         }
@@ -412,73 +408,60 @@ namespace ThreeRiversTech.Zuleger.Atrium.API
             var req = DoPOSTAsync(AtriumController.DATA_URL, content, setSessionCookie: true, encryptedExchange: true);
             req.Wait();
             var xml = req.Result;
-            var insertedRecords = from e in xml.Elements(AtriumController.XML_EL_RECORDS)
+            var insertedRecords = from e 
+                                  in xml.Elements(AtriumController.XML_EL_RECORDS)
                                   select e.Element(AtriumController.XML_EL_RECORD);
             CheckAllAnswers(insertedRecords, AtriumController.XML_EL_DATA);
             return insertedRecords?.First()?.Element(AtriumController.XML_EL_DATA)?.Attribute("id")?.Value;
         }
 
         /// <summary>
-        /// Retrieves all Cards on the Atrium Controller.
+        /// Inserts a Card C# object into the Atrium Controller's database.
         /// </summary>
-        /// <param name="startIdx">Optional: Start index of the objects to search through as defined in the Atrium Controller. (by default: 1) 0 represents Admin.</param>
-        /// <param name="endIdx">Optional: End index of the objects to search through as defined in the Atrium Controller. (by default: 5000)</param>
-        /// <returns>Dictionary where Key is userObjectID
-        /// and value is the full Dictionary of information on the respective User.
-        /// If multiple records exist with the same Key, then the first Card is the only one that stays.</returns>
-        public Dictionary<String, Dictionary<String, String>> GetAllCards(int startIdx = 1, int endIdx = 5000)
+        /// <param name="card">The Card object to be inserted into the Atrium Controller's database.</param>
+        /// <returns>String object that is of real type int representing the Object ID as assigned by the Atrium Controller when user is inserted.</returns>
+        public String InsertCard(Card card)
         {
-            var content = FetchAndEncryptXML(AtriumController.READ_CARD,
-                "@tid", _transactionNum.ToString(),
-                "@SerialNo", _serialNo,
-                "@min", startIdx.ToString(),
-                "@max", endIdx.ToString()
-            );
-            var req = DoPOSTAsync(AtriumController.DATA_URL, content, setSessionCookie: true, encryptedExchange: true);
-            req.Wait();
-            var xml = req.Result;
+            return InsertCard(
+                card.DisplayName, 
+                card.ObjectGuid, 
+                card.EntityRelationshipGuid.Value, 
+                card.EntityRelationshipId,
+                card.CardNumber, 
+                card.ActivationDate, 
+                card.ExpirationDate);
+        }
 
-            var checkRecords = from e in xml.Elements(AtriumController.XML_EL_RECORDS)
-                               select e.Element(AtriumController.XML_EL_RECORD);
-            CheckAllAnswers(checkRecords, AtriumController.XML_EL_DATA);
+        /// <summary>
+        /// Gets all Users that exist in the Atrium database in increments. Best used when the number of Users in the database is unknown.
+        /// Larger increments increases speed through HTTP but could be worse if the number of records that actually exist are on the short end of the increment.
+        /// (e.g. 1034 records exist with a 1000 increment would force two HTTP requests searching for 2000 total records. 
+        /// An increment of 1035 or better would be best here)
+        /// By default 100.
+        /// </summary>
+        /// <param name="increment">Increment of users to grab. 
+        /// Larger numbers increases speed through HTTP but could be worse if the number of records that actually exist are on the short end of the increment.
+        /// (e.g. 1034 records exist with a 1000 increment would force two HTTP requests searching for 2000 total records. 
+        /// An increment of 1035 or better would be best here)
+        /// By default 100.</param>
+        /// <returns></returns>
+        public List<Card> GetAllCards(int increment = 100)
+        {
+            int sIdx = 1;
+            int eIdx = increment;
 
-            var listRecords = from e in xml.Elements(AtriumController.XML_EL_RECORDS).Elements(AtriumController.XML_EL_RECORD).Elements(AtriumController.XML_EL_DATA)
-                          where e.Attribute("obj_status")?.Value == "used"
-                          select new Dictionary<String, String>
-                          {
-                              { "objectID", e.Attribute("id")?.Value },
-                              { "userObjectID", e.Attribute("dword4")?.Value },
-                              { "isValid", e.Attribute("valid")?.Value },
-                              { "displayName", e.Attribute("label3")?.Value },
-                              { "cardNumber", e.Attribute("hexv5")?.Value },
-                              { "actDate", e.Attribute("utc_time22")?.Value },
-                              { "expDate", e.Attribute("utc_time23")?.Value },
-                          };
-            var records = new Dictionary<String, Dictionary<String, String>>();
-            foreach(var record in listRecords)
+            List<Card> cards = GetAllCardsByIndex(sIdx, eIdx);
+            while (cards != null && cards.Count >= eIdx)
             {
-                if(records.ContainsKey(record["userObjectID"]) && records["userObjectID"].ContainsKey("Count"))
-                {
-                    records[record["userObjectID"]]["Count"] = (Int32.Parse(records[record["userObjectID"]]["Count"])+1).ToString();
-                }
-                else
-                {
-                    records.Add(record["userObjectID"], record);
-                    record.Add("Count", "1");
-                }
+                sIdx += increment;
+                eIdx += increment;
+                cards.AddRange(GetAllCardsByIndex(sIdx, eIdx));
             }
 
-            return records.Count() > 0 ? records : null;
+            return cards;
         }
 
-        /// <summary>
-        /// Retrieves all cards on the Atrium Controller referenced by the UserID attached to the card. If no cards are found, then null is returned.
-        /// </summary>
-        /// <param name="userID">Guid of the User that attached cards are being searched for.</param>
-        /// <param name="startIdx">Optional: Start index of the objects to search through as defined in the Atrium Controller. (by default: 1) 0 represents Admin.</param>
-        /// <param name="endIdx">Optional: End index of the objects to search through as defined in the Atrium Controller. (by default: 5000)</param>
-        /// <returns>A list of Dictionaries holding Key Value Pairs of String to Strings where the Key is {objectID, isValid, displayName, actDate, expDate}.</returns>
-        public List<Dictionary<String, String>> GetAllCardsByUserID(String userID, int startIdx = 1, int endIdx = 5000)
+        private List<Card> GetAllCardsByIndex(int startIdx, int endIdx)
         {
             var content = FetchAndEncryptXML(AtriumController.READ_CARD,
                 "@tid", _transactionNum.ToString(),
@@ -490,37 +473,33 @@ namespace ThreeRiversTech.Zuleger.Atrium.API
             req.Wait();
             var xml = req.Result;
 
-            var checkRecords = from e in xml.Elements(AtriumController.XML_EL_RECORDS)
+            var checkRecords = from e 
+                               in xml.Elements(AtriumController.XML_EL_RECORDS)
                                select e.Element(AtriumController.XML_EL_RECORD);
             CheckAllAnswers(checkRecords, AtriumController.XML_EL_DATA);
 
-            var records = from e in xml.Elements(AtriumController.XML_EL_RECORDS).Elements(AtriumController.XML_EL_RECORD).Elements(AtriumController.XML_EL_DATA)
-                          where e.Attribute("obj_status")?.Value == "used" &&
-                                e.Attribute("guid26")?.Value.ToLower() == userID
-                          select new Dictionary<String, String>
-                          {
-                              { "objectID", e.Attribute("id")?.Value },
-                              { "isValid", e.Attribute("valid")?.Value },
-                              { "displayName", e.Attribute("label3")?.Value },
-                              { "actDate", e.Attribute("utc_time22")?.Value },
-                              { "expDate", e.Attribute("utc_time23")?.Value },
-                          };
-
-            return records.Count() > 0 ? records.ToList() : null;
-        }
-
-        /// <summary>
-        /// Retrieves a card on the Atrium Controller referenced by the UserID attached to the card.
-        /// If a UserID has multiple cards attached, then the first Card that appears in Object ID order (ascending) is returned.
-        /// If no card is found, then null is returned.
-        /// </summary>
-        /// <param name="userID">Guid of the User that attached cards are being searched for.</param>
-        /// <param name="startIdx">Optional: Start index of the objects to search through as defined in the Atrium Controller. (by default: 1) 0 represents Admin.</param>
-        /// <param name="endIdx">Optional: End index of the objects to search through as defined in the Atrium Controller. (by default: 5000)</param>
-        /// <returns>Dictionary holding Key Value Pairs of String to Strings where the Key is {objectID, isValid, displayName, actDate, expDate}.</returns>
-        public Dictionary<String, String> GetCardByUserID(String userID, int startIdx = 1, int endIdx = 5000)
-        {
-            return this.GetAllCardsByUserID(userID, startIdx, endIdx)?.First();
+            var listRecords = from e 
+                              in xml.Elements(AtriumController.XML_EL_RECORDS)
+                                           .Elements(AtriumController.XML_EL_RECORD)
+                                           .Elements(AtriumController.XML_EL_DATA)
+                              where e.Attribute("obj_status")?.Value == "used"
+                              select new Card
+                              {
+                                  ObjectId = e.Attribute("id")?.Value,
+                                  ObjectGuid = Guid.Parse(e.Attribute("guid2")?.Value),
+                                  IsValid = e.Attribute("valid")?.Value == "1",
+                                  DisplayName = e.Attribute("label3")?.Value,
+                                  CardNumber = Convert.ToInt32(e.Attribute("hexv5")?.Value, 16),
+                                  // Dates need to be converted from Unix Timestamps to Local Times.
+                                  ActivationDate = new DateTime(1970, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc)
+                                                    .AddSeconds(Convert.ToInt32(e.Attribute("utc_time22")?.Value, 16))
+                                                    .ToLocalTime(),
+                                  ExpirationDate = new DateTime(1970, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc)
+                                                    .AddSeconds(Convert.ToInt32(e.Attribute("utc_time23")?.Value, 16))
+                                                    .ToLocalTime()
+                              };
+            
+            return listRecords.ToList();
         }
 
         /// <summary>
@@ -664,9 +643,9 @@ namespace ThreeRiversTech.Zuleger.Atrium.API
         /// <param name="args">Variable arguments of String objects that are used to substitute arguments in the XML template.
         /// The size of the amount of Strings to pass should be divisible by two where every even argument is what should be replaced by the odd argument.</param>
         /// <returns>StringContent item that is to be used in the next POST request.</returns>
-        private StringContent FetchXMLAsHttpContent(String fileName, params String[] args)
+        private StringContent FetchXMLAsHttpContent(String xml, params String[] args)
         {
-            var fileContent = File.ReadAllText(fileName, Encoding.ASCII);
+            var fileContent = xml;
             for(int i = 0; i < args.Length; i += 2)
             {
                 fileContent = fileContent.Replace(args[i], args[i+1]);
@@ -684,14 +663,14 @@ namespace ThreeRiversTech.Zuleger.Atrium.API
         /// <summary>
         /// Fetches an XML File and substitutes provided arguments, encrypts it under the RC4 Encryption Algorithm, then creates an encrypted request to be sent.
         /// </summary>
-        /// <param name="fileName">File name of the XML template to use.</param>
+        /// <param name="xml">XML template to use.</param>
         /// <param name="args">Variable arguments of String objects that are used to substitute arguments in the XML template.
         /// The size of the amount of Strings to pass should be divisible by two where every even argument is what should be replaced by the odd argument.</param>
         /// <returns>A Dictionary of parameters that are to be used in a parameterized POST request.</returns>
-        private Dictionary<String, String> FetchAndEncryptXML(String fileName, params String[] args)
+        private Dictionary<String, String> FetchAndEncryptXML(String xml, params String[] args)
         {
             Dictionary<String, String> parameters = new Dictionary<String, String>();
-            var fileContent = File.ReadAllText(fileName, Encoding.ASCII);
+            var fileContent = xml;
             for (int i = 0; i < args.Length; i += 2)
             {
                 fileContent = fileContent.Replace(args[i], args[i + 1]);

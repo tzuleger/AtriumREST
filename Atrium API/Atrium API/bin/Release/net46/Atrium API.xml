@@ -66,6 +66,16 @@
             <param name="al5">Integer that represents the Object ID for an Access Level. By default: -1 for no access level</param>
             <returns></returns>
         </member>
+        <member name="M:ThreeRiversTech.Zuleger.Atrium.API.AtriumController.To26BitCardNumber(System.Int32,System.Int32)">
+            <summary>
+            Converts two 32-bit integers into one 26-bit integer. Specifically used for converting a Family Number and Member Number into
+            it's 26-bit variant, where the Family Number is the upper 10 bits and the Member Number is the lower 16 bits.
+            </summary>
+            <param name="familyNumber">10-bit Int32 that corresponds to the Family Number on the card.</param>
+            <param name="memberNumber">16-bit Int32 that corresponds to the Member Number that belongs to the related family.</param>
+            <returns>26-bit integer directly converted from the family number bits concatenated with the member number bits.
+            If family number or member number is less than 0, then -1 is returned.</returns>
+        </member>
         <member name="M:ThreeRiversTech.Zuleger.Atrium.API.AtriumController.#ctor(System.String,System.String,System.String)">
             <summary>
             Creates an AtriumConnection object connected to the specified address under the specified username and password.
@@ -86,37 +96,27 @@
             <param name="accessLevels">Array of 5 integers between 0-9,999 (inclusive) that represent the Object ID for each Access Level.</param>
             <returns>String object that is of real type int representing the Object ID as assigned by the Atrium Controller when user is inserted.</returns>
         </member>
-        <member name="M:ThreeRiversTech.Zuleger.Atrium.API.AtriumController.GetAllUsers(System.Int32,System.Int32)">
+        <member name="M:ThreeRiversTech.Zuleger.Atrium.API.AtriumController.InsertUser(ThreeRiversTech.Zuleger.Atrium.API.Objects.User)">
             <summary>
-            Retrieves all Users on the Atrium Controller.
+            Inserts a User C# object into the Atrium Controller's database.
             </summary>
-            <param name="startIdx">Optional: Start index of the objects to search through as defined in the Atrium Controller. (by default: 1) 0 represents Admin.</param>
-            <param name="endIdx">Optional: End index of the objects to search through as defined in the Atrium Controller. (by default: 5000)</param>
-            <returns>Dictionary where Key is FirstName space LastName (e.g. "John Doe")
-            and value is the full Dictionary of information on the respective User.
-            If multiple records exist with the same Key, then the first User is the only one that stays.</returns>
+            <param name="user">The User object to insert into the Atrium database.</param>
+            <returns>String object that is of real type int representing the Object ID as assigned by the Atrium Controller when user is inserted.</returns>
         </member>
-        <member name="M:ThreeRiversTech.Zuleger.Atrium.API.AtriumController.GetAllUsersByName(System.String,System.String,System.Int32,System.Int32)">
+        <member name="M:ThreeRiversTech.Zuleger.Atrium.API.AtriumController.GetAllUsers(System.Int32)">
             <summary>
-            Retrieves all users on the Atrium Controller referenced by First Name and Last Name being equal (case insensitive).
+            Gets all Users that exist in the Atrium database in increments. Best used when the number of Users in the database is unknown.
+            Larger increments increases speed through HTTP but could be worse if the number of records that actually exist are on the short end of the increment.
+            (e.g. 1034 records exist with a 1000 increment would force two HTTP requests searching for 2000 total records. 
+            An increment of 1035 or better would be best here)
+            By default 100.
             </summary>
-            <param name="firstName">First name of the User to search for. If null, then only searches by Last name. One must be provided.</param>
-            <param name="lastName">Last name of the User to search for. If null, then only searches by First name. One must be provided.</param>
-            <param name="startIdx">Optional: Start index of the objects to search through as defined in the Atrium Controller. (by default: 1) 0 represents Admin.</param>
-            <param name="endIdx">Optional: End index of the objects to search through as defined in the Atrium Controller. (by default: 5000)</param>
-            <returns>List of Dictionaries holding Key Value Pairs of String to Strings where the Key is {userID, objectID, isValid, firstName, lastName, actDate, expDate, accessLevel{1-5}}.</returns>
-        </member>
-        <member name="M:ThreeRiversTech.Zuleger.Atrium.API.AtriumController.GetUserByName(System.String,System.String,System.Int32,System.Int32)">
-            <summary>
-            Retrieves a user on the Atrium Controller referenced by the First Name and Last Name being equal. (case insensitive)
-            If multiple users exist with the same name, then the first User that appears in Object ID order (ascending) is returned.
-            If no user is found, then null is returned.
-            </summary>
-            <param name="firstName">First name of the User to search for. If null, then only searches by Last name. One must be provided.</param>
-            <param name="lastName">Last name of the User to search for. If null, then only searches by First name. One must be provided.</param>
-            <param name="startIdx">Optional: Start index of the objects to search through as defined in the Atrium Controller. (by default: 1) 0 represents Admin.</param>
-            <param name="endIdx">Optional: End index of the objects to search through as defined in the Atrium Controller. (by default: 5000)</param>
-            <returns>Dictionary holding Key Value Pairs of String to Strings where the Key is {objectID, isValid, displayName, actDate, expDate}.</returns>
+            <param name="increment">Increment of users to grab. 
+            Larger numbers increases speed through HTTP but could be worse if the number of records that actually exist are on the short end of the increment.
+            (e.g. 1034 records exist with a 1000 increment would force two HTTP requests searching for 2000 total records. 
+            An increment of 1035 or better would be best here)
+            By default 100.</param>
+            <returns></returns>
         </member>
         <member name="M:ThreeRiversTech.Zuleger.Atrium.API.AtriumController.UpdateUser(System.String,System.String,System.String,System.DateTime,System.DateTime,System.Int32[])">
             <summary>
@@ -143,35 +143,27 @@
             <param name="expDate">Expiration Date of the card.</param>
             <returns>String object that is of real type int representing the Object ID as assigned by the Atrium Controller when card is inserted.</returns>
         </member>
-        <member name="M:ThreeRiversTech.Zuleger.Atrium.API.AtriumController.GetAllCards(System.Int32,System.Int32)">
+        <member name="M:ThreeRiversTech.Zuleger.Atrium.API.AtriumController.InsertCard(ThreeRiversTech.Zuleger.Atrium.API.Objects.Card)">
             <summary>
-            Retrieves all Cards on the Atrium Controller.
+            Inserts a Card C# object into the Atrium Controller's database.
             </summary>
-            <param name="startIdx">Optional: Start index of the objects to search through as defined in the Atrium Controller. (by default: 1) 0 represents Admin.</param>
-            <param name="endIdx">Optional: End index of the objects to search through as defined in the Atrium Controller. (by default: 5000)</param>
-            <returns>Dictionary where Key is userObjectID
-            and value is the full Dictionary of information on the respective User.
-            If multiple records exist with the same Key, then the first Card is the only one that stays.</returns>
+            <param name="card">The Card object to be inserted into the Atrium Controller's database.</param>
+            <returns>String object that is of real type int representing the Object ID as assigned by the Atrium Controller when user is inserted.</returns>
         </member>
-        <member name="M:ThreeRiversTech.Zuleger.Atrium.API.AtriumController.GetAllCardsByUserID(System.String,System.Int32,System.Int32)">
+        <member name="M:ThreeRiversTech.Zuleger.Atrium.API.AtriumController.GetAllCards(System.Int32)">
             <summary>
-            Retrieves all cards on the Atrium Controller referenced by the UserID attached to the card. If no cards are found, then null is returned.
+            Gets all Users that exist in the Atrium database in increments. Best used when the number of Users in the database is unknown.
+            Larger increments increases speed through HTTP but could be worse if the number of records that actually exist are on the short end of the increment.
+            (e.g. 1034 records exist with a 1000 increment would force two HTTP requests searching for 2000 total records. 
+            An increment of 1035 or better would be best here)
+            By default 100.
             </summary>
-            <param name="userID">Guid of the User that attached cards are being searched for.</param>
-            <param name="startIdx">Optional: Start index of the objects to search through as defined in the Atrium Controller. (by default: 1) 0 represents Admin.</param>
-            <param name="endIdx">Optional: End index of the objects to search through as defined in the Atrium Controller. (by default: 5000)</param>
-            <returns>A list of Dictionaries holding Key Value Pairs of String to Strings where the Key is {objectID, isValid, displayName, actDate, expDate}.</returns>
-        </member>
-        <member name="M:ThreeRiversTech.Zuleger.Atrium.API.AtriumController.GetCardByUserID(System.String,System.Int32,System.Int32)">
-            <summary>
-            Retrieves a card on the Atrium Controller referenced by the UserID attached to the card.
-            If a UserID has multiple cards attached, then the first Card that appears in Object ID order (ascending) is returned.
-            If no card is found, then null is returned.
-            </summary>
-            <param name="userID">Guid of the User that attached cards are being searched for.</param>
-            <param name="startIdx">Optional: Start index of the objects to search through as defined in the Atrium Controller. (by default: 1) 0 represents Admin.</param>
-            <param name="endIdx">Optional: End index of the objects to search through as defined in the Atrium Controller. (by default: 5000)</param>
-            <returns>Dictionary holding Key Value Pairs of String to Strings where the Key is {objectID, isValid, displayName, actDate, expDate}.</returns>
+            <param name="increment">Increment of users to grab. 
+            Larger numbers increases speed through HTTP but could be worse if the number of records that actually exist are on the short end of the increment.
+            (e.g. 1034 records exist with a 1000 increment would force two HTTP requests searching for 2000 total records. 
+            An increment of 1035 or better would be best here)
+            By default 100.</param>
+            <returns></returns>
         </member>
         <member name="M:ThreeRiversTech.Zuleger.Atrium.API.AtriumController.UpdateCard(System.String,System.String,System.DateTime,System.DateTime)">
             <summary>
@@ -233,7 +225,7 @@
             <summary>
             Fetches an XML File and substitutes provided arguments, encrypts it under the RC4 Encryption Algorithm, then creates an encrypted request to be sent.
             </summary>
-            <param name="fileName">File name of the XML template to use.</param>
+            <param name="xml">XML template to use.</param>
             <param name="args">Variable arguments of String objects that are used to substitute arguments in the XML template.
             The size of the amount of Strings to pass should be divisible by two where every even argument is what should be replaced by the odd argument.</param>
             <returns>A Dictionary of parameters that are to be used in a parameterized POST request.</returns>
@@ -342,6 +334,97 @@
             </summary>
             <param name="xml">The XML documentation element that should contain the attribute.</param>
             <param name="attr">The attribute that was searched for in the XML.</param>
+        </member>
+        <member name="T:ThreeRiversTech.Zuleger.Atrium.API.Objects.BaseObject">
+            <summary>
+            The base object containing attributes that all Atrium objects have.
+            </summary>
+        </member>
+        <member name="P:ThreeRiversTech.Zuleger.Atrium.API.Objects.BaseObject.ObjectId">
+            <summary>
+            Object ID of where the Object is located in the Atrium Controller.
+            </summary>
+        </member>
+        <member name="P:ThreeRiversTech.Zuleger.Atrium.API.Objects.BaseObject.ObjectGuid">
+            <summary>
+            Object's GUID.
+            </summary>
+        </member>
+        <member name="P:ThreeRiversTech.Zuleger.Atrium.API.Objects.BaseObject.EntityRelationshipId">
+            <summary>
+            Related Entity's Object ID.
+            </summary>
+        </member>
+        <member name="P:ThreeRiversTech.Zuleger.Atrium.API.Objects.BaseObject.EntityRelationshipGuid">
+            <summary>
+            Related Entity's GUID
+            </summary>
+        </member>
+        <member name="P:ThreeRiversTech.Zuleger.Atrium.API.Objects.BaseObject.IsValid">
+            <summary>
+            Boolean specifying if the Object is valid in the Controller.
+            </summary>
+        </member>
+        <member name="T:ThreeRiversTech.Zuleger.Atrium.API.Objects.User">
+            <summary>
+            User object that resembles the appearance of User in Atrium (and attributes)
+            </summary>
+        </member>
+        <member name="P:ThreeRiversTech.Zuleger.Atrium.API.Objects.User.FirstName">
+            <summary>
+            First Name of the User.
+            </summary>
+        </member>
+        <member name="P:ThreeRiversTech.Zuleger.Atrium.API.Objects.User.LastName">
+            <summary>
+            Last Name of the User.
+            </summary>
+        </member>
+        <member name="P:ThreeRiversTech.Zuleger.Atrium.API.Objects.User.ActivationDate">
+            <summary>
+            Activation Date of the User.
+            </summary>
+        </member>
+        <member name="P:ThreeRiversTech.Zuleger.Atrium.API.Objects.User.ExpirationDate">
+            <summary>
+            Expiration Date of the User.
+            </summary>
+        </member>
+        <member name="P:ThreeRiversTech.Zuleger.Atrium.API.Objects.User.AccessLevelObjectIds">
+            <summary>
+            Integer array (expected size of at most 5) specifying the (up to) five Levels (specification of Object ID) this User has access to.
+            </summary>
+        </member>
+        <member name="M:ThreeRiversTech.Zuleger.Atrium.API.Objects.User.ToString">
+            <summary>
+            Overriden ToString() to return FirstName concatenated with LastName separated by a space. (e.g. "John Doe").
+            </summary>
+            <returns>String of User's FirstName concatenated with LastName separated with a space.</returns>
+        </member>
+        <member name="T:ThreeRiversTech.Zuleger.Atrium.API.Objects.Card">
+            <summary>
+            Card object that resembles the appearance of Card in Atrium (and attributes)
+            </summary>
+        </member>
+        <member name="P:ThreeRiversTech.Zuleger.Atrium.API.Objects.Card.DisplayName">
+            <summary>
+            Display Name of the Card.
+            </summary>
+        </member>
+        <member name="P:ThreeRiversTech.Zuleger.Atrium.API.Objects.Card.CardNumber">
+            <summary>
+            26 bit Integer where upper 10 bits is the Family number and lower 16 bits is the card number.
+            </summary>
+        </member>
+        <member name="P:ThreeRiversTech.Zuleger.Atrium.API.Objects.Card.ActivationDate">
+            <summary>
+            Activation Date of the Card.
+            </summary>
+        </member>
+        <member name="P:ThreeRiversTech.Zuleger.Atrium.API.Objects.Card.ExpirationDate">
+            <summary>
+            Expiration Date of the Card.
+            </summary>
         </member>
     </members>
 </doc>
