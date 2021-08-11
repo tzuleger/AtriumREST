@@ -107,13 +107,13 @@
             <summary>
             Gets all Users that exist in the Atrium database in increments. Best used when the number of Users in the database is unknown.
             Larger increments increases speed through HTTP but could be worse if the number of records that actually exist are on the short end of the increment.
-            (e.g. 1034 records exist with a 1000 increment would force two HTTP requests searching for 2000 total records. 
+            (e.g. 1034 records exist with a 1000 increment would force two HTTP requests searching for 2000 total records.
             An increment of 1035 or better would be best here)
             By default 100.
             </summary>
-            <param name="increment">Increment of users to grab. 
+            <param name="increment">Increment of users to grab.
             Larger numbers increases speed through HTTP but could be worse if the number of records that actually exist are on the short end of the increment.
-            (e.g. 1034 records exist with a 1000 increment would force two HTTP requests searching for 2000 total records. 
+            (e.g. 1034 records exist with a 1000 increment would force two HTTP requests searching for 2000 total records.
             An increment of 1035 or better would be best here)
             By default 100.</param>
             <returns></returns>
@@ -128,6 +128,13 @@
             <param name="actDate">New expiration date of the User to update.</param>
             <param name="expDate">New activation date of the User to update.</param>
             <param name="accessLevels">Array of 5 integers between 0-9,999 (inclusive) that represent the Object ID for each Access Level.</param>
+            <returns>Boolean indicating whether the user was successfully updated or not.</returns>
+        </member>
+        <member name="M:ThreeRiversTech.Zuleger.Atrium.API.AtriumController.UpdateUser(ThreeRiversTech.Zuleger.Atrium.API.Objects.User)">
+            <summary>
+            Updates a User based off an already existing User C# object.
+            </summary>
+            <param name="user">User object that is to be updated. (Object ID of "user" must already exist in the Controller as a User)</param>
             <returns>Boolean indicating whether the user was successfully updated or not.</returns>
         </member>
         <member name="M:ThreeRiversTech.Zuleger.Atrium.API.AtriumController.InsertCard(System.String,System.Guid,System.Guid,System.String,System.Int32,System.DateTime,System.DateTime)">
@@ -154,13 +161,13 @@
             <summary>
             Gets all Users that exist in the Atrium database in increments. Best used when the number of Users in the database is unknown.
             Larger increments increases speed through HTTP but could be worse if the number of records that actually exist are on the short end of the increment.
-            (e.g. 1034 records exist with a 1000 increment would force two HTTP requests searching for 2000 total records. 
+            (e.g. 1034 records exist with a 1000 increment would force two HTTP requests searching for 2000 total records.
             An increment of 1035 or better would be best here)
             By default 100.
             </summary>
-            <param name="increment">Increment of users to grab. 
+            <param name="increment">Increment of users to grab.
             Larger numbers increases speed through HTTP but could be worse if the number of records that actually exist are on the short end of the increment.
-            (e.g. 1034 records exist with a 1000 increment would force two HTTP requests searching for 2000 total records. 
+            (e.g. 1034 records exist with a 1000 increment would force two HTTP requests searching for 2000 total records.
             An increment of 1035 or better would be best here)
             By default 100.</param>
             <returns></returns>
@@ -175,111 +182,15 @@
             <param name="expDate">New activation date of the User to update.</param>
             <returns>Boolean indicating whether the card was successfully updated or not.</returns>
         </member>
-        <member name="M:ThreeRiversTech.Zuleger.Atrium.API.AtriumController.CheckAnswer(System.Xml.Linq.XElement,System.Xml.Linq.XName,System.String,System.Boolean)">
+        <member name="M:ThreeRiversTech.Zuleger.Atrium.API.AtriumController.UpdateCard(ThreeRiversTech.Zuleger.Atrium.API.Objects.Card)">
             <summary>
-            Checks an element in an XML Response String that it has an "ok" answer.
+            Updates a User given a C# Card Object. Object ID must already exist in the database.
             </summary>
-            <param name="xml">XElement that is to be checked for the "ok"</param>
-            <param name="elementName">Subelement name to check inside of xml</param>
-            <param name="attr">Optional: Attribute that the "ok" should be under. (by default: "err")</param>
-            <param name="throwException">Optional: If true, throws an exception. Otherwise, returns a boolean indicating success or not. (by default: true)</param>
-            <returns>Boolean value indicating that "ok" is in the response string.</returns>
-        </member>
-        <member name="M:ThreeRiversTech.Zuleger.Atrium.API.AtriumController.CheckAllAnswers(System.Collections.Generic.IEnumerable{System.Xml.Linq.XElement},System.Xml.Linq.XName,System.String,System.Boolean)">
-            <summary>
-            Checks a set of elements in an XML Response String that it has an "ok" answer.
-            </summary>
-            <param name="xmlElements">Enumerable XML elements that are typically of "REC" type.</param>
-            <param name="elementName">Subelement name to check inside of xml</param>
-            <param name="attr">Expected attribute that displays the response/answer message. (by default: "res")</param>
-            <param name="throwException">Optional: If true, throws an exception. Otherwise, returns a boolean indicating success or not. (by default: true)</param>
-            <returns>Boolean value indicating that "ok" is in the response string.</returns>
-        </member>
-        <member name="M:ThreeRiversTech.Zuleger.Atrium.API.AtriumController.DoPOSTAsync(System.String,System.Collections.Generic.Dictionary{System.String,System.String},System.Boolean,System.Boolean)">
-            <summary>
-            Performs a POST request to the specified Subdomain (under the Address provided from construction) with specific parameters to send.
-            </summary>
-            <param name="subdomain">The subdomain that the GET request is to be sent.</param>
-            <param name="parameters">Dictionary of parameters that are to be sent with the POST request.</param>
-            <param name="setSessionCookie">Optional: If true, sets a Cookie that stores the SessionID. (by default: false)</param>
-            <param name="encryptedExchange">Optional: If true, expects the response to be encrypted and decrypts it upon reception. (by default: false)</param>
-            <returns>An asynchronous task that returns an XElement of the response. (XML Response)</returns>
-        </member>
-        <member name="M:ThreeRiversTech.Zuleger.Atrium.API.AtriumController.DoGETAsync(System.String)">
-            <summary>
-            Performs a GET request to the specified Subdomain (under the Address provided from construction)
-            </summary>
-            <param name="subdomain">The subdomain that the GET request is to be sent.</param>
-            <returns>An asynchronous task that returns an XElement of the response. (XML Response)</returns>
-        </member>
-        <member name="M:ThreeRiversTech.Zuleger.Atrium.API.AtriumController.FetchXMLAsHttpContent(System.String,System.String[])">
-            <summary>
-            Fetches an XML File and substitutes provided arguments and converts it to an HttpContent object.
-            </summary>
-            <param name="fileName">File name of the XML template to be used.</param>
-            <param name="args">Variable arguments of String objects that are used to substitute arguments in the XML template.
-            The size of the amount of Strings to pass should be divisible by two where every even argument is what should be replaced by the odd argument.</param>
-            <returns>StringContent item that is to be used in the next POST request.</returns>
-        </member>
-        <member name="M:ThreeRiversTech.Zuleger.Atrium.API.AtriumController.FetchAndEncryptXML(System.String,System.String[])">
-            <summary>
-            Fetches an XML File and substitutes provided arguments, encrypts it under the RC4 Encryption Algorithm, then creates an encrypted request to be sent.
-            </summary>
-            <param name="xml">XML template to use.</param>
-            <param name="args">Variable arguments of String objects that are used to substitute arguments in the XML template.
-            The size of the amount of Strings to pass should be divisible by two where every even argument is what should be replaced by the odd argument.</param>
-            <returns>A Dictionary of parameters that are to be used in a parameterized POST request.</returns>
-        </member>
-        <member name="M:ThreeRiversTech.Zuleger.Atrium.API.AtriumController.Rc4(System.Byte[],System.Byte[])">
-            <summary>
-            Performs RC4 encryption/decryption on a specified byte array with a specified byte array as the key.
-            </summary>
-            <param name="pwd">Key that is used to encrypt/decrypt the data.</param>
-            <param name="data">Data that is to be encrypted/decrypted</param>
-            <returns>Byte array that represents the ciphertext of data after encryption/decryption.</returns>
-        </member>
-        <member name="M:ThreeRiversTech.Zuleger.Atrium.API.AtriumController.Md5(System.String)">
-            <summary>
-            Performs an MD5 Hash algorithm on a String.
-            </summary>
-            <param name="text">String to perform the MD5 hash on.</param>
-            <returns>A byte array that is the result of hashing text.</returns>
-        </member>
-        <member name="M:ThreeRiversTech.Zuleger.Atrium.API.AtriumController.CheckSum(System.String)">
-            <summary>
-            Counts the character codes of every character in given String to create a CheckSum.
-            </summary>
-            <param name="str">String to be checksummed.</param>
-            <returns>A 16 bit Hexadecimal String that is built from the checksum of str.</returns>
-        </member>
-        <member name="M:ThreeRiversTech.Zuleger.Atrium.API.AtriumController.PadLeft(System.String,System.Char,System.Int32)">
-            <summary>
-            Pads a string with a provided specific character to a provided total length.
-            </summary>
-            <param name="s">String that is to be padded.</param>
-            <param name="c">Character that is used when padding s.</param>
-            <param name="length">Total length of what s should be.</param>
-            <returns>String s padded with c to the desired length.</returns>
-        </member>
-        <member name="M:ThreeRiversTech.Zuleger.Atrium.API.AtriumController.ByteArrayToHexString(System.Byte[])">
-            <summary>
-            Converts an array of bytes to a hexadecimal string.
-            </summary>
-            <param name="bytes">Byte array to be converted to hexadecimal string</param>
-            <returns>A hexadecimal String as interpreted by the bytes.</returns>
+            <param name="card">Card object to update</param>
+            <returns>Boolean indicating whether the card was updated successfully or not.</returns>
         </member>
         <member name="M:ThreeRiversTech.Zuleger.Atrium.API.AtriumController.HexStringToByteArray(System.String)">
-            <summary>
             Converts a hexadecimal String to an array of bytes.
-            </summary>
-            <param name="hex">Hexadecimal string to convert into a byte array.</param>
-            <returns>Byte array that was converted from the hexadecimal string.</returns>
-        </member>
-        <member name="M:ThreeRiversTech.Zuleger.Atrium.API.AtriumController.GenerateRandomId">
-             <summary>
-            
-             </summary>
-             <returns></returns>
         </member>
         <member name="T:ThreeRiversTech.Zuleger.Atrium.API.AtriumController.AnswerNotOkException">
             <summary>
@@ -365,6 +276,12 @@
             Boolean specifying if the Object is valid in the Controller.
             </summary>
         </member>
+        <member name="M:ThreeRiversTech.Zuleger.Atrium.API.Objects.BaseObject.Update(ThreeRiversTech.Zuleger.Atrium.API.Objects.BaseObject)">
+            <summary>
+            Update this object's attributes to be the same as o's attributes.
+            </summary>
+            <param name="o"></param>
+        </member>
         <member name="T:ThreeRiversTech.Zuleger.Atrium.API.Objects.User">
             <summary>
             User object that resembles the appearance of User in Atrium (and attributes)
@@ -424,6 +341,11 @@
         <member name="P:ThreeRiversTech.Zuleger.Atrium.API.Objects.Card.ExpirationDate">
             <summary>
             Expiration Date of the Card.
+            </summary>
+        </member>
+        <member name="T:ThreeRiversTech.Zuleger.Atrium.API.Example.Example">
+            <summary>
+            In-depth example on how to use the Atrium API.
             </summary>
         </member>
     </members>

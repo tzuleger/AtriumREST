@@ -46,7 +46,7 @@ namespace ThreeRiversTech.Zuleger.Atrium.API
         private const String UPDATE_USER = "<?xml version=\"1.0\" encoding=\"utf-8\"?><SDK xmlns='https://www.cdvi.ca/'><RECORDS><REC trans_id='@tid' cmd='write' sernum='@SerialNo' type='user' id='@ObjectID' rec='cfg'><DATA label3='@FirstName' label4='@LastName' utc_time22='@ActivationDate' utc_time23='@ExpirationDate'/></REC></RECORDS></SDK>";
         private const String UPDATE_CARD = "<?xml version=\"1.0\" encoding=\"utf-8\"?><SDK xmlns='https://www.cdvi.ca/'><RECORDS><REC trans_id='@tid' cmd='write' sernum='@SerialNo' type='user' id='@ObjectID' rec='cfg'><DATA label3='@DisplayName' utc_time22='@ActivationDate' utc_time23='@ExpirationDate'/></REC><RECORDS></SDK>";
         private const String READ_USER = "<?xml version=\"1.0\" encoding=\"utf-8\"?><SDK xmlns='https://www.cdvi.ca/'><RECORDS><REC trans_id='@tid' cmd='read' sernum='@SerialNo' type='user' id_min='@min' id_max='@max' rec='cfg'></REC></RECORDS></SDK>";
-        private const String READ_CARD = "<?xml version=\"1.0\" encoding=\"utf-8\"?><SDK xmlns='https://www.cdvi.ca/'><RECORDS><REC trans_id='@tid' cmd='read' sernum='@SerialNo' type='card' id='0' rec='cfg'></REC></RECORDS></SDK>";
+        private const String READ_CARD = "<?xml version=\"1.0\" encoding=\"utf-8\"?><SDK xmlns='https://www.cdvi.ca/'><RECORDS><REC trans_id='@tid' cmd='read' sernum='@SerialNo' type='card' id_min='@min' id_max='@max' rec='cfg'></REC></RECORDS></SDK>";
 
         // For Random Guid generation.
         private static Random _random = new Random();
@@ -257,13 +257,16 @@ namespace ThreeRiversTech.Zuleger.Atrium.API
         /// <returns>String object that is of real type int representing the Object ID as assigned by the Atrium Controller when user is inserted.</returns>
         public String InsertUser(User user)
         {
-            return InsertUser(
+            String objectId = InsertUser(
                 user.FirstName,
                 user.LastName,
                 user.ObjectGuid,
                 user.ActivationDate,
                 user.ExpirationDate,
                 user.AccessLevelObjectIds);
+
+            user.ObjectId = objectId;
+            return objectId;
         }
 
         /// <summary>
@@ -291,6 +294,11 @@ namespace ThreeRiversTech.Zuleger.Atrium.API
                 eIdx += increment;
                 users.AddRange(GetAllUsersByIndex(sIdx, eIdx));
             }
+
+            // Increment once more to grab stragglers.
+            sIdx += increment;
+            eIdx += increment;
+            users.AddRange(GetAllUsersByIndex(sIdx, eIdx));
 
             return users;
         }
@@ -379,6 +387,23 @@ namespace ThreeRiversTech.Zuleger.Atrium.API
             return CheckAllAnswers(updatedRecords, AtriumController.XML_EL_DATA, throwException: false);
         }
 
+        /// <summary>
+        /// Updates a User based off an already existing User C# object.
+        /// </summary>
+        /// <param name="user">User object that is to be updated. (Object ID of "user" must already exist in the Controller as a User)</param>
+        /// <returns>Boolean indicating whether the user was successfully updated or not.</returns>
+        public bool UpdateUser(User user)
+        {
+            return UpdateUser(
+                user.ObjectId, 
+                user.FirstName, 
+                user.LastName, 
+                user.ActivationDate, 
+                user.ExpirationDate, 
+                user.AccessLevelObjectIds);
+
+        }
+
         // Insert card into atrium controller associated with AtriumConnection object.
         /// <summary>
         /// Inserts a new Card into Atrium under the provided information.
@@ -422,7 +447,7 @@ namespace ThreeRiversTech.Zuleger.Atrium.API
         /// <returns>String object that is of real type int representing the Object ID as assigned by the Atrium Controller when user is inserted.</returns>
         public String InsertCard(Card card)
         {
-            return InsertCard(
+            String objectId = InsertCard(
                 card.DisplayName,
                 card.ObjectGuid,
                 card.EntityRelationshipGuid.Value,
@@ -430,6 +455,9 @@ namespace ThreeRiversTech.Zuleger.Atrium.API
                 card.CardNumber,
                 card.ActivationDate,
                 card.ExpirationDate);
+
+            card.ObjectId = objectId;
+            return objectId;
         }
 
         /// <summary>
@@ -445,7 +473,7 @@ namespace ThreeRiversTech.Zuleger.Atrium.API
         /// An increment of 1035 or better would be best here)
         /// By default 100.</param>
         /// <returns></returns>
-        public List<Card> GetAllCards(int increment = 100)
+        public List<Card> GetAllCards(int increment=100)
         {
             int sIdx = 1;
             int eIdx = increment;
@@ -457,6 +485,11 @@ namespace ThreeRiversTech.Zuleger.Atrium.API
                 eIdx += increment;
                 cards.AddRange(GetAllCardsByIndex(sIdx, eIdx));
             }
+
+            // Increment once more to grab stragglers.
+            sIdx += increment;
+            eIdx += increment;
+            cards.AddRange(GetAllCardsByIndex(sIdx, eIdx));
 
             return cards;
         }
@@ -529,7 +562,19 @@ namespace ThreeRiversTech.Zuleger.Atrium.API
             return CheckAllAnswers(updatedRecords, AtriumController.XML_EL_DATA, throwException: false);
         }
 
-
+        /// <summary>
+        /// Updates a User given a C# Card Object. Object ID must already exist in the database.
+        /// </summary>
+        /// <param name="card">Card object to update</param>
+        /// <returns>Boolean indicating whether the card was updated successfully or not.</returns>
+        public bool UpdateCard(Card card)
+        {
+            return UpdateCard(
+                card.ObjectId, 
+                card.DisplayName, 
+                card.ActivationDate, 
+                card.ExpirationDate);
+        }
 
         // Checks an element in an XML Response String that it has an "ok" answer.
         private bool CheckAnswer(XElement xml, XName elementName, String attr="err", bool throwException=true)

@@ -14,7 +14,7 @@ namespace ThreeRiversTech.Zuleger.Atrium.API.Objects
         /// <summary>
         /// Object ID of where the Object is located in the Atrium Controller.
         /// </summary>
-        public String ObjectId { get; set; }
+        public String ObjectId { get; set; } = null;
         /// <summary>
         /// Object's GUID.
         /// </summary>
@@ -30,7 +30,21 @@ namespace ThreeRiversTech.Zuleger.Atrium.API.Objects
         /// <summary>
         /// Boolean specifying if the Object is valid in the Controller.
         /// </summary>
-        public bool IsValid { get; set; }
+        public bool IsValid { get; set; } = true;
+        /// <summary>
+        /// Update this object's attributes to be the same as o's attributes.
+        /// </summary>
+        /// <param name="o"></param>
+        public void Update(BaseObject o)
+        {
+            foreach(var pi in this.GetType().GetProperties())
+            {
+                if (pi.GetValue(o) != null)
+                {
+                    pi.SetValue(this, pi.GetValue(o));
+                }
+            }
+        }
     }
     /// <summary>
     /// User object that resembles the appearance of User in Atrium (and attributes)
