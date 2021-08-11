@@ -21,6 +21,9 @@ namespace ThreeRiversTech.Zuleger.Atrium.API.Example
 
             // Establish connection (connection is to CDVI public A22 board)
             AtriumController cnn = new AtriumController("admin", "admin", "http://69.70.57.94/");
+
+            // After a successful connection. You can get basic information on the Product you connected to.
+            Console.WriteLine($"Successfully connected to {cnn.ProductName}, {cnn.ProductLabel} (v{cnn.ProductVersion}) - SN: {cnn.SerialNumber}");
             
             // Print the Request Text to Atrium SDK and Response Text from Atrium SDK for debugging purposes.
             // Updates after every SDK transaction (e.g. InsertCard, InsertUser, UpdateCard, UpdateUser, etc.)
