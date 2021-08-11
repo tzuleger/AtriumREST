@@ -600,6 +600,7 @@ namespace ThreeRiversTech.Zuleger.Atrium.API
         }
 
         // Performs a GET request to the specified Subdomain (under the Address provided from construction)
+        private async Task<XElement> DoGETAsync(String subdomain)
         {
             RequestText = "GET " + _address + subdomain;
             var response = await _client.GetAsync(_address + subdomain);
