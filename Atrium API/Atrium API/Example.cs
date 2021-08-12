@@ -29,13 +29,6 @@ namespace ThreeRiversTech.Zuleger.Atrium.API.Example
             // Updates after every SDK transaction (e.g. InsertCard, InsertUser, UpdateCard, UpdateUser, etc.)
             Console.WriteLine($"Request Text:\n{cnn.RequestText}\nResponse Text:\n{cnn.ResponseText}");
             
-            // WARNING: There is one bug that I have yet to fix. The SDK storage can be fragmented easily when other objects are deleted and there is no way to defragment the SDK storage.
-            // The increment grabbing works like this: Grab an increment of Objects. Filter the increment based on obj_status == "used". 
-            // If the total number of objects from that grab is less than the increment, then incrementing can end and the function should return the list of objects.
-            // If there once existed 17 Objects with respective Object IDs and Objects with ID 9-16 were deleted, then this function (w/ increment=100) would grab Objects 1-8.
-            // Since the total number of objects from increment grab 1 is less than the increment (8 < 10) then the function returns. The problem is that Object 17 still exists.
-            // So the function should continue until Object 17 is taken.
-            
             // The public board (at the time of developing this example) only has 9 Users, so for best optimization, an increment of 10 is useful.
             List<User> users = cnn.GetAllUsers(increment: 10);
             // By default, the increment is 100.
