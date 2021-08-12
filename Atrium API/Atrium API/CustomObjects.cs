@@ -11,6 +11,7 @@ namespace ThreeRiversTech.Zuleger.Atrium.API.Objects
     /// </summary>
     public abstract class BaseObject
     {
+        public String Status { get; set; }
         /// <summary>
         /// Object ID of where the Object is located in the Atrium Controller.
         /// </summary>

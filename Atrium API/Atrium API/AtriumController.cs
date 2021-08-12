@@ -295,10 +295,7 @@ namespace ThreeRiversTech.Zuleger.Atrium.API
                 users.AddRange(GetAllUsersByIndex(sIdx, eIdx));
             }
 
-            // Increment once more to grab stragglers.
-            sIdx += increment;
-            eIdx += increment;
-            users.AddRange(GetAllUsersByIndex(sIdx, eIdx));
+            users.RemoveAll(user => user.Status == "deleted");
 
             return users;
         }
@@ -325,8 +322,10 @@ namespace ThreeRiversTech.Zuleger.Atrium.API
                                            .Elements(AtriumController.XML_EL_RECORD)
                                            .Elements(AtriumController.XML_EL_DATA)
                               where e.Attribute("obj_status")?.Value == "used"
+                                 || e.Attribute("obj_status")?.Value == "deleted"
                               select new User
                               {
+                                  Status = e.Attribute("obj_status")?.Value,
                                   ObjectGuid = Guid.Parse(e.Attribute("guid2")?.Value),
                                   ObjectId = e.Attribute("id")?.Value,
                                   IsValid = e.Attribute("valid")?.Value == "1",
@@ -395,11 +394,11 @@ namespace ThreeRiversTech.Zuleger.Atrium.API
         public bool UpdateUser(User user)
         {
             return UpdateUser(
-                user.ObjectId, 
-                user.FirstName, 
-                user.LastName, 
-                user.ActivationDate, 
-                user.ExpirationDate, 
+                user.ObjectId,
+                user.FirstName,
+                user.LastName,
+                user.ActivationDate,
+                user.ExpirationDate,
                 user.AccessLevelObjectIds);
 
         }
@@ -486,10 +485,7 @@ namespace ThreeRiversTech.Zuleger.Atrium.API
                 cards.AddRange(GetAllCardsByIndex(sIdx, eIdx));
             }
 
-            // Increment once more to grab stragglers.
-            sIdx += increment;
-            eIdx += increment;
-            cards.AddRange(GetAllCardsByIndex(sIdx, eIdx));
+            cards.RemoveAll(card => card.Status == "deleted");
 
             return cards;
         }
@@ -516,8 +512,10 @@ namespace ThreeRiversTech.Zuleger.Atrium.API
                                            .Elements(AtriumController.XML_EL_RECORD)
                                            .Elements(AtriumController.XML_EL_DATA)
                               where e.Attribute("obj_status")?.Value == "used"
+                                 || e.Attribute("obj_status")?.Value == "deleted"
                               select new Card
                               {
+                                  Status = e.Attribute("obj_status")?.Value,
                                   ObjectId = e.Attribute("id")?.Value,
                                   ObjectGuid = Guid.Parse(e.Attribute("guid2")?.Value),
                                   IsValid = e.Attribute("valid")?.Value == "1",
@@ -570,9 +568,9 @@ namespace ThreeRiversTech.Zuleger.Atrium.API
         public bool UpdateCard(Card card)
         {
             return UpdateCard(
-                card.ObjectId, 
-                card.DisplayName, 
-                card.ActivationDate, 
+                card.ObjectId,
+                card.DisplayName,
+                card.ActivationDate,
                 card.ExpirationDate);
         }
 
