@@ -251,6 +251,11 @@
             The base object containing attributes that all Atrium objects have.
             </summary>
         </member>
+        <member name="P:ThreeRiversTech.Zuleger.Atrium.API.Objects.BaseObject.Status">
+            <summary>
+            
+            </summary>
+        </member>
         <member name="P:ThreeRiversTech.Zuleger.Atrium.API.Objects.BaseObject.ObjectId">
             <summary>
             Object ID of where the Object is located in the Atrium Controller.

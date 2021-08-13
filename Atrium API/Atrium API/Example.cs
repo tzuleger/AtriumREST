@@ -30,7 +30,7 @@ namespace ThreeRiversTech.Zuleger.Atrium.API.Example
             Console.WriteLine($"Request Text:\n{cnn.RequestText}\nResponse Text:\n{cnn.ResponseText}");
             
             // The public board (at the time of developing this example) only has 9 Users, so for best optimization, an increment of 10 is useful.
-            List<User> users = cnn.GetAllUsers(increment: 10);
+            List<User> users = cnn.GetAllUsers(increment: 3);
             // By default, the increment is 100.
             List<Card> cards = cnn.GetAllCards();
             Console.WriteLine($"{cnn.RequestText}\n{cnn.ResponseText}");

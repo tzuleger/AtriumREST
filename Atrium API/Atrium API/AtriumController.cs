@@ -75,39 +75,36 @@ namespace ThreeRiversTech.Zuleger.Atrium.API
         /// Stores the Request XML data to the last POST request made.
         /// </summary>
         public String RequestText { get; set; } = "No request made.";
-
         /// <summary>
         /// Stores the Response String from the last POST request made.
         /// </summary>
         public String ResponseText { get; set; } = "No response received.";
-
         /// <summary>
         /// Serial number of the Atrium Controller that the AtriumConnection object is connected to.
         /// </summary>
         public String SerialNumber { get => _serialNo; }
-
         /// <summary>
         /// Product name of the Atrium Controller that the AtriumConnection object is connected to.
         /// </summary>
         public String ProductName { get => _product; }
-
         /// <summary>
         /// Product label of the Atrium Controller that the AtriumConnection object is connected to.
         /// </summary>
         public String ProductLabel { get => _label; }
-
         /// <summary>
         /// Product version of the Atrium Controller that the AtriumConnection object is connected to.
         /// </summary>
         public String ProductVersion { get => _version; }
-
         /// <summary>
         /// Generates a random Guid (128-bit ID) in the format of "########-####-####-####-############".
         /// This should never be the same string when called.
         /// </summary>
         public Guid GenerateGuid { get => AtriumController.GenerateRandomId(); }
 
+        // Keeps track of the number of transactions being sent over the current Connection.
         private int _transactionNum = 1;
+
+        // PUBLIC STATIC METHODS --------------------
 
         /// <summary>
         /// Constructs an integer array of the 5 integer arguments. If an argument is not provided, then that Access Level is ignored.
@@ -142,6 +139,8 @@ namespace ThreeRiversTech.Zuleger.Atrium.API
 
             return Convert.ToInt32(famNumBits + memNumBits, 2);
         }
+
+        // PUBLIC INSTANCE METHODS ----------------
 
         /// <summary>
         /// Creates an AtriumConnection object connected to the specified address under the specified username and password.
@@ -212,6 +211,37 @@ namespace ThreeRiversTech.Zuleger.Atrium.API
             // Officially logged in.
         }
 
+        /// <summary>
+        /// Gets all Users that exist in the Atrium database in increments. Best used when the number of Users in the database is unknown.
+        /// Larger increments increases speed through HTTP but could be worse if the number of records that actually exist are on the short end of the increment.
+        /// (e.g. 1034 records exist with a 1000 increment would force two HTTP requests searching for 2000 total records.
+        /// An increment of 1035 or better would be best here)
+        /// By default 100.
+        /// </summary>
+        /// <param name="increment">Increment of users to grab.
+        /// Larger numbers increases speed through HTTP but could be worse if the number of records that actually exist are on the short end of the increment.
+        /// (e.g. 1034 records exist with a 1000 increment would force two HTTP requests searching for 2000 total records.
+        /// An increment of 1035 or better would be best here)
+        /// By default 100.</param>
+        /// <returns>List of all Users that are in the Atrium Controller</returns>
+        public List<User> GetAllUsers(int increment=100)
+        {
+            int sIdx = 1;
+            int eIdx = increment;
+
+            List<User> users = GetAllUsersByIndex(sIdx, eIdx);
+            while (users != null && users.Count >= eIdx)
+            {
+                sIdx += increment;
+                eIdx += increment;
+                users.AddRange(GetAllUsersByIndex(sIdx, eIdx));
+            }
+
+            users.RemoveAll(user => user.Status == "deleted");
+
+            return users;
+        }
+
         // Insert user into atrium controller associated with AtriumConnection object.
         /// <summary>
         /// Inserts a new User into the Atrium Controller with the provided information.
@@ -270,87 +300,6 @@ namespace ThreeRiversTech.Zuleger.Atrium.API
         }
 
         /// <summary>
-        /// Gets all Users that exist in the Atrium database in increments. Best used when the number of Users in the database is unknown.
-        /// Larger increments increases speed through HTTP but could be worse if the number of records that actually exist are on the short end of the increment.
-        /// (e.g. 1034 records exist with a 1000 increment would force two HTTP requests searching for 2000 total records.
-        /// An increment of 1035 or better would be best here)
-        /// By default 100.
-        /// </summary>
-        /// <param name="increment">Increment of users to grab.
-        /// Larger numbers increases speed through HTTP but could be worse if the number of records that actually exist are on the short end of the increment.
-        /// (e.g. 1034 records exist with a 1000 increment would force two HTTP requests searching for 2000 total records.
-        /// An increment of 1035 or better would be best here)
-        /// By default 100.</param>
-        /// <returns></returns>
-        public List<User> GetAllUsers(int increment=100)
-        {
-            int sIdx = 1;
-            int eIdx = increment;
-
-            List<User> users = GetAllUsersByIndex(sIdx, eIdx);
-            while (users != null && users.Count >= eIdx)
-            {
-                sIdx += increment;
-                eIdx += increment;
-                users.AddRange(GetAllUsersByIndex(sIdx, eIdx));
-            }
-
-            users.RemoveAll(user => user.Status == "deleted");
-
-            return users;
-        }
-
-        private List<User> GetAllUsersByIndex(int startIdx, int endIdx)
-        {
-            var content = FetchAndEncryptXML(AtriumController.READ_USER,
-                "@tid", _transactionNum.ToString(),
-                "@SerialNo", _serialNo,
-                "@min", startIdx.ToString(),
-                "@max", endIdx.ToString()
-            );
-            var req = DoPOSTAsync(AtriumController.DATA_URL, content, setSessionCookie: true, encryptedExchange: true);
-            req.Wait();
-            var xml = req.Result;
-
-            var checkRecords = from e
-                               in xml.Elements(AtriumController.XML_EL_RECORDS)
-                               select e.Element(AtriumController.XML_EL_RECORD);
-            CheckAllAnswers(checkRecords, AtriumController.XML_EL_DATA);
-
-            var listRecords = from e
-                              in xml.Elements(AtriumController.XML_EL_RECORDS)
-                                           .Elements(AtriumController.XML_EL_RECORD)
-                                           .Elements(AtriumController.XML_EL_DATA)
-                              where e.Attribute("obj_status")?.Value == "used"
-                                 || e.Attribute("obj_status")?.Value == "deleted"
-                              select new User
-                              {
-                                  Status = e.Attribute("obj_status")?.Value,
-                                  ObjectGuid = Guid.Parse(e.Attribute("guid2")?.Value),
-                                  ObjectId = e.Attribute("id")?.Value,
-                                  IsValid = e.Attribute("valid")?.Value == "1",
-                                  FirstName = e.Attribute("label3")?.Value,
-                                  LastName = e.Attribute("label4")?.Value,
-                                  ActivationDate = new DateTime(1970, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc)
-                                                    .AddSeconds(Convert.ToInt32(e.Attribute("utc_time22")?.Value, 16))
-                                                    .ToLocalTime(),
-                                  ExpirationDate = new DateTime(1970, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc)
-                                                    .AddSeconds(Convert.ToInt32(e.Attribute("utc_time23")?.Value, 16))
-                                                    .ToLocalTime(),
-                                  AccessLevelObjectIds = new int[]
-                                  {
-                                      Int32.Parse(e.Attribute("word24_0")?.Value),
-                                      Int32.Parse(e.Attribute("word24_1")?.Value),
-                                      Int32.Parse(e.Attribute("word24_2")?.Value),
-                                      Int32.Parse(e.Attribute("word24_3")?.Value),
-                                      Int32.Parse(e.Attribute("word24_4")?.Value)
-                                  }
-                              };
-
-            return listRecords.ToList();
-        }
-
-        /// <summary>
         /// Updates a User, specified by the Atrium Controller's defined Object ID, to a new First Name, Last Name, Activation Date, and Expiration Date.
         /// </summary>
         /// <param name="objectId">Object ID, as defined by the Atrium Controller, of what User to update.</param>
@@ -400,10 +349,39 @@ namespace ThreeRiversTech.Zuleger.Atrium.API
                 user.ActivationDate,
                 user.ExpirationDate,
                 user.AccessLevelObjectIds);
-
         }
 
-        // Insert card into atrium controller associated with AtriumConnection object.
+        /// <summary>
+        /// Gets all Users that exist in the Atrium database in increments. Best used when the number of Users in the database is unknown.
+        /// Larger increments increases speed through HTTP but could be worse if the number of records that actually exist are on the short end of the increment.
+        /// (e.g. 1034 records exist with a 1000 increment would force two HTTP requests searching for 2000 total records.
+        /// An increment of 1035 or better would be best here)
+        /// By default 100.
+        /// </summary>
+        /// <param name="increment">Increment of users to grab.
+        /// Larger numbers increases speed through HTTP but could be worse if the number of records that actually exist are on the short end of the increment.
+        /// (e.g. 1034 records exist with a 1000 increment would force two HTTP requests searching for 2000 total records.
+        /// An increment of 1035 or better would be best here)
+        /// By default 100.</param>
+        /// <returns>List of all Cards that are in the Atrium Controller</returns>
+        public List<Card> GetAllCards(int increment=100)
+        {
+            int sIdx = 1;
+            int eIdx = increment;
+
+            List<Card> cards = GetAllCardsByIndex(sIdx, eIdx);
+            while (cards != null && cards.Count >= eIdx)
+            {
+                sIdx += increment;
+                eIdx += increment;
+                cards.AddRange(GetAllCardsByIndex(sIdx, eIdx));
+            }
+
+            cards.RemoveAll(card => card.Status == "deleted");
+
+            return cards;
+        }
+
         /// <summary>
         /// Inserts a new Card into Atrium under the provided information.
         /// </summary>
@@ -460,36 +438,205 @@ namespace ThreeRiversTech.Zuleger.Atrium.API
         }
 
         /// <summary>
-        /// Gets all Users that exist in the Atrium database in increments. Best used when the number of Users in the database is unknown.
-        /// Larger increments increases speed through HTTP but could be worse if the number of records that actually exist are on the short end of the increment.
-        /// (e.g. 1034 records exist with a 1000 increment would force two HTTP requests searching for 2000 total records.
-        /// An increment of 1035 or better would be best here)
-        /// By default 100.
+        /// Updates a User, specified by the Atrium Controller's defined Object ID, to a new First Name, Last Name, Activation Date, and Expiration Date.
         /// </summary>
-        /// <param name="increment">Increment of users to grab.
-        /// Larger numbers increases speed through HTTP but could be worse if the number of records that actually exist are on the short end of the increment.
-        /// (e.g. 1034 records exist with a 1000 increment would force two HTTP requests searching for 2000 total records.
-        /// An increment of 1035 or better would be best here)
-        /// By default 100.</param>
-        /// <returns></returns>
-        public List<Card> GetAllCards(int increment=100)
+        /// <param name="objectId">Object ID, as defined by the Atrium Controller, of what User to update.</param>
+        /// <param name="displayName">The new name to replace current Display Name on the card.</param>
+        /// <param name="actDate">New expiration date of the User to update.</param>
+        /// <param name="expDate">New activation date of the User to update.</param>
+        /// <returns>Boolean indicating whether the card was successfully updated or not.</returns>
+        public bool UpdateCard(String objectId, String displayName, DateTime actDate, DateTime expDate)
         {
-            int sIdx = 1;
-            int eIdx = increment;
-
-            List<Card> cards = GetAllCardsByIndex(sIdx, eIdx);
-            while (cards != null && cards.Count >= eIdx)
-            {
-                sIdx += increment;
-                eIdx += increment;
-                cards.AddRange(GetAllCardsByIndex(sIdx, eIdx));
-            }
-
-            cards.RemoveAll(card => card.Status == "deleted");
-
-            return cards;
+            var content = FetchAndEncryptXML(
+                AtriumController.UPDATE_CARD,
+                "@tid", _transactionNum.ToString(),
+                "@ObjectID", objectId,
+                "@SerialNo", _serialNo,
+                "@FirstName", displayName,
+                "@ActivationDate", Convert.ToString(((DateTimeOffset)actDate).ToUnixTimeSeconds(), 16),
+                "@ExpirationDate", Convert.ToString(((DateTimeOffset)expDate).ToUnixTimeSeconds(), 16)
+            );
+            var req = DoPOSTAsync(AtriumController.DATA_URL, content, setSessionCookie: true, encryptedExchange: true);
+            req.Wait();
+            var xml = req.Result;
+            var updatedRecords = from e in xml.Elements(AtriumController.XML_EL_RECORDS)
+                                 select e.Element(AtriumController.XML_EL_RECORD);
+            return CheckAllAnswers(updatedRecords, AtriumController.XML_EL_DATA, throwException: false);
         }
 
+        /// <summary>
+        /// Updates a User given a C# Card Object. Object ID must already exist in the database.
+        /// </summary>
+        /// <param name="card">Card object to update</param>
+        /// <returns>Boolean indicating whether the card was updated successfully or not.</returns>
+        public bool UpdateCard(Card card)
+        {
+            return UpdateCard(
+                card.ObjectId,
+                card.DisplayName,
+                card.ActivationDate,
+                card.ExpirationDate);
+        }
+
+        // PRIVATE STATIC METHDOS ---------------------
+
+        // Performs RC4 encryption/decryption on a specified byte array with a specified byte array as the key.
+        private static byte[] Rc4(byte[] pwd, byte[] data)
+        {
+            int a, i, j, k, tmp;
+            int[] key, box;
+            byte[] cipher;
+
+            key = new int[256];
+            box = new int[256];
+            cipher = new byte[data.Length];
+
+            for (i = 0; i < 256; i++)
+            {
+                key[i] = pwd[i % pwd.Length];
+                box[i] = i;
+            }
+            for (j = i = 0; i < 256; i++)
+            {
+                j = (j + box[i] + key[i]) % 256;
+                tmp = box[i];
+                box[i] = box[j];
+                box[j] = tmp;
+            }
+            for (a = j = i = 0; i < data.Length; i++)
+            {
+                a++;
+                a %= 256;
+                j += box[a];
+                j %= 256;
+                tmp = box[a];
+                box[a] = box[j];
+                box[j] = tmp;
+                k = box[((box[a] + box[j]) % 256)];
+                cipher[i] = (byte)(data[i] ^ k);
+            }
+            return cipher;
+        }
+
+        // Performs an MD5 Hash algorithm on a String.
+        private static byte[] Md5(String text)
+        {
+            byte[] hash;
+            using (MD5 md5 = MD5.Create())
+            {
+                hash = md5.ComputeHash(Encoding.ASCII.GetBytes(text));
+            }
+            return hash;
+        }
+
+        // Counts the character codes of every character in given String to create a CheckSum.
+        private static String CheckSum(String str)
+        {
+            int chk = 0;
+            for (int i = 0; i < str.Length; i++)
+            {
+                chk += str[i];
+            }
+            var chkSumString = (chk & 0xFFFF).ToString("X");
+            chkSumString = AtriumController.PadLeft(chkSumString, '0', 4);
+            return chkSumString;
+        }
+
+        // Pads a string to the left with a provided specific character to a provided total length.
+        private static String PadLeft(String s, char c, int length)
+        {
+            while(s.Length < length)
+            {
+                s = c + s;
+            }
+            return s;
+        }
+
+        // Converts an array of bytes to a hexadecimal string.
+        private static string ByteArrayToHexString(byte[] bytes)
+        {
+          return BitConverter.ToString(bytes).Replace("-","");
+        }
+
+        ///Converts a hexadecimal String to an array of bytes.
+        private static byte[] HexStringToByteArray(String hex)
+        {
+            return Enumerable.Range(0, hex.Length)
+                             .Where(x => x % 2 == 0)
+                             .Select(x => Convert.ToByte(hex.Substring(x, 2), 16))
+                             .ToArray();
+        }
+
+        // Generates a random GUID with format of "########-####-####-####-############"
+        private static Guid GenerateRandomId()
+        {
+            byte[] buf = new byte[16];
+            _random.NextBytes(buf);
+            String result = String.Concat(buf.Select(x => x.ToString("X2")).ToArray());
+
+            String s1 = result.Substring(0, 8);
+            String s2 = result.Substring(7, 4);
+            String s3 = result.Substring(11, 4);
+            String s4 = result.Substring(15, 4);
+            String s5 = result.Substring(19, 12);
+
+            return Guid.Parse($"{s1}-{s2}-{s3}-{s4}-{s5}");
+        }
+
+        // PRIVATE INSTANCE METHODS ----------------
+
+        // Gets all Users in the Atrium Controller specified by the object indices provided
+        private List<User> GetAllUsersByIndex(int startIdx, int endIdx)
+        {
+            var content = FetchAndEncryptXML(AtriumController.READ_USER,
+                "@tid", _transactionNum.ToString(),
+                "@SerialNo", _serialNo,
+                "@min", startIdx.ToString(),
+                "@max", endIdx.ToString()
+            );
+            var req = DoPOSTAsync(AtriumController.DATA_URL, content, setSessionCookie: true, encryptedExchange: true);
+            req.Wait();
+            var xml = req.Result;
+
+            var checkRecords = from e
+                               in xml.Elements(AtriumController.XML_EL_RECORDS)
+                               select e.Element(AtriumController.XML_EL_RECORD);
+            CheckAllAnswers(checkRecords, AtriumController.XML_EL_DATA);
+
+            var listRecords = from e
+                              in xml.Elements(AtriumController.XML_EL_RECORDS)
+                                           .Elements(AtriumController.XML_EL_RECORD)
+                                           .Elements(AtriumController.XML_EL_DATA)
+                              where e.Attribute("obj_status")?.Value == "used"
+                                 || e.Attribute("obj_status")?.Value == "deleted"
+                              select new User
+                              {
+                                  Status = e.Attribute("obj_status")?.Value,
+                                  ObjectGuid = Guid.Parse(e.Attribute("guid2")?.Value),
+                                  ObjectId = e.Attribute("id")?.Value,
+                                  IsValid = e.Attribute("valid")?.Value == "1",
+                                  FirstName = e.Attribute("label3")?.Value,
+                                  LastName = e.Attribute("label4")?.Value,
+                                  ActivationDate = new DateTime(1970, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc)
+                                                    .AddSeconds(Convert.ToInt32(e.Attribute("utc_time22")?.Value, 16))
+                                                    .ToLocalTime(),
+                                  ExpirationDate = new DateTime(1970, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc)
+                                                    .AddSeconds(Convert.ToInt32(e.Attribute("utc_time23")?.Value, 16))
+                                                    .ToLocalTime(),
+                                  AccessLevelObjectIds = new int[]
+                                  {
+                                      Int32.Parse(e.Attribute("word24_0")?.Value),
+                                      Int32.Parse(e.Attribute("word24_1")?.Value),
+                                      Int32.Parse(e.Attribute("word24_2")?.Value),
+                                      Int32.Parse(e.Attribute("word24_3")?.Value),
+                                      Int32.Parse(e.Attribute("word24_4")?.Value)
+                                  }
+                              };
+
+            return listRecords.ToList();
+        }
+
+        // Gets all Cards in the Atrium Controller specified by the object indices provided
         private List<Card> GetAllCardsByIndex(int startIdx, int endIdx)
         {
             var content = FetchAndEncryptXML(AtriumController.READ_CARD,
@@ -531,47 +678,6 @@ namespace ThreeRiversTech.Zuleger.Atrium.API
                               };
 
             return listRecords.ToList();
-        }
-
-        /// <summary>
-        /// Updates a User, specified by the Atrium Controller's defined Object ID, to a new First Name, Last Name, Activation Date, and Expiration Date.
-        /// </summary>
-        /// <param name="objectId">Object ID, as defined by the Atrium Controller, of what User to update.</param>
-        /// <param name="displayName">The new name to replace current Display Name on the card.</param>
-        /// <param name="actDate">New expiration date of the User to update.</param>
-        /// <param name="expDate">New activation date of the User to update.</param>
-        /// <returns>Boolean indicating whether the card was successfully updated or not.</returns>
-        public bool UpdateCard(String objectId, String displayName, DateTime actDate, DateTime expDate)
-        {
-            var content = FetchAndEncryptXML(
-                AtriumController.UPDATE_CARD,
-                "@tid", _transactionNum.ToString(),
-                "@ObjectID", objectId,
-                "@SerialNo", _serialNo,
-                "@FirstName", displayName,
-                "@ActivationDate", Convert.ToString(((DateTimeOffset)actDate).ToUnixTimeSeconds(), 16),
-                "@ExpirationDate", Convert.ToString(((DateTimeOffset)expDate).ToUnixTimeSeconds(), 16)
-            );
-            var req = DoPOSTAsync(AtriumController.DATA_URL, content, setSessionCookie: true, encryptedExchange: true);
-            req.Wait();
-            var xml = req.Result;
-            var updatedRecords = from e in xml.Elements(AtriumController.XML_EL_RECORDS)
-                                 select e.Element(AtriumController.XML_EL_RECORD);
-            return CheckAllAnswers(updatedRecords, AtriumController.XML_EL_DATA, throwException: false);
-        }
-
-        /// <summary>
-        /// Updates a User given a C# Card Object. Object ID must already exist in the database.
-        /// </summary>
-        /// <param name="card">Card object to update</param>
-        /// <returns>Boolean indicating whether the card was updated successfully or not.</returns>
-        public bool UpdateCard(Card card)
-        {
-            return UpdateCard(
-                card.ObjectId,
-                card.DisplayName,
-                card.ActivationDate,
-                card.ExpirationDate);
         }
 
         // Checks an element in an XML Response String that it has an "ok" answer.
@@ -694,110 +800,7 @@ namespace ThreeRiversTech.Zuleger.Atrium.API
             return parameters;
         }
 
-        // Performs RC4 encryption/decryption on a specified byte array with a specified byte array as the key.
-        private static byte[] Rc4(byte[] pwd, byte[] data)
-        {
-            int a, i, j, k, tmp;
-            int[] key, box;
-            byte[] cipher;
-
-            key = new int[256];
-            box = new int[256];
-            cipher = new byte[data.Length];
-
-            for (i = 0; i < 256; i++)
-            {
-                key[i] = pwd[i % pwd.Length];
-                box[i] = i;
-            }
-            for (j = i = 0; i < 256; i++)
-            {
-                j = (j + box[i] + key[i]) % 256;
-                tmp = box[i];
-                box[i] = box[j];
-                box[j] = tmp;
-            }
-            for (a = j = i = 0; i < data.Length; i++)
-            {
-                a++;
-                a %= 256;
-                j += box[a];
-                j %= 256;
-                tmp = box[a];
-                box[a] = box[j];
-                box[j] = tmp;
-                k = box[((box[a] + box[j]) % 256)];
-                cipher[i] = (byte)(data[i] ^ k);
-            }
-            return cipher;
-        }
-
-        // Performs an MD5 Hash algorithm on a String.
-        private static byte[] Md5(String text)
-        {
-            byte[] hash;
-            using (MD5 md5 = MD5.Create())
-            {
-                hash = md5.ComputeHash(Encoding.ASCII.GetBytes(text));
-            }
-            return hash;
-        }
-
-        // Counts the character codes of every character in given String to create a CheckSum.
-        private static String CheckSum(String str)
-        {
-            int chk = 0;
-            for (int i = 0; i < str.Length; i++)
-            {
-                chk += str[i];
-            }
-            var chkSumString = (chk & 0xFFFF).ToString("X");
-            chkSumString = AtriumController.PadLeft(chkSumString, '0', 4);
-            return chkSumString;
-        }
-
-        // Pads a string to the left with a provided specific character to a provided total length.
-        private static String PadLeft(String s, char c, int length)
-        {
-            while(s.Length < length)
-            {
-                s = c + s;
-            }
-            return s;
-        }
-
-        // Converts an array of bytes to a hexadecimal string.
-        private static string ByteArrayToHexString(byte[] bytes)
-        {
-          return BitConverter.ToString(bytes).Replace("-","");
-        }
-
-        ///Converts a hexadecimal String to an array of bytes.
-        private static byte[] HexStringToByteArray(String hex)
-        {
-            return Enumerable.Range(0, hex.Length)
-                             .Where(x => x % 2 == 0)
-                             .Select(x => Convert.ToByte(hex.Substring(x, 2), 16))
-                             .ToArray();
-        }
-
-        // Generates a random GUID with format of "########-####-####-####-############"
-        private static Guid GenerateRandomId()
-        {
-            byte[] buf = new byte[16];
-            _random.NextBytes(buf);
-            String result = String.Concat(buf.Select(x => x.ToString("X2")).ToArray());
-
-            String s1 = result.Substring(0, 8);
-            String s2 = result.Substring(7, 4);
-            String s3 = result.Substring(11, 4);
-            String s4 = result.Substring(15, 4);
-            String s5 = result.Substring(19, 12);
-
-            return Guid.Parse($"{s1}-{s2}-{s3}-{s4}-{s5}");
-        }
-
-        // Custom Exceptions
+        // CUSTOM EXCEPTIONS -----------------------
 
         /// <summary>
         /// Thrown when an Atrium Answer failed to interpret the XML request correctly.
