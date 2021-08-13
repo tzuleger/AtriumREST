@@ -84,6 +84,21 @@
             <param name="password">Password to log into Atrium under specified username</param>
             <param name="address">Atrium Controller Address to connect to</param>
         </member>
+        <member name="M:ThreeRiversTech.Zuleger.Atrium.API.AtriumController.GetAllUsers(System.Int32)">
+            <summary>
+            Gets all Users that exist in the Atrium database in increments. Best used when the number of Users in the database is unknown.
+            Larger increments increases speed through HTTP but could be worse if the number of records that actually exist are on the short end of the increment.
+            (e.g. 1034 records exist with a 1000 increment would force two HTTP requests searching for 2000 total records.
+            An increment of 1035 or better would be best here)
+            By default 100.
+            </summary>
+            <param name="increment">Increment of users to grab.
+            Larger numbers increases speed through HTTP but could be worse if the number of records that actually exist are on the short end of the increment.
+            (e.g. 1034 records exist with a 1000 increment would force two HTTP requests searching for 2000 total records.
+            An increment of 1035 or better would be best here)
+            By default 100.</param>
+            <returns>List of all Users that are in the Atrium Controller</returns>
+        </member>
         <member name="M:ThreeRiversTech.Zuleger.Atrium.API.AtriumController.InsertUser(System.String,System.String,System.Guid,System.DateTime,System.DateTime,System.Int32[])">
             <summary>
             Inserts a new User into the Atrium Controller with the provided information.
@@ -103,21 +118,6 @@
             <param name="user">The User object to insert into the Atrium database.</param>
             <returns>String object that is of real type int representing the Object ID as assigned by the Atrium Controller when user is inserted.</returns>
         </member>
-        <member name="M:ThreeRiversTech.Zuleger.Atrium.API.AtriumController.GetAllUsers(System.Int32)">
-            <summary>
-            Gets all Users that exist in the Atrium database in increments. Best used when the number of Users in the database is unknown.
-            Larger increments increases speed through HTTP but could be worse if the number of records that actually exist are on the short end of the increment.
-            (e.g. 1034 records exist with a 1000 increment would force two HTTP requests searching for 2000 total records.
-            An increment of 1035 or better would be best here)
-            By default 100.
-            </summary>
-            <param name="increment">Increment of users to grab.
-            Larger numbers increases speed through HTTP but could be worse if the number of records that actually exist are on the short end of the increment.
-            (e.g. 1034 records exist with a 1000 increment would force two HTTP requests searching for 2000 total records.
-            An increment of 1035 or better would be best here)
-            By default 100.</param>
-            <returns></returns>
-        </member>
         <member name="M:ThreeRiversTech.Zuleger.Atrium.API.AtriumController.UpdateUser(System.String,System.String,System.String,System.DateTime,System.DateTime,System.Int32[])">
             <summary>
             Updates a User, specified by the Atrium Controller's defined Object ID, to a new First Name, Last Name, Activation Date, and Expiration Date.
@@ -136,6 +136,21 @@
             </summary>
             <param name="user">User object that is to be updated. (Object ID of "user" must already exist in the Controller as a User)</param>
             <returns>Boolean indicating whether the user was successfully updated or not.</returns>
+        </member>
+        <member name="M:ThreeRiversTech.Zuleger.Atrium.API.AtriumController.GetAllCards(System.Int32)">
+            <summary>
+            Gets all Users that exist in the Atrium database in increments. Best used when the number of Users in the database is unknown.
+            Larger increments increases speed through HTTP but could be worse if the number of records that actually exist are on the short end of the increment.
+            (e.g. 1034 records exist with a 1000 increment would force two HTTP requests searching for 2000 total records.
+            An increment of 1035 or better would be best here)
+            By default 100.
+            </summary>
+            <param name="increment">Increment of users to grab.
+            Larger numbers increases speed through HTTP but could be worse if the number of records that actually exist are on the short end of the increment.
+            (e.g. 1034 records exist with a 1000 increment would force two HTTP requests searching for 2000 total records.
+            An increment of 1035 or better would be best here)
+            By default 100.</param>
+            <returns>List of all Cards that are in the Atrium Controller</returns>
         </member>
         <member name="M:ThreeRiversTech.Zuleger.Atrium.API.AtriumController.InsertCard(System.String,System.Guid,System.Guid,System.String,System.Int32,System.DateTime,System.DateTime)">
             <summary>
@@ -157,21 +172,6 @@
             <param name="card">The Card object to be inserted into the Atrium Controller's database.</param>
             <returns>String object that is of real type int representing the Object ID as assigned by the Atrium Controller when user is inserted.</returns>
         </member>
-        <member name="M:ThreeRiversTech.Zuleger.Atrium.API.AtriumController.GetAllCards(System.Int32)">
-            <summary>
-            Gets all Users that exist in the Atrium database in increments. Best used when the number of Users in the database is unknown.
-            Larger increments increases speed through HTTP but could be worse if the number of records that actually exist are on the short end of the increment.
-            (e.g. 1034 records exist with a 1000 increment would force two HTTP requests searching for 2000 total records.
-            An increment of 1035 or better would be best here)
-            By default 100.
-            </summary>
-            <param name="increment">Increment of users to grab.
-            Larger numbers increases speed through HTTP but could be worse if the number of records that actually exist are on the short end of the increment.
-            (e.g. 1034 records exist with a 1000 increment would force two HTTP requests searching for 2000 total records.
-            An increment of 1035 or better would be best here)
-            By default 100.</param>
-            <returns></returns>
-        </member>
         <member name="M:ThreeRiversTech.Zuleger.Atrium.API.AtriumController.UpdateCard(System.String,System.String,System.DateTime,System.DateTime)">
             <summary>
             Updates a User, specified by the Atrium Controller's defined Object ID, to a new First Name, Last Name, Activation Date, and Expiration Date.
@@ -188,6 +188,12 @@
             </summary>
             <param name="card">Card object to update</param>
             <returns>Boolean indicating whether the card was updated successfully or not.</returns>
+        </member>
+        <member name="M:ThreeRiversTech.Zuleger.Atrium.API.AtriumController.Close">
+            <summary>
+            Closes the AtriumController's connection. If this function is called, the connection cannot be reopened.
+            </summary>
+            <returns>Boolean indicating whether the Controller closed the connection or not.</returns>
         </member>
         <member name="M:ThreeRiversTech.Zuleger.Atrium.API.AtriumController.HexStringToByteArray(System.String)">
             Converts a hexadecimal String to an array of bytes.

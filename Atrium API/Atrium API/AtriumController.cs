@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Net;
 using System.Net.Http;
 using System.Security.Cryptography;
 using System.Text;
@@ -56,6 +57,8 @@ namespace ThreeRiversTech.Zuleger.Atrium.API
         private const String DATA_URL = "sdk.xml";
 
         // Connection info
+        private readonly CookieContainer _cookies;
+        private readonly HttpClientHandler _handler;
         private readonly HttpClient _client;
         private readonly String _address;
 
@@ -115,7 +118,12 @@ namespace ThreeRiversTech.Zuleger.Atrium.API
         /// <param name="al4">Integer that represents the Object ID for an Access Level. By default: -1 for no access level</param>
         /// <param name="al5">Integer that represents the Object ID for an Access Level. By default: -1 for no access level</param>
         /// <returns></returns>
-        public static int[] ACCESS_LEVELS(int al1=-1, int al2=-1, int al3=-1, int al4=-1, int al5=-1)
+        public static int[] ACCESS_LEVELS(
+            int al1=-1,
+            int al2=-1,
+            int al3=-1,
+            int al4=-1,
+            int al5=-1)
         {
             return new int[] { al1, al2, al3, al4, al5 };
         }
@@ -148,9 +156,14 @@ namespace ThreeRiversTech.Zuleger.Atrium.API
         /// <param name="username">Username to log in as.</param>
         /// <param name="password">Password to log into Atrium under specified username</param>
         /// <param name="address">Atrium Controller Address to connect to</param>
-        public AtriumController(String username, String password, String address)
+        public AtriumController(
+            String username,
+            String password,
+            String address)
         {
-            _client = new HttpClient();
+            _cookies = new CookieContainer();
+            _handler = new HttpClientHandler() { CookieContainer=_cookies};
+            _client = new HttpClient(_handler);
             _address = address;
 
             // Fetch Session info to establish temporary Session Key
@@ -185,7 +198,9 @@ namespace ThreeRiversTech.Zuleger.Atrium.API
                 var req = DoPOSTAsync(AtriumController.LOGIN_URL, parameters);
                 req.Wait();
                 xml = req.Result;
-                if (CheckAnswer(xml, AtriumController.XML_EL_CONNECTION, throwException:false)) // If "ok" then break the loop, otherwise, keep trying. (Sessions may not be available).
+
+                // If "ok" then break the loop, otherwise, keep trying. (Sessions may not be available).
+                if (CheckAnswer(xml, AtriumController.XML_EL_CONNECTION, throwException:false))
                 {
                     break;
                 }
@@ -253,7 +268,13 @@ namespace ThreeRiversTech.Zuleger.Atrium.API
         /// <param name="expDate">Expiration date of the User.</param>
         /// <param name="accessLevels">Array of 5 integers between 0-9,999 (inclusive) that represent the Object ID for each Access Level.</param>
         /// <returns>String object that is of real type int representing the Object ID as assigned by the Atrium Controller when user is inserted.</returns>
-        public String InsertUser(String firstName, String lastName, Guid id, DateTime actDate, DateTime expDate, int[] accessLevels)
+        public String InsertUser(
+            String firstName,
+            String lastName,
+            Guid id,
+            DateTime actDate,
+            DateTime expDate,
+            int[] accessLevels)
         {
             var content = FetchAndEncryptXML(
                 AtriumController.ADD_USER,
@@ -309,7 +330,13 @@ namespace ThreeRiversTech.Zuleger.Atrium.API
         /// <param name="expDate">New activation date of the User to update.</param>
         /// <param name="accessLevels">Array of 5 integers between 0-9,999 (inclusive) that represent the Object ID for each Access Level.</param>
         /// <returns>Boolean indicating whether the user was successfully updated or not.</returns>
-        public bool UpdateUser(String objectId, String firstName, String lastName, DateTime actDate, DateTime expDate, int[] accessLevels)
+        public bool UpdateUser(
+            String objectId,
+            String firstName,
+            String lastName,
+            DateTime actDate,
+            DateTime expDate,
+            int[] accessLevels)
         {
             var content = FetchAndEncryptXML(
                 AtriumController.UPDATE_USER,
@@ -393,7 +420,14 @@ namespace ThreeRiversTech.Zuleger.Atrium.API
         /// <param name="actDate">Activation Date of the card.</param>
         /// <param name="expDate">Expiration Date of the card.</param>
         /// <returns>String object that is of real type int representing the Object ID as assigned by the Atrium Controller when card is inserted.</returns>
-        public String InsertCard(String displayName, Guid cardId, Guid userId, String objectId, int cardNum, DateTime actDate, DateTime expDate)
+        public String InsertCard(
+            String displayName,
+            Guid cardId,
+            Guid userId,
+            String objectId,
+            int cardNum,
+            DateTime actDate,
+            DateTime expDate)
         {
             var content = FetchAndEncryptXML(
                 AtriumController.ADD_CARD,
@@ -445,7 +479,11 @@ namespace ThreeRiversTech.Zuleger.Atrium.API
         /// <param name="actDate">New expiration date of the User to update.</param>
         /// <param name="expDate">New activation date of the User to update.</param>
         /// <returns>Boolean indicating whether the card was successfully updated or not.</returns>
-        public bool UpdateCard(String objectId, String displayName, DateTime actDate, DateTime expDate)
+        public bool UpdateCard(
+            String objectId,
+            String displayName,
+            DateTime actDate,
+            DateTime expDate)
         {
             var content = FetchAndEncryptXML(
                 AtriumController.UPDATE_CARD,
@@ -476,6 +514,25 @@ namespace ThreeRiversTech.Zuleger.Atrium.API
                 card.DisplayName,
                 card.ActivationDate,
                 card.ExpirationDate);
+        }
+
+        /// <summary>
+        /// Closes the AtriumController's connection. If this function is called, the connection cannot be reopened.
+        /// </summary>
+        /// <returns>Boolean indicating whether the Controller closed the connection or not.</returns>
+        public bool Close()
+        {
+            var parameters = new Dictionary<String, String>
+            {
+                { "sid", _sessionId },
+                { "cmd", "logout" }
+            };
+
+            var req = DoPOSTAsync(AtriumController.LOGIN_URL, parameters);
+            req.Wait();
+            var xml = req.Result;
+
+            return CheckAnswer(xml, AtriumController.XML_EL_CONNECTION, throwException: false);
         }
 
         // PRIVATE STATIC METHDOS ---------------------
@@ -594,7 +651,12 @@ namespace ThreeRiversTech.Zuleger.Atrium.API
                 "@min", startIdx.ToString(),
                 "@max", endIdx.ToString()
             );
-            var req = DoPOSTAsync(AtriumController.DATA_URL, content, setSessionCookie: true, encryptedExchange: true);
+
+            var req = DoPOSTAsync(
+                AtriumController.DATA_URL,
+                content,
+                setSessionCookie: true,
+                encryptedExchange: true);
             req.Wait();
             var xml = req.Result;
 
@@ -608,19 +670,18 @@ namespace ThreeRiversTech.Zuleger.Atrium.API
                                            .Elements(AtriumController.XML_EL_RECORD)
                                            .Elements(AtriumController.XML_EL_DATA)
                               where e.Attribute("obj_status")?.Value == "used"
-                                 || e.Attribute("obj_status")?.Value == "deleted"
                               select new User
                               {
-                                  Status = e.Attribute("obj_status")?.Value,
+                                  Status     = e.Attribute("obj_status")?.Value,
                                   ObjectGuid = Guid.Parse(e.Attribute("guid2")?.Value),
-                                  ObjectId = e.Attribute("id")?.Value,
-                                  IsValid = e.Attribute("valid")?.Value == "1",
-                                  FirstName = e.Attribute("label3")?.Value,
-                                  LastName = e.Attribute("label4")?.Value,
+                                  ObjectId   = e.Attribute("id")?.Value,
+                                  IsValid    = e.Attribute("valid")?.Value == "1",
+                                  FirstName  = e.Attribute("label3")?.Value,
+                                  LastName   = e.Attribute("label4")?.Value,
                                   ActivationDate = new DateTime(1970, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc)
                                                     .AddSeconds(Convert.ToInt32(e.Attribute("utc_time22")?.Value, 16))
                                                     .ToLocalTime(),
-                                  ExpirationDate = new DateTime(1970, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc)
+                                  ExpirationDate =new DateTime(1970, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc)
                                                     .AddSeconds(Convert.ToInt32(e.Attribute("utc_time23")?.Value, 16))
                                                     .ToLocalTime(),
                                   AccessLevelObjectIds = new int[]
@@ -645,7 +706,11 @@ namespace ThreeRiversTech.Zuleger.Atrium.API
                 "@min", startIdx.ToString(),
                 "@max", endIdx.ToString()
             );
-            var req = DoPOSTAsync(AtriumController.DATA_URL, content, setSessionCookie: true, encryptedExchange: true);
+            var req = DoPOSTAsync(
+                AtriumController.DATA_URL,
+                content,
+                setSessionCookie: true,
+                encryptedExchange: true);
             req.Wait();
             var xml = req.Result;
 
@@ -672,16 +737,20 @@ namespace ThreeRiversTech.Zuleger.Atrium.API
                                   ActivationDate = new DateTime(1970, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc)
                                                     .AddSeconds(Convert.ToInt32(e.Attribute("utc_time22")?.Value, 16))
                                                     .ToLocalTime(),
-                                  ExpirationDate = new DateTime(1970, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc)
+                                  ExpirationDate =new DateTime(1970, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc)
                                                     .AddSeconds(Convert.ToInt32(e.Attribute("utc_time23")?.Value, 16))
-                                                    .ToLocalTime()
+                                                    .ToLocalTime(),
                               };
 
             return listRecords.ToList();
         }
 
         // Checks an element in an XML Response String that it has an "ok" answer.
-        private bool CheckAnswer(XElement xml, XName elementName, String attr="err", bool throwException=true)
+        private bool CheckAnswer(
+            XElement xml,
+            XName elementName,
+            String attr="err",
+            bool throwException=true)
         {
             var e = xml.Element(elementName);
             if(attr == null)
@@ -704,7 +773,11 @@ namespace ThreeRiversTech.Zuleger.Atrium.API
         }
 
         // Checks a set of elements in an XML Response String that it has an "ok" answer.
-        private bool CheckAllAnswers(IEnumerable<XElement> xmlElements, XName elementName, String attr = "res", bool throwException = true)
+        private bool CheckAllAnswers(
+            IEnumerable<XElement> xmlElements,
+            XName elementName,
+            String attr = "res",
+            bool throwException = true)
         {
             foreach (var el in xmlElements)
             {
@@ -717,12 +790,16 @@ namespace ThreeRiversTech.Zuleger.Atrium.API
         }
 
         // Performs a POST request to the specified Subdomain (under the Address provided from construction) with specific parameters to send.
-        private async Task<XElement> DoPOSTAsync(String subdomain, Dictionary<String, String> parameters, bool setSessionCookie = false, bool encryptedExchange = false)
+        private async Task<XElement> DoPOSTAsync(
+            String subdomain,
+            Dictionary<String, String> parameters,
+            bool setSessionCookie = false,
+            bool encryptedExchange = false)
         {
             var encodedContent = new FormUrlEncodedContent(parameters);
             if(setSessionCookie)
             {
-                encodedContent.Headers.Add("Cookie", $"Session={_sessionId}-{AtriumController.PadLeft(_userId, '0', 2)}");
+                _cookies.Add(new Uri(_address), new Cookie("Session", $"{_sessionId}-{AtriumController.PadLeft(_userId, '0', 2)}"));
             }
             var response = await _client.PostAsync(_address + subdomain, encodedContent);
             var responseString = await response.Content.ReadAsStringAsync();
@@ -730,18 +807,20 @@ namespace ThreeRiversTech.Zuleger.Atrium.API
             {
                 if(!responseString.Contains("post_enc="))
                 {
+                    this.ResponseText = responseString;
                     throw new HttpRequestException(responseString);
                 }
-                var postEnc = responseString.Replace("post_enc=", "");
-                postEnc = postEnc.Substring(0, postEnc.IndexOf("&"));
-                responseString = Encoding.ASCII.GetString(AtriumController.Rc4(Encoding.ASCII.GetBytes(_sessionKey), HexStringToByteArray(postEnc)));
+                else
+                {
+                    var postEnc = responseString.Replace("post_enc=", "");
+                    postEnc = postEnc.Substring(0, postEnc.IndexOf("&"));
+                    responseString = Encoding.ASCII.GetString(
+                        AtriumController.Rc4(
+                            Encoding.ASCII.GetBytes(_sessionKey),
+                            HexStringToByteArray(postEnc)));
+                }
             }
             var xml = XElement.Parse(responseString);
-            StringBuilder sb = new StringBuilder();
-            foreach (var el in xml.Nodes())
-            {
-                sb.AppendLine(el.ToString());
-            }
             _transactionNum++;
 
             ResponseText = xml.ToString();

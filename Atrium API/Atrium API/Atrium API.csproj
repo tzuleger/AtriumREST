@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <OutputType>Exe</OutputType>
+    <OutputType>Library</OutputType>
     <TargetFramework>net46</TargetFramework>
     <RootNamespace>ThreeRiversTech.Zuleger.Atrium.API</RootNamespace>
     <ApplicationIcon />
@@ -9,7 +9,7 @@
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
-    <DocumentationFile>C:\Users\Travis\Documents\GitHub\Atrium-API\Atrium API\Atrium API\Atrium API.xml</DocumentationFile>
+    <DocumentationFile>E:\GitHub\Atrium-API\Atrium API\Atrium API\Atrium API.xml</DocumentationFile>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
