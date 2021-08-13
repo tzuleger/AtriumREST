@@ -83,19 +83,19 @@ namespace ThreeRiversTech.Zuleger.Atrium.API
         /// </summary>
         public String ResponseText { get; set; } = "No response received.";
         /// <summary>
-        /// Serial number of the Atrium Controller that the AtriumConnection object is connected to.
+        /// Serial number of the Atrium Controller that the AtriumController object is connected to.
         /// </summary>
         public String SerialNumber { get => _serialNo; }
         /// <summary>
-        /// Product name of the Atrium Controller that the AtriumConnection object is connected to.
+        /// Product name of the Atrium Controller that the AtriumController object is connected to.
         /// </summary>
         public String ProductName { get => _product; }
         /// <summary>
-        /// Product label of the Atrium Controller that the AtriumConnection object is connected to.
+        /// Product label of the Atrium Controller that the AtriumController object is connected to.
         /// </summary>
         public String ProductLabel { get => _label; }
         /// <summary>
-        /// Product version of the Atrium Controller that the AtriumConnection object is connected to.
+        /// Product version of the Atrium Controller that the AtriumController object is connected to.
         /// </summary>
         public String ProductVersion { get => _version; }
         /// <summary>
@@ -103,6 +103,10 @@ namespace ThreeRiversTech.Zuleger.Atrium.API
         /// This should never be the same string when called.
         /// </summary>
         public Guid GenerateGuid { get => AtriumController.GenerateRandomId(); }
+        /// <summary>
+        /// Session ID of the Atrium Controller that the AtriumController object is connected to.
+        /// </summary>
+        public String SessionID { get => _sessionId; }
 
         // Keeps track of the number of transactions being sent over the current Connection.
         private int _transactionNum = 1;
@@ -151,7 +155,7 @@ namespace ThreeRiversTech.Zuleger.Atrium.API
         // PUBLIC INSTANCE METHODS ----------------
 
         /// <summary>
-        /// Creates an AtriumConnection object connected to the specified address under the specified username and password.
+        /// Creates an AtriumController object connected to the specified address under the specified username and password.
         /// </summary>
         /// <param name="username">Username to log in as.</param>
         /// <param name="password">Password to log into Atrium under specified username</param>
@@ -252,12 +256,10 @@ namespace ThreeRiversTech.Zuleger.Atrium.API
                 users.AddRange(GetAllUsersByIndex(sIdx, eIdx));
             }
 
-            users.RemoveAll(user => user.Status == "deleted");
-
             return users;
         }
 
-        // Insert user into atrium controller associated with AtriumConnection object.
+        // Insert user into atrium controller associated with AtriumController object.
         /// <summary>
         /// Inserts a new User into the Atrium Controller with the provided information.
         /// </summary>
@@ -403,8 +405,6 @@ namespace ThreeRiversTech.Zuleger.Atrium.API
                 eIdx += increment;
                 cards.AddRange(GetAllCardsByIndex(sIdx, eIdx));
             }
-
-            cards.RemoveAll(card => card.Status == "deleted");
 
             return cards;
         }

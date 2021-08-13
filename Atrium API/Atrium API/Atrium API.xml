@@ -31,28 +31,33 @@
         </member>
         <member name="P:ThreeRiversTech.Zuleger.Atrium.API.AtriumController.SerialNumber">
             <summary>
-            Serial number of the Atrium Controller that the AtriumConnection object is connected to.
+            Serial number of the Atrium Controller that the AtriumController object is connected to.
             </summary>
         </member>
         <member name="P:ThreeRiversTech.Zuleger.Atrium.API.AtriumController.ProductName">
             <summary>
-            Product name of the Atrium Controller that the AtriumConnection object is connected to.
+            Product name of the Atrium Controller that the AtriumController object is connected to.
             </summary>
         </member>
         <member name="P:ThreeRiversTech.Zuleger.Atrium.API.AtriumController.ProductLabel">
             <summary>
-            Product label of the Atrium Controller that the AtriumConnection object is connected to.
+            Product label of the Atrium Controller that the AtriumController object is connected to.
             </summary>
         </member>
         <member name="P:ThreeRiversTech.Zuleger.Atrium.API.AtriumController.ProductVersion">
             <summary>
-            Product version of the Atrium Controller that the AtriumConnection object is connected to.
+            Product version of the Atrium Controller that the AtriumController object is connected to.
             </summary>
         </member>
         <member name="P:ThreeRiversTech.Zuleger.Atrium.API.AtriumController.GenerateGuid">
             <summary>
             Generates a random Guid (128-bit ID) in the format of "########-####-####-####-############".
             This should never be the same string when called.
+            </summary>
+        </member>
+        <member name="P:ThreeRiversTech.Zuleger.Atrium.API.AtriumController.SessionID">
+            <summary>
+            Session ID of the Atrium Controller that the AtriumController object is connected to.
             </summary>
         </member>
         <member name="M:ThreeRiversTech.Zuleger.Atrium.API.AtriumController.ACCESS_LEVELS(System.Int32,System.Int32,System.Int32,System.Int32,System.Int32)">
@@ -78,7 +83,7 @@
         </member>
         <member name="M:ThreeRiversTech.Zuleger.Atrium.API.AtriumController.#ctor(System.String,System.String,System.String)">
             <summary>
-            Creates an AtriumConnection object connected to the specified address under the specified username and password.
+            Creates an AtriumController object connected to the specified address under the specified username and password.
             </summary>
             <param name="username">Username to log in as.</param>
             <param name="password">Password to log into Atrium under specified username</param>
