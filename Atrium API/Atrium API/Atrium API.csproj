@@ -9,17 +9,21 @@
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
-    <DocumentationFile>E:\GitHub\Atrium-API\Atrium API\Atrium API\Atrium API.xml</DocumentationFile>
+    <DocumentationFile>C:\Users\Travis\Documents\GitHub\Atrium-API\Atrium API\Atrium API\Atrium API.xml</DocumentationFile>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
-    <DocumentationFile>E:\GitHub\Atrium-API\Atrium API\Atrium API\Atrium API.xml</DocumentationFile>
+    <DocumentationFile>C:\Users\Travis\Documents\GitHub\Atrium-API\Atrium API\Atrium API\Atrium API.xml</DocumentationFile>
   </PropertyGroup>
 
   <ItemGroup>
     <PackageReference Include="ILMerge" Version="3.0.41" />
     <PackageReference Include="System.Net.Http" Version="4.3.4" />
     <PackageReference Include="System.Runtime" Version="4.3.1" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Reference Include="System.Net.Http" />
   </ItemGroup>
 
 </Project>

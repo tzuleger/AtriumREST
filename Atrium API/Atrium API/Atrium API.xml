@@ -26,12 +26,23 @@
         </member>
         <member name="P:ThreeRiversTech.Zuleger.Atrium.API.AtriumController.ResponseText">
             <summary>
-            Stores the Response String from the last POST request made.
+            Stores the Response String from the last POST response received.
+            </summary>
+        </member>
+        <member name="P:ThreeRiversTech.Zuleger.Atrium.API.AtriumController.EncryptedRequest">
+            <summary>
+            Serial number of the Atrium Controller that the AtriumController object is connected to.
+            Stores the Request XML data after encryption to the last POST request made.
+            </summary>
+        </member>
+        <member name="P:ThreeRiversTech.Zuleger.Atrium.API.AtriumController.EncryptedResponse">
+            <summary>
+            Stores the Response XML data before decryption to the last POST response received.
             </summary>
         </member>
         <member name="P:ThreeRiversTech.Zuleger.Atrium.API.AtriumController.SerialNumber">
             <summary>
-            Serial number of the Atrium Controller that the AtriumController object is connected to.
+            Serial number of the Atrium Controller that the AtriumConnection object is connected to.
             </summary>
         </member>
         <member name="P:ThreeRiversTech.Zuleger.Atrium.API.AtriumController.ProductName">
@@ -363,6 +374,16 @@
             <summary>
             In-depth example on how to use the Atrium API.
             </summary>
+        </member>
+        <member name="M:ThreeRiversTech.Zuleger.Atrium.API.UTF8.IsValid(System.Byte[],System.Int32,System.Int32,System.Int32@)">
+            <summary>
+            
+            </summary>
+            <param name="buffer"></param>
+            <param name="position"></param>
+            <param name="length"></param>
+            <param name="bytes"></param>
+            <returns></returns>
         </member>
     </members>
 </doc>

@@ -1,16 +1,16 @@
 {
   "version": 2,
-  "dgSpecHash": "Tgc8gg9KLLmxy0yAK4M2PvV68czDb55o2AkyYj+BoWb3Ick1N1gpRA8TTutpnTOfaKrpdpv5wEUWukIQUgjtQg==",
+  "dgSpecHash": "8v19jzuukrfkNy5UuUlSkPJgkrTquR156NXcBi/S3jxBNLCbpRbO47k8cSjI8/yXCrnZfH9NiHSKsOcHbJWXvg==",
   "success": true,
-  "projectFilePath": "E:\\GitHub\\Atrium-API\\Atrium API\\Atrium API\\Atrium API.csproj",
+  "projectFilePath": "C:\\Users\\Travis\\Documents\\GitHub\\Atrium-API\\Atrium API\\Atrium API\\Atrium API.csproj",
   "expectedPackageFiles": [
-    "C:\\Users\\travi\\.nuget\\packages\\ilmerge\\3.0.41\\ilmerge.3.0.41.nupkg.sha512",
-    "C:\\Users\\travi\\.nuget\\packages\\system.net.http\\4.3.4\\system.net.http.4.3.4.nupkg.sha512",
-    "C:\\Users\\travi\\.nuget\\packages\\system.runtime\\4.3.1\\system.runtime.4.3.1.nupkg.sha512",
-    "C:\\Users\\travi\\.nuget\\packages\\system.security.cryptography.algorithms\\4.3.0\\system.security.cryptography.algorithms.4.3.0.nupkg.sha512",
-    "C:\\Users\\travi\\.nuget\\packages\\system.security.cryptography.encoding\\4.3.0\\system.security.cryptography.encoding.4.3.0.nupkg.sha512",
-    "C:\\Users\\travi\\.nuget\\packages\\system.security.cryptography.primitives\\4.3.0\\system.security.cryptography.primitives.4.3.0.nupkg.sha512",
-    "C:\\Users\\travi\\.nuget\\packages\\system.security.cryptography.x509certificates\\4.3.0\\system.security.cryptography.x509certificates.4.3.0.nupkg.sha512"
+    "C:\\Users\\Travis\\.nuget\\packages\\ilmerge\\3.0.41\\ilmerge.3.0.41.nupkg.sha512",
+    "C:\\Users\\Travis\\.nuget\\packages\\system.net.http\\4.3.4\\system.net.http.4.3.4.nupkg.sha512",
+    "C:\\Users\\Travis\\.nuget\\packages\\system.runtime\\4.3.1\\system.runtime.4.3.1.nupkg.sha512",
+    "C:\\Users\\Travis\\.nuget\\packages\\system.security.cryptography.algorithms\\4.3.0\\system.security.cryptography.algorithms.4.3.0.nupkg.sha512",
+    "C:\\Users\\Travis\\.nuget\\packages\\system.security.cryptography.encoding\\4.3.0\\system.security.cryptography.encoding.4.3.0.nupkg.sha512",
+    "C:\\Users\\Travis\\.nuget\\packages\\system.security.cryptography.primitives\\4.3.0\\system.security.cryptography.primitives.4.3.0.nupkg.sha512",
+    "C:\\Users\\Travis\\.nuget\\packages\\system.security.cryptography.x509certificates\\4.3.0\\system.security.cryptography.x509certificates.4.3.0.nupkg.sha512"
   ],
   "logs": []
 }

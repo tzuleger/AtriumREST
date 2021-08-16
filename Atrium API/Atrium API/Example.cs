@@ -1,4 +1,5 @@
 ﻿using System;
+using System.IO;
 using System.Collections.Generic;
 
 using ThreeRiversTech.Zuleger.Atrium.API.Objects;
@@ -16,11 +17,23 @@ namespace ThreeRiversTech.Zuleger.Atrium.API.Example
             bool userInsertedOrUpdated = false;
             bool cardInsertedOrUpdated = false;
 
+            //AtriumController.TEST("226AA4115678DF6D", "00008F1D", File.ReadAllText("C:/Users/Travis/Desktop/test.xml"));
+            //Console.ReadLine();
+
             AtriumController.MaxAttempts = 3; // Attempt to establish connection 3 times.
             AtriumController.DelayBetweenAttempts = 12; // Wait 12 seconds between each attempt to establish a connection.
 
             // Establish connection (connection is to CDVI public A22 board)
-            AtriumController cnn = new AtriumController("admin", "admin", "http://69.70.57.94/");
+            AtriumController cnn = null;
+            Console.WriteLine($"1 for public, 2 for private (192.168.1.218:2000)");
+            if (Console.ReadLine() == "1")
+            {
+                cnn = new AtriumController("admin", "admin", "http://69.70.57.94/");
+            }
+            else
+            {
+                cnn = new AtriumController("hrgcscript", "fp9$v9!q=L=j&IZp", "http://192.168.1.218:2000/");
+            }
 
             // After a successful connection. You can get basic information on the Product you connected to.
             Console.WriteLine($"Successfully connected to {cnn.ProductName}, {cnn.ProductLabel} (v{cnn.ProductVersion}) - SN: {cnn.SerialNumber}");
@@ -30,10 +43,17 @@ namespace ThreeRiversTech.Zuleger.Atrium.API.Example
             Console.WriteLine($"Request Text:\n{cnn.RequestText}\nResponse Text:\n{cnn.ResponseText}");
             
             // The public board (at the time of developing this example) only has 9 Users, so for best optimization, an increment of 10 is useful.
-            List<User> users = cnn.GetAllUsers(increment: 3);
+            List<User> users = cnn.GetAllUsers(increment: 10);
+            Console.WriteLine($"Request Text:\n{cnn.RequestText}\nResponse Text:\n{cnn.ResponseText}");
+            Console.WriteLine($"Response Encrypted:\n{cnn.EncryptedResponse}");
+            if(true)
+            {
+                cnn.Close();
+                return;
+            }
             // By default, the increment is 100.
             List<Card> cards = cnn.GetAllCards();
-            Console.WriteLine($"{cnn.RequestText}\n{cnn.ResponseText}");
+            Console.WriteLine($"Request Text:\n{cnn.RequestText}\nResponse Text:\n{cnn.ResponseText}");
 
             // Using Atrium SDK Demo App, I obtained the Object ID for "Door 1 ONLY", "Area A", and "Warehouse Access Level"
             const int access_level_door_1_only = 0;
@@ -80,6 +100,7 @@ namespace ThreeRiversTech.Zuleger.Atrium.API.Example
                 // If the returned Object ID is null, then the insertion failed.
                 userInsertedOrUpdated = newUserObjectID != null;
             }
+            Console.WriteLine($"Request Text:\n{cnn.RequestText}\nResponse Text:\n{cnn.ResponseText}");
 
             // We also want a card attached to this User.
             Card newCard = new Card
@@ -136,6 +157,7 @@ namespace ThreeRiversTech.Zuleger.Atrium.API.Example
                 //    newCard.ActivationDate, 
                 //    newCard.ExpirationDate);
             }
+            Console.WriteLine($"Request Text:\n{cnn.RequestText}\nResponse Text:\n{cnn.ResponseText}");
         }
     }
 }
