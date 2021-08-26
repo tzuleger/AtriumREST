@@ -1,0 +1,56 @@
+{
+  "format": 1,
+  "restore": {
+    "C:\\Users\\Travis\\Documents\\GitHub\\Atrium-API\\AtriumREST\\AtriumREST\\AtriumREST.csproj": {}
+  },
+  "projects": {
+    "C:\\Users\\Travis\\Documents\\GitHub\\Atrium-API\\AtriumREST\\AtriumREST\\AtriumREST.csproj": {
+      "version": "1.0.0",
+      "restore": {
+        "projectUniqueName": "C:\\Users\\Travis\\Documents\\GitHub\\Atrium-API\\AtriumREST\\AtriumREST\\AtriumREST.csproj",
+        "projectName": "AtriumREST",
+        "projectPath": "C:\\Users\\Travis\\Documents\\GitHub\\Atrium-API\\AtriumREST\\AtriumREST\\AtriumREST.csproj",
+        "packagesPath": "C:\\Users\\Travis\\.nuget\\packages\\",
+        "outputPath": "C:\\Users\\Travis\\Documents\\GitHub\\Atrium-API\\AtriumREST\\AtriumREST\\obj\\",
+        "projectStyle": "PackageReference",
+        "fallbackFolders": [
+          "C:\\Program Files (x86)\\Microsoft\\Xamarin\\NuGet\\"
+        ],
+        "configFilePaths": [
+          "C:\\Users\\Travis\\AppData\\Roaming\\NuGet\\NuGet.Config",
+          "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config",
+          "C:\\Program Files (x86)\\NuGet\\Config\\Xamarin.Offline.config"
+        ],
+        "originalTargetFrameworks": [
+          "net46"
+        ],
+        "sources": {
+          "C:\\Program Files (x86)\\Microsoft SDKs\\NuGetPackages\\": {},
+          "https://api.nuget.org/v3/index.json": {}
+        },
+        "frameworks": {
+          "net46": {
+            "targetAlias": "net46",
+            "projectReferences": {}
+          }
+        },
+        "warningProperties": {
+          "warnAsError": [
+            "NU1605"
+          ]
+        }
+      },
+      "frameworks": {
+        "net46": {
+          "targetAlias": "net46",
+          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\5.0.206\\RuntimeIdentifierGraph.json"
+        }
+      },
+      "runtimes": {
+        "win7-x86": {
+          "#import": []
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,20 @@
+C:\Users\Travis\Documents\GitHub\Atrium-API\Atrium API\Atrium API\bin\Release\net46\AtriumREST.exe.config
+C:\Users\Travis\Documents\GitHub\Atrium-API\Atrium API\Atrium API\bin\Release\net46\AtriumREST.exe
+C:\Users\Travis\Documents\GitHub\Atrium-API\Atrium API\Atrium API\bin\Release\net46\AtriumREST.pdb
+C:\Users\Travis\Documents\GitHub\Atrium-API\Atrium API\Atrium API\bin\Release\net46\Atrium API.xml
+C:\Users\Travis\Documents\GitHub\Atrium-API\Atrium API\Atrium API\obj\Release\net46\AtriumREST.csprojAssemblyReference.cache
+C:\Users\Travis\Documents\GitHub\Atrium-API\Atrium API\Atrium API\obj\Release\net46\AtriumREST.AssemblyInfoInputs.cache
+C:\Users\Travis\Documents\GitHub\Atrium-API\Atrium API\Atrium API\obj\Release\net46\AtriumREST.AssemblyInfo.cs
+C:\Users\Travis\Documents\GitHub\Atrium-API\Atrium API\Atrium API\obj\Release\net46\AtriumREST.csproj.CoreCompileInputs.cache
+C:\Users\Travis\Documents\GitHub\Atrium-API\Atrium API\Atrium API\obj\Release\net46\AtriumREST.exe
+C:\Users\Travis\Documents\GitHub\Atrium-API\Atrium API\Atrium API\obj\Release\net46\AtriumREST.pdb
+C:\Users\Travis\Documents\GitHub\Atrium-API\AtriumREST\AtriumREST\bin\Release\net46\AtriumREST.exe.config
+C:\Users\Travis\Documents\GitHub\Atrium-API\AtriumREST\AtriumREST\bin\Release\net46\AtriumREST.exe
+C:\Users\Travis\Documents\GitHub\Atrium-API\AtriumREST\AtriumREST\bin\Release\net46\AtriumREST.pdb
+C:\Users\Travis\Documents\GitHub\Atrium-API\AtriumREST\AtriumREST\bin\Release\net46\Atrium API.xml
+C:\Users\Travis\Documents\GitHub\Atrium-API\AtriumREST\AtriumREST\obj\Release\net46\AtriumREST.csprojAssemblyReference.cache
+C:\Users\Travis\Documents\GitHub\Atrium-API\AtriumREST\AtriumREST\obj\Release\net46\AtriumREST.AssemblyInfoInputs.cache
+C:\Users\Travis\Documents\GitHub\Atrium-API\AtriumREST\AtriumREST\obj\Release\net46\AtriumREST.AssemblyInfo.cs
+C:\Users\Travis\Documents\GitHub\Atrium-API\AtriumREST\AtriumREST\obj\Release\net46\AtriumREST.csproj.CoreCompileInputs.cache
+C:\Users\Travis\Documents\GitHub\Atrium-API\AtriumREST\AtriumREST\obj\Release\net46\AtriumREST.exe
+C:\Users\Travis\Documents\GitHub\Atrium-API\AtriumREST\AtriumREST\obj\Release\net46\AtriumREST.pdb
