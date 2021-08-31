@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Linq;
 using System.Text;
 
 namespace ThreeRiversTech.Zuleger.Atrium.REST.Security
@@ -27,7 +28,7 @@ namespace ThreeRiversTech.Zuleger.Atrium.REST.Security
         /// <returns>Decrypted string in ASCII</returns>
         public static String Decrypt(String hexKey, String ciphertext)
         {
-            return Encoding.ASCII.GetString(rc4(toBytes(hexKey), toBytes(ciphertext)));
+            return fromBytes(rc4(toBytes(hexKey), fromHex(ciphertext)));
         }
 
         /// <summary>
@@ -83,17 +84,33 @@ namespace ThreeRiversTech.Zuleger.Atrium.REST.Security
             return cipher;
         }
 
+        // Converts an ASCII String to an array of bytes.
+        private static byte[] toBytes(String str)
+        {
+            return Encoding.ASCII.GetBytes(str);
+        }
+
+        // Converts an array of bytes to an ASCII String
+        private static String fromBytes(byte[] bytes)
+        {
+            return Encoding.ASCII.GetString(bytes);
+        }
+
         // Converts an array of bytes to a hexadecimal string.
         private static String toHex(byte[] bytes)
         {
             return BitConverter.ToString(bytes).Replace("-", "");
         }
 
-        ///Converts a hexadecimal String to an array of bytes.
-        private static byte[] toBytes(String hex)
+        // Converts a hexadecimal String to an array of bytes.
+        private static byte[] fromHex(String hex)
         {
-            return Encoding.ASCII.GetBytes(hex);
+            return Enumerable.Range(0, hex.Length)
+                             .Where(x => x % 2 == 0)
+                             .Select(x => Convert.ToByte(hex.Substring(x, 2), 16))
+                             .ToArray();
         }
+        
 
         // Pads a string s to the left with the given character c to the total length of l
         private static String pad(String s, char c, int l)

@@ -9,6 +9,20 @@
             Used to communicate with an Atrium Controller using Atrium SDK and HTTP.
             </summary>
         </member>
+        <member name="M:ThreeRiversTech.Zuleger.Atrium.REST.AtriumController.#ctor(System.String,System.String,System.String)">
+            <summary>
+            Creates an AtriumController object connected to the specified address under the specified username and password.
+            </summary>
+            <param name="username">Username to log in as.</param>
+            <param name="password">Password to log into Atrium under specified username</param>
+            <param name="address">Atrium Controller Address to connect to</param>
+        </member>
+        <member name="M:ThreeRiversTech.Zuleger.Atrium.REST.AtriumController.Close">
+            <summary>
+            Closes the AtriumController's connection. If this function is called, the connection cannot be reopened.
+            </summary>
+            <returns>Boolean indicating whether the Controller closed the connection or not.</returns>
+        </member>
         <member name="P:ThreeRiversTech.Zuleger.Atrium.REST.AtriumController.MaxAttempts">
             <summary>
             Maximum number of attempts to establish a session. (by default: 10. Maximum amount that can be set is 50.)
@@ -18,6 +32,41 @@
             <summary>
             The time in seconds to wait for the next attempt to log into the controller. (by default: 10 seconds)
             </summary>
+        </member>
+        <member name="M:ThreeRiversTech.Zuleger.Atrium.REST.AtriumController.ACCESS_LEVELS(System.Int32,System.Int32,System.Int32,System.Int32,System.Int32)">
+            <summary>
+            Constructs an integer array of the 5 integer arguments. If an argument is not provided, then that Access Level is ignored.
+            </summary>
+            <param name="al1">Integer that represents the Object ID for an Access Level. By default: -1 for no access level</param>
+            <param name="al2">Integer that represents the Object ID for an Access Level. By default: -1 for no access level</param>
+            <param name="al3">Integer that represents the Object ID for an Access Level. By default: -1 for no access level</param>
+            <param name="al4">Integer that represents the Object ID for an Access Level. By default: -1 for no access level</param>
+            <param name="al5">Integer that represents the Object ID for an Access Level. By default: -1 for no access level</param>
+            <returns></returns>
+        </member>
+        <member name="M:ThreeRiversTech.Zuleger.Atrium.REST.AtriumController.To26BitCardNumber(System.Int32,System.Int32)">
+            <summary>
+            Converts two 32-bit integers into one 26-bit integer. Specifically used for converting a Family Number and Member Number into
+            it's 26-bit variant, where the Family Number is the upper 10 bits and the Member Number is the lower 16 bits.
+            </summary>
+            <param name="familyNumber">10-bit Int32 that corresponds to the Family Number on the card.</param>
+            <param name="memberNumber">16-bit Int32 that corresponds to the Member Number that belongs to the related family.</param>
+            <returns>26-bit integer directly converted from the family number bits concatenated with the member number bits.
+            If family number or member number is less than 0, then -1 is returned.</returns>
+        </member>
+        <member name="M:ThreeRiversTech.Zuleger.Atrium.REST.AtriumController.ToUTC(System.DateTime)">
+            <summary>
+            Converts a DateTime to its UTC counterpart in Hexadecimal notation as a String
+            </summary>
+            <param name="dt">DateTime to convert to Hexadecimal UTC</param>
+            <returns>String representing UTC time of the datetime passed in. Is in Hexadecimal notation</returns>
+        </member>
+        <member name="M:ThreeRiversTech.Zuleger.Atrium.REST.AtriumController.FromUTC(System.String)">
+            <summary>
+            Converts a UTC Hexadecimal String to its DateTime counterpart.
+            </summary>
+            <param name="utc">UTC String that is to be converted to a DateTime.</param>
+            <returns>DateTime representing local time of converted UTC string. If the String cannot be parsed, then default is returned.</returns>
         </member>
         <member name="P:ThreeRiversTech.Zuleger.Atrium.REST.AtriumController.RequestText">
             <summary>
@@ -71,40 +120,27 @@
             This should never be the same string when called.
             </summary>
         </member>
-        <member name="M:ThreeRiversTech.Zuleger.Atrium.REST.AtriumController.#ctor(System.String,System.String,System.String)">
+        <member name="M:ThreeRiversTech.Zuleger.Atrium.REST.AtriumController.Insert(ThreeRiversTech.Zuleger.Atrium.REST.Objects.AtriumObject)">
             <summary>
-            Creates an AtriumController object connected to the specified address under the specified username and password.
+            Inserts a single Atrium Object into the controller.
             </summary>
-            <param name="username">Username to log in as.</param>
-            <param name="password">Password to log into Atrium under specified username</param>
-            <param name="address">Atrium Controller Address to connect to</param>
+            <param name="o">Atrium Object to be inserted.</param>
         </member>
-        <member name="M:ThreeRiversTech.Zuleger.Atrium.REST.AtriumController.Close">
+        <member name="M:ThreeRiversTech.Zuleger.Atrium.REST.AtriumController.Update(ThreeRiversTech.Zuleger.Atrium.REST.Objects.AtriumObject)">
             <summary>
-            Closes the AtriumController's connection. If this function is called, the connection cannot be reopened.
+            Updates a single Atrium Object into the controller. If the object does not exist (defined by GUID being equal) then no update occurs.
             </summary>
-            <returns>Boolean indicating whether the Controller closed the connection or not.</returns>
+            <param name="o">Object to be updated in the controller.</param>
+            <returns>True if the object was successfully updated. False otherwise.</returns>
         </member>
-        <member name="M:ThreeRiversTech.Zuleger.Atrium.REST.AtriumController.ACCESS_LEVELS(System.Int32,System.Int32,System.Int32,System.Int32,System.Int32)">
+        <member name="M:ThreeRiversTech.Zuleger.Atrium.REST.AtriumController.GetAll``1(System.Int32,System.Int32)">
             <summary>
-            Constructs an integer array of the 5 integer arguments. If an argument is not provided, then that Access Level is ignored.
+            Grabs all records between the specified minimum and maximum object IDs in the controller.
             </summary>
-            <param name="al1">Integer that represents the Object ID for an Access Level. By default: -1 for no access level</param>
-            <param name="al2">Integer that represents the Object ID for an Access Level. By default: -1 for no access level</param>
-            <param name="al3">Integer that represents the Object ID for an Access Level. By default: -1 for no access level</param>
-            <param name="al4">Integer that represents the Object ID for an Access Level. By default: -1 for no access level</param>
-            <param name="al5">Integer that represents the Object ID for an Access Level. By default: -1 for no access level</param>
-            <returns></returns>
-        </member>
-        <member name="M:ThreeRiversTech.Zuleger.Atrium.REST.AtriumController.To26BitCardNumber(System.Int32,System.Int32)">
-            <summary>
-            Converts two 32-bit integers into one 26-bit integer. Specifically used for converting a Family Number and Member Number into
-            it's 26-bit variant, where the Family Number is the upper 10 bits and the Member Number is the lower 16 bits.
-            </summary>
-            <param name="familyNumber">10-bit Int32 that corresponds to the Family Number on the card.</param>
-            <param name="memberNumber">16-bit Int32 that corresponds to the Member Number that belongs to the related family.</param>
-            <returns>26-bit integer directly converted from the family number bits concatenated with the member number bits.
-            If family number or member number is less than 0, then -1 is returned.</returns>
+            <typeparam name="T">AtriumObject child that is to be grabbed from the Controller</typeparam>
+            <param name="startIndex">Start index of what objects to grab from in the Controller.</param>
+            <param name="endIndex">End index of what objects to grab from in the Controller.</param>
+            <returns>List of the specified AtriumObject objects that were grabbed from the Controller.</returns>
         </member>
         <member name="M:ThreeRiversTech.Zuleger.Atrium.REST.AtriumController.CHECK_ENCRYPTION(System.String,System.String,System.String,System.String,System.String)">
             <summary>
@@ -131,7 +167,7 @@
             By default 100.</param>
             <returns>List of all Cards that are in the Atrium Controller</returns>
         </member>
-        <member name="M:ThreeRiversTech.Zuleger.Atrium.REST.AtriumController.InsertCard(System.String,System.Guid,System.Guid,System.String,System.Int32,System.DateTime,System.DateTime)">
+        <member name="M:ThreeRiversTech.Zuleger.Atrium.REST.AtriumController.InsertCard(System.String,System.String,System.String,System.String,System.String,System.DateTime,System.DateTime)">
             <summary>
             Inserts a new Card into Atrium under the provided information.
             </summary>
@@ -183,7 +219,7 @@
             By default 100.</param>
             <returns>List of all Users that are in the Atrium Controller</returns>
         </member>
-        <member name="M:ThreeRiversTech.Zuleger.Atrium.REST.AtriumController.InsertUser(System.String,System.String,System.Guid,System.DateTime,System.DateTime,System.Int32[])">
+        <member name="M:ThreeRiversTech.Zuleger.Atrium.REST.AtriumController.InsertUser(System.String,System.String,System.String,System.DateTime,System.DateTime,System.Int32[])">
             <summary>
             Inserts a new User into the Atrium Controller with the provided information.
             </summary>
@@ -278,19 +314,59 @@
             </summary>
             <param name="errcode">Error Code that was given instead of "ok"</param>
         </member>
+        <member name="T:ThreeRiversTech.Zuleger.Atrium.REST.Objects.SdkDataType">
+            <summary>
+            
+            </summary>
+        </member>
+        <member name="P:ThreeRiversTech.Zuleger.Atrium.REST.Objects.SdkDataType.Name">
+            <summary>
+            
+            </summary>
+        </member>
+        <member name="P:ThreeRiversTech.Zuleger.Atrium.REST.Objects.SdkDataType.RelatedAttribute">
+            <summary>
+            
+            </summary>
+        </member>
+        <member name="P:ThreeRiversTech.Zuleger.Atrium.REST.Objects.SdkDataType.RelatedType">
+            <summary>
+            
+            </summary>
+        </member>
         <member name="T:ThreeRiversTech.Zuleger.Atrium.REST.Objects.AtriumObject">
             <summary>
             The base object containing attributes that all Atrium objects have.
             </summary>
         </member>
+        <member name="P:ThreeRiversTech.Zuleger.Atrium.REST.Objects.AtriumObject.SdkType">
+            <summary>
+            Type as defined inside of the SDK.
+            </summary>
+        </member>
         <member name="P:ThreeRiversTech.Zuleger.Atrium.REST.Objects.AtriumObject.Status">
             <summary>
-            
+            Status of the Object in the Controller.
             </summary>
         </member>
         <member name="P:ThreeRiversTech.Zuleger.Atrium.REST.Objects.AtriumObject.ObjectId">
             <summary>
             Object ID of where the Object is located in the Atrium Controller.
+            </summary>
+        </member>
+        <member name="P:ThreeRiversTech.Zuleger.Atrium.REST.Objects.AtriumObject.IsValid">
+            <summary>
+            Boolean specifying if the Object is valid in the Controller.
+            </summary>
+        </member>
+        <member name="P:ThreeRiversTech.Zuleger.Atrium.REST.Objects.AtriumObject.IsReadOnly">
+            <summary>
+            
+            </summary>
+        </member>
+        <member name="P:ThreeRiversTech.Zuleger.Atrium.REST.Objects.AtriumObject.CannotBeDeleted">
+            <summary>
+            
             </summary>
         </member>
         <member name="P:ThreeRiversTech.Zuleger.Atrium.REST.Objects.AtriumObject.ObjectGuid">
@@ -308,20 +384,36 @@
             Related Entity's GUID
             </summary>
         </member>
-        <member name="P:ThreeRiversTech.Zuleger.Atrium.REST.Objects.AtriumObject.IsValid">
-            <summary>
-            Boolean specifying if the Object is valid in the Controller.
-            </summary>
-        </member>
-        <member name="M:ThreeRiversTech.Zuleger.Atrium.REST.Objects.AtriumObject.Update(ThreeRiversTech.Zuleger.Atrium.REST.Objects.AtriumObject)">
+        <member name="M:ThreeRiversTech.Zuleger.Atrium.REST.Objects.AtriumObject.Copy(ThreeRiversTech.Zuleger.Atrium.REST.Objects.AtriumObject,System.Boolean,System.Boolean)">
             <summary>
             Update this object's attributes to be the same as o's attributes.
             </summary>
-            <param name="o"></param>
+            <param name="o">The Atrium Object that its attributes are to be copied to this object.</param>
+            <param name="overwrite">Boolean specifying whether overwriting should occur on parameters on "this" object where values already exist. By default: false./param>
+            <param name="overwriteIds"/>Boolean specifying whether overwriting should occur on Id type parameters. By default: true.</param>
+            <returns>"this" after copying has finished.</returns>
+        </member>
+        <member name="M:ThreeRiversTech.Zuleger.Atrium.REST.Objects.AtriumObject.Jsonify(System.Boolean)">
+            <summary>
+            Returns all Properties separated by a newline character and in format of "PropertyName: Value"
+            </summary>
+            <param name="beautify">Specifies whether to beautify the JSON output or not. By default: true.</param>
+            <returns>String that contains all properties in JSON format.</returns>
+        </member>
+        <member name="M:ThreeRiversTech.Zuleger.Atrium.REST.Objects.AtriumObject.ToString">
+            <summary>
+            Same as "AllProperties()" but is the default AtriumObject ToString method.
+            </summary>
+            <returns>String that contains all properties in JSON format.</returns>
         </member>
         <member name="T:ThreeRiversTech.Zuleger.Atrium.REST.Objects.Card">
             <summary>
             Card object that resembles the appearance of Card in Atrium (and attributes)
+            </summary>
+        </member>
+        <member name="P:ThreeRiversTech.Zuleger.Atrium.REST.Objects.Card.SdkType">
+            <summary>
+            Inherited: Type as defined in the SDK.
             </summary>
         </member>
         <member name="P:ThreeRiversTech.Zuleger.Atrium.REST.Objects.Card.DisplayName">
@@ -329,9 +421,94 @@
             Display Name of the Card.
             </summary>
         </member>
-        <member name="P:ThreeRiversTech.Zuleger.Atrium.REST.Objects.Card.CardNumber">
+        <member name="P:ThreeRiversTech.Zuleger.Atrium.REST.Objects.Card.CardNumberLo">
             <summary>
             26 bit Integer where upper 10 bits is the Family number and lower 16 bits is the card number.
+            </summary>
+        </member>
+        <member name="P:ThreeRiversTech.Zuleger.Atrium.REST.Objects.Card.CardNumberHi">
+             <summary>
+            
+             </summary>
+        </member>
+        <member name="P:ThreeRiversTech.Zuleger.Atrium.REST.Objects.Card.Code">
+             <summary>
+            
+             </summary>
+        </member>
+        <member name="P:ThreeRiversTech.Zuleger.Atrium.REST.Objects.Card.Format">
+             <summary>
+            
+             </summary>
+        </member>
+        <member name="P:ThreeRiversTech.Zuleger.Atrium.REST.Objects.Card.OptionCanArm">
+             <summary>
+            
+             </summary>
+        </member>
+        <member name="P:ThreeRiversTech.Zuleger.Atrium.REST.Objects.Card.OptionCanDisarm">
+             <summary>
+            
+             </summary>
+        </member>
+        <member name="P:ThreeRiversTech.Zuleger.Atrium.REST.Objects.Card.OptionCanAccess">
+             <summary>
+            
+             </summary>
+        </member>
+        <member name="P:ThreeRiversTech.Zuleger.Atrium.REST.Objects.Card.OptionInterlockOverride">
+             <summary>
+            
+             </summary>
+        </member>
+        <member name="P:ThreeRiversTech.Zuleger.Atrium.REST.Objects.Card.OptionExtendDelay">
+             <summary>
+            
+             </summary>
+        </member>
+        <member name="P:ThreeRiversTech.Zuleger.Atrium.REST.Objects.Card.OptionAntiPassbackOverride">
+             <summary>
+            
+             </summary>
+        </member>
+        <member name="P:ThreeRiversTech.Zuleger.Atrium.REST.Objects.Card.OptionAccessCount">
+             <summary>
+            
+             </summary>
+        </member>
+        <member name="P:ThreeRiversTech.Zuleger.Atrium.REST.Objects.Card.OptionTrace">
+             <summary>
+            
+             </summary>
+        </member>
+        <member name="P:ThreeRiversTech.Zuleger.Atrium.REST.Objects.Card.OptionGuardTour">
+             <summary>
+            
+             </summary>
+        </member>
+        <member name="P:ThreeRiversTech.Zuleger.Atrium.REST.Objects.Card.OptionCapacityOverride">
+             <summary>
+            
+             </summary>
+        </member>
+        <member name="P:ThreeRiversTech.Zuleger.Atrium.REST.Objects.Card.OptionProgramming">
+             <summary>
+            
+             </summary>
+        </member>
+        <member name="P:ThreeRiversTech.Zuleger.Atrium.REST.Objects.Card.OptionLost">
+             <summary>
+            
+             </summary>
+        </member>
+        <member name="P:ThreeRiversTech.Zuleger.Atrium.REST.Objects.Card.OptionStolen">
+             <summary>
+            
+             </summary>
+        </member>
+        <member name="P:ThreeRiversTech.Zuleger.Atrium.REST.Objects.Card.ActivationDateHexUTC">
+            <summary>
+            Activation Date of the Card in HEX UTC.
             </summary>
         </member>
         <member name="P:ThreeRiversTech.Zuleger.Atrium.REST.Objects.Card.ActivationDate">
@@ -339,14 +516,59 @@
             Activation Date of the Card.
             </summary>
         </member>
+        <member name="P:ThreeRiversTech.Zuleger.Atrium.REST.Objects.Card.ExpirationDateHexUTC">
+            <summary>
+            Activation Date of the Card in HEX UTC.
+            </summary>
+        </member>
         <member name="P:ThreeRiversTech.Zuleger.Atrium.REST.Objects.Card.ExpirationDate">
             <summary>
             Expiration Date of the Card.
             </summary>
         </member>
+        <member name="P:ThreeRiversTech.Zuleger.Atrium.REST.Objects.Card.OptionLockdownActivation">
+             <summary>
+            
+             </summary>
+        </member>
+        <member name="P:ThreeRiversTech.Zuleger.Atrium.REST.Objects.Card.OptionLockdownDeactivation">
+             <summary>
+            
+             </summary>
+        </member>
+        <member name="P:ThreeRiversTech.Zuleger.Atrium.REST.Objects.Card.OptionLockdownOverride">
+             <summary>
+            
+             </summary>
+        </member>
+        <member name="P:ThreeRiversTech.Zuleger.Atrium.REST.Objects.Card.OptionLockdownPartition">
+             <summary>
+            
+             </summary>
+        </member>
+        <member name="P:ThreeRiversTech.Zuleger.Atrium.REST.Objects.Card.OptionRequirePIN">
+             <summary>
+            
+             </summary>
+        </member>
+        <member name="P:ThreeRiversTech.Zuleger.Atrium.REST.Objects.Card.OptionUseCounter">
+             <summary>
+            
+             </summary>
+        </member>
+        <member name="P:ThreeRiversTech.Zuleger.Atrium.REST.Objects.Card.OptionDoubleSwipe">
+             <summary>
+            
+             </summary>
+        </member>
         <member name="T:ThreeRiversTech.Zuleger.Atrium.REST.Objects.User">
             <summary>
             User object that resembles the appearance of User in Atrium (and attributes)
+            </summary>
+        </member>
+        <member name="P:ThreeRiversTech.Zuleger.Atrium.REST.Objects.User.SdkType">
+            <summary>
+            Inherited: Type as defined in the SDK.
             </summary>
         </member>
         <member name="P:ThreeRiversTech.Zuleger.Atrium.REST.Objects.User.FirstName">
@@ -359,9 +581,99 @@
             Last Name of the User.
             </summary>
         </member>
+        <member name="P:ThreeRiversTech.Zuleger.Atrium.REST.Objects.User.OptionDualArming">
+             <summary>
+            
+             </summary>
+        </member>
+        <member name="P:ThreeRiversTech.Zuleger.Atrium.REST.Objects.User.OptionAccess">
+             <summary>
+            
+             </summary>
+        </member>
+        <member name="P:ThreeRiversTech.Zuleger.Atrium.REST.Objects.User.OptionDuress">
+             <summary>
+            
+             </summary>
+        </member>
+        <member name="P:ThreeRiversTech.Zuleger.Atrium.REST.Objects.User.OptionInterlockOverride">
+             <summary>
+            
+             </summary>
+        </member>
+        <member name="P:ThreeRiversTech.Zuleger.Atrium.REST.Objects.User.OptionExtendedDelay">
+             <summary>
+            
+             </summary>
+        </member>
+        <member name="P:ThreeRiversTech.Zuleger.Atrium.REST.Objects.User.OptionAntiPassbackOverride">
+             <summary>
+            
+             </summary>
+        </member>
+        <member name="P:ThreeRiversTech.Zuleger.Atrium.REST.Objects.User.OptionAccessCount">
+             <summary>
+            
+             </summary>
+        </member>
+        <member name="P:ThreeRiversTech.Zuleger.Atrium.REST.Objects.User.OptionTrace">
+             <summary>
+            
+             </summary>
+        </member>
+        <member name="P:ThreeRiversTech.Zuleger.Atrium.REST.Objects.User.OptionGuardTour">
+             <summary>
+            
+             </summary>
+        </member>
+        <member name="P:ThreeRiversTech.Zuleger.Atrium.REST.Objects.User.OptionCapacityOverride">
+             <summary>
+            
+             </summary>
+        </member>
+        <member name="P:ThreeRiversTech.Zuleger.Atrium.REST.Objects.User.OptionProgramming">
+             <summary>
+            
+             </summary>
+        </member>
+        <member name="P:ThreeRiversTech.Zuleger.Atrium.REST.Objects.User.OptionUserCounter">
+             <summary>
+            
+             </summary>
+        </member>
+        <member name="P:ThreeRiversTech.Zuleger.Atrium.REST.Objects.User.OptionCanDisarm">
+             <summary>
+            
+             </summary>
+        </member>
+        <member name="P:ThreeRiversTech.Zuleger.Atrium.REST.Objects.User.OptionVisitor">
+             <summary>
+            
+             </summary>
+        </member>
+        <member name="P:ThreeRiversTech.Zuleger.Atrium.REST.Objects.User.OptionAsset">
+             <summary>
+            
+             </summary>
+        </member>
+        <member name="P:ThreeRiversTech.Zuleger.Atrium.REST.Objects.User.SupervisorLevelID">
+             <summary>
+            
+             </summary>
+        </member>
+        <member name="P:ThreeRiversTech.Zuleger.Atrium.REST.Objects.User.ActivationDateHexUTC">
+            <summary>
+            Activation Date of the User in HEX UTC.
+            </summary>
+        </member>
         <member name="P:ThreeRiversTech.Zuleger.Atrium.REST.Objects.User.ActivationDate">
             <summary>
             Activation Date of the User.
+            </summary>
+        </member>
+        <member name="P:ThreeRiversTech.Zuleger.Atrium.REST.Objects.User.ExpirationDateHexUTC">
+            <summary>
+            Activation Date of the User in HEX UTC.
             </summary>
         </member>
         <member name="P:ThreeRiversTech.Zuleger.Atrium.REST.Objects.User.ExpirationDate">
@@ -373,6 +685,66 @@
             <summary>
             Integer array (expected size of at most 5) specifying the (up to) five Levels (specification of Object ID) this User has access to.
             </summary>
+        </member>
+        <member name="P:ThreeRiversTech.Zuleger.Atrium.REST.Objects.User.AccessLevel1">
+             <summary>
+            
+             </summary>
+        </member>
+        <member name="P:ThreeRiversTech.Zuleger.Atrium.REST.Objects.User.AccessLevel2">
+             <summary>
+            
+             </summary>
+        </member>
+        <member name="P:ThreeRiversTech.Zuleger.Atrium.REST.Objects.User.AccessLevel3">
+             <summary>
+            
+             </summary>
+        </member>
+        <member name="P:ThreeRiversTech.Zuleger.Atrium.REST.Objects.User.AccessLevel4">
+             <summary>
+            
+             </summary>
+        </member>
+        <member name="P:ThreeRiversTech.Zuleger.Atrium.REST.Objects.User.AccessLevel5">
+             <summary>
+            
+             </summary>
+        </member>
+        <member name="P:ThreeRiversTech.Zuleger.Atrium.REST.Objects.User.Language">
+            <summary>
+            Language interpreted as. 0=English, 1=French, 2=Spanish, 3=Chinese.
+            </summary>
+        </member>
+        <member name="P:ThreeRiversTech.Zuleger.Atrium.REST.Objects.User.FloorLevelObjectIds">
+            <summary>
+            Integer array (expected size of at most 5) specifying the (up to) five Levels (specification of Object ID) this User has access to.
+            </summary>
+        </member>
+        <member name="P:ThreeRiversTech.Zuleger.Atrium.REST.Objects.User.FloorLevel1">
+             <summary>
+            
+             </summary>
+        </member>
+        <member name="P:ThreeRiversTech.Zuleger.Atrium.REST.Objects.User.FloorLevel2">
+             <summary>
+            
+             </summary>
+        </member>
+        <member name="P:ThreeRiversTech.Zuleger.Atrium.REST.Objects.User.FloorLevel3">
+             <summary>
+            
+             </summary>
+        </member>
+        <member name="P:ThreeRiversTech.Zuleger.Atrium.REST.Objects.User.FloorLevel4">
+             <summary>
+            
+             </summary>
+        </member>
+        <member name="P:ThreeRiversTech.Zuleger.Atrium.REST.Objects.User.FloorLevel5">
+             <summary>
+            
+             </summary>
         </member>
         <member name="M:ThreeRiversTech.Zuleger.Atrium.REST.Objects.User.ToString">
             <summary>
@@ -419,9 +791,6 @@
             </summary>
             <param name="str">String to perform the check sum on.</param>
             <returns>Returns a String formatted like "0x####" where #### is the summation of all character codes in str.</returns>
-        </member>
-        <member name="M:ThreeRiversTech.Zuleger.Atrium.REST.Security.RC4.toBytes(System.String)">
-            Converts a hexadecimal String to an array of bytes.
         </member>
     </members>
 </doc>

@@ -15,21 +15,153 @@ namespace ThreeRiversTech.Zuleger.Atrium.REST
         public sealed class Card : AtriumObject
         {
             /// <summary>
+            /// Inherited: Type as defined in the SDK.
+            /// </summary>
+            public override String SdkType { get => "card"; }
+            /// <summary>
             /// Display Name of the Card.
             /// </summary>
+            [SdkDataType(Name = "label3")]
             public String DisplayName { get; set; }
             /// <summary>
             /// 26 bit Integer where upper 10 bits is the Family number and lower 16 bits is the card number.
             /// </summary>
-            public int CardNumber { get; set; } = -1;
+            [SdkDataType(Name = "hexv5")]
+            public String CardNumberLo { get; set; } = "000000";
+            /// <summary>
+            ///
+            /// </summary>
+            [SdkDataType(Name = "hexv6")]
+            public String CardNumberHi { get; set; } = "000000";
+            /// <summary>
+            ///
+            /// </summary>
+            [SdkDataType(Name = "key7")]
+            public String Code { get; set; }
+            /// <summary>
+            ///
+            /// </summary>
+            [SdkDataType(Name = "byte8")]
+            public String Format { get; set; }
+            /// <summary>
+            ///
+            /// </summary>
+            [SdkDataType(Name = "bit9")]
+            public int OptionCanArm { get; set; }
+            /// <summary>
+            ///
+            /// </summary>
+            [SdkDataType(Name = "bit10")]
+            public int OptionCanDisarm { get; set; }
+            /// <summary>
+            ///
+            /// </summary>
+            [SdkDataType(Name = "bit11")]
+            public int OptionCanAccess { get; set; }
+            /// <summary>
+            ///
+            /// </summary>
+            [SdkDataType(Name = "bit13")]
+            public int OptionInterlockOverride { get; set; }
+            /// <summary>
+            ///
+            /// </summary>
+            [SdkDataType(Name = "bit14")]
+            public int OptionExtendDelay { get; set; }
+            /// <summary>
+            ///
+            /// </summary>
+            [SdkDataType(Name = "bit15")]
+            public int OptionAntiPassbackOverride { get; set; }
+            /// <summary>
+            ///
+            /// </summary>
+            [SdkDataType(Name = "bit16")]
+            public int OptionAccessCount { get; set; }
+            /// <summary>
+            ///
+            /// </summary>
+            [SdkDataType(Name = "bit17")]
+            public int OptionTrace { get; set; }
+            /// <summary>
+            ///
+            /// </summary>
+            [SdkDataType(Name = "bit18")]
+            public int OptionGuardTour { get; set; }
+            /// <summary>
+            ///
+            /// </summary>
+            [SdkDataType(Name = "bit19")]
+            public int OptionCapacityOverride { get; set; }
+            /// <summary>
+            ///
+            /// </summary>
+            [SdkDataType(Name = "bit20")]
+            public int OptionProgramming { get; set; }
+            /// <summary>
+            ///
+            /// </summary>
+            [SdkDataType(Name = "bit21")]
+            public int OptionLost { get; set; }
+            /// <summary>
+            ///
+            /// </summary>
+            [SdkDataType(Name = "bit22")]
+            public int OptionStolen { get; set; }
+            /// <summary>
+            /// Activation Date of the Card in HEX UTC.
+            /// </summary>
+            [SdkDataType(Name = "utc_time24", RelatedAttribute = "ActivationDate", RelatedType = "DateTime")]
+            public String ActivationDateHexUTC { get => AtriumController.ToUTC(ActivationDate); }
             /// <summary>
             /// Activation Date of the Card.
             /// </summary>
             public DateTime ActivationDate { get; set; }
             /// <summary>
+            /// Activation Date of the Card in HEX UTC.
+            /// </summary>
+            [SdkDataType(Name = "utc_time25", RelatedAttribute = "ExpirationDate", RelatedType = "DateTime")]
+            public String ExpirationDateHexUTC { get => AtriumController.ToUTC(ExpirationDate); }
+            /// <summary>
             /// Expiration Date of the Card.
             /// </summary>
             public DateTime ExpirationDate { get; set; }
+            /// <summary>
+            ///
+            /// </summary>
+            [SdkDataType(Name = "bit27")]
+            public int OptionLockdownActivation { get; set; }
+            /// <summary>
+            ///
+            /// </summary>
+            [SdkDataType(Name = "bit28")]
+            public int OptionLockdownDeactivation { get; set; }
+            /// <summary>
+            ///
+            /// </summary>
+            [SdkDataType(Name = "bit29")]
+            public int OptionLockdownOverride { get; set; }
+            /// <summary>
+            ///
+            /// </summary>
+            [SdkDataType(Name = "bit30")]
+            public int OptionLockdownPartition { get; set; }
+            /// <summary>
+            ///
+            /// </summary>
+            [SdkDataType(Name = "bit31")]
+            public int OptionRequirePIN { get; set; }
+            /// <summary>
+            ///
+            /// </summary>
+            [SdkDataType(Name = "bit32")]
+            public int OptionUseCounter { get; set; }
+            /// <summary>
+            ///
+            /// </summary>
+            [SdkDataType(Name = "bit33")]
+            public int OptionDoubleSwipe { get; set; }
+            public override String ToString() => $"{DisplayName} : {CardNumberLo}-{CardNumberHi}";
         }
     }
 
@@ -77,10 +209,10 @@ namespace ThreeRiversTech.Zuleger.Atrium.REST
         /// <returns>String object that is of real type int representing the Object ID as assigned by the Atrium Controller when card is inserted.</returns>
         public String InsertCard(
             String displayName,
-            Guid cardId,
-            Guid userId,
+            String cardId,
+            String userId,
             String objectId,
-            int cardNum,
+            String cardNum,
             DateTime actDate,
             DateTime expDate)
         {
@@ -90,9 +222,9 @@ namespace ThreeRiversTech.Zuleger.Atrium.REST
                 "@SerialNo", _serialNo,
                 "@DisplayName", displayName,
                 "@ObjectID", objectId,
-                "@CardID", cardId.ToString(),
-                "@UserID", userId.ToString(),
-                "@MemberNumber", Convert.ToString(cardNum, 16),
+                "@CardID", cardId,
+                "@UserID", userId,
+                "@MemberNumber", cardNum,
                 "@ActivationDate", Convert.ToString(((DateTimeOffset)actDate).ToUnixTimeSeconds(), 16),
                 "@ExpirationDate", Convert.ToString(((DateTimeOffset)expDate).ToUnixTimeSeconds(), 16)
             );
@@ -116,9 +248,9 @@ namespace ThreeRiversTech.Zuleger.Atrium.REST
             String objectId = InsertCard(
                 card.DisplayName,
                 card.ObjectGuid,
-                card.EntityRelationshipGuid.Value,
+                card.EntityRelationshipGuid,
                 card.EntityRelationshipId,
-                card.CardNumber,
+                card.CardNumberLo,
                 card.ActivationDate,
                 card.ExpirationDate);
 
@@ -204,10 +336,10 @@ namespace ThreeRiversTech.Zuleger.Atrium.REST
                               {
                                   Status = e.Attribute("obj_status")?.Value,
                                   ObjectId = e.Attribute("id")?.Value,
-                                  ObjectGuid = Guid.Parse(e.Attribute("guid2")?.Value),
-                                  IsValid = e.Attribute("valid")?.Value == "1",
+                                  ObjectGuid = e.Attribute("guid2").Value,
+                                  IsValid = Int32.Parse(e.Attribute("valid")?.Value),
                                   DisplayName = e.Attribute("label3")?.Value,
-                                  CardNumber = Convert.ToInt32(e.Attribute("hexv5")?.Value, 16),
+                                  CardNumberLo = e.Attribute("hexv5")?.Value,
                                   // Dates need to be converted from Unix Timestamps to Local Times.
                                   ActivationDate = new DateTime(1970, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc)
                                                     .AddSeconds(Convert.ToInt32(e.Attribute("utc_time22")?.Value, 16))

@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Linq;
 using System.Collections.Generic;
 
 using ThreeRiversTech.Zuleger.Atrium.REST.Objects;
@@ -10,244 +11,110 @@ namespace ThreeRiversTech.Zuleger.Atrium.REST.Example
     /// </summary>
     class Example
     {
+        private static Random r = new Random();
+
+        const int access_level_door_1_only = 0;
+        const int access_level_area_a = 9;
+        const int access_level_warehouse = 16;
+
         public static void Main(String[] args)
         {
             // Variables for making sure updates/inserts occur.
-            bool userInsertedOrUpdated = false;
-            bool cardInsertedOrUpdated = false;
-
-            AtriumController.CHECK_ENCRYPTION("ABED141026D7F6BC", "0A221037", "lol");
-            Console.ReadLine();
-
-            AtriumController.MaxAttempts = 3; // Attempt to establish connection 3 times.
-            AtriumController.DelayBetweenAttempts = 12; // Wait 12 seconds between each attempt to establish a connection.
-
-            // Establish connection (connection is to CDVI public A22 board)
             AtriumController cnn = null;
             var username = "admin";
-            var password = "Holmen2019";
-            Console.WriteLine($"Connecting to 192.168.1.218:2000 as \"{username}\" with password \"{password}\"");
-            cnn = new AtriumController(username, password, "http://192.168.1.218:2000/");
-
-            Exception exc = null;
-
-            // After a successful connection. You can get basic information on the Product you connected to.
+            var password = "admin";
+            var address = "http://69.70.57.94/";
+            Console.WriteLine($"Connecting to {address} as \"{username}\" with password \"{password}\"");
+            cnn = new AtriumController(username, password, address);
             Console.WriteLine($"Successfully connected. Device Info: {cnn.ProductName}, {cnn.ProductLabel} (v{cnn.ProductVersion}) - SN: {cnn.SerialNumber}");
-            
-            
-            // Print the Request Text to Atrium SDK and Response Text from Atrium SDK for debugging purposes.
-            // Updates after every SDK transaction (e.g. InsertCard, InsertUser, UpdateCard, UpdateUser, etc.)
-            Console.WriteLine($"Request Text:\n{cnn.RequestText}\nResponse Text:\n{cnn.ResponseText}");
 
-            // The public board (at the time of developing this example) only has 9 Users, so for best optimization, an increment of 10 is useful.
-            List<User> users = null;
-            try
-            {
-                users = cnn.GetAllUsers(increment: 1000);
-            }
-            catch (Exception e)
-            {
-                Console.WriteLine($"Exception occurred: {e.Message}\n{e.StackTrace}.");
-                cnn.Close();
-                return;
-            }
-            finally
-            {
-                Console.WriteLine($"Request Text:\n{cnn.RequestText}\nResponse Text:\n{cnn.ResponseText}");
-                Console.WriteLine($"Request Encrypted: \n{cnn.EncryptedRequest}\nResponse Encrypted:\n{cnn.EncryptedResponse}");
-            }
+            List<User> users = cnn.GetAll<User>();
+            List<Card> cards = cnn.GetAll<Card>();
 
-            // By default, the increment is 100.
-            List<Card> cards = null;
-            try
-            {
-                cards = cnn.GetAllCards();
-            }
-            catch (Exception e)
-            {
-                Console.WriteLine($"Exception occurred: {e.Message}\n{e.StackTrace}.");
-                cnn.Close();
-                exc = e;
-            }
-            finally
-            {
-                Console.WriteLine($"Request Text:\n{cnn.RequestText}\nResponse Text:\n{cnn.ResponseText}");
-                Console.WriteLine($"Request Encrypted: \n{cnn.EncryptedRequest}\nResponse Encrypted:\n{cnn.EncryptedResponse}");
-            }
-            if(exc != null)
-            {
-                return;
-            }
-
-            // Using Atrium SDK Demo App, I obtained the Object ID for "Door 1 ONLY", "Area A", and "Warehouse Access Level"
-            const int access_level_door_1_only = 0;
-            const int access_level_area_a = 9;
-            const int access_level_warehouse = 16;
-
-            // Create a new User that is set to expire 1 year and 7 days from now.
-            User newUser = new User
+            User u = new User
             {
                 FirstName = "John",
                 LastName = "Doe",
                 ActivationDate = DateTime.Now,
-                ExpirationDate = DateTime.Now.AddYears(1).AddDays(7),
-                ObjectGuid = cnn.GenerateGuid,
-                // static AtriumController.ACCESS_LEVELS() can have up to 5 arguments, allowing up to 5 different levels of access for a User
+                ExpirationDate = DateTime.Now.AddYears(3).AddDays(7),
                 AccessLevelObjectIds = AtriumController.ACCESS_LEVELS(
-                    access_level_door_1_only, 
-                    access_level_area_a, 
+                    access_level_door_1_only,
+                    access_level_area_a,
                     access_level_warehouse)
             };
-
-            // Check if User exists.
-            List<User> usersWithNameJohnDoe = users.FindAll(user => user.ToString() == newUser.ToString());
-            if (usersWithNameJohnDoe.Count > 0)
+            Card c = new Card
             {
-                // User exists.
-
-                // User.Update(User) updates the caller User object's attributes to be the same as the argument User object.
-                // All null attributes in the argument User object are ignored and are not copied to the caller User object.
-                usersWithNameJohnDoe[0].Update(newUser);
-                try
-                {
-                    userInsertedOrUpdated = cnn.UpdateUser(usersWithNameJohnDoe[0]);
-                }
-                catch (Exception e)
-                {
-                    Console.WriteLine($"Exception occurred: {e.Message}\n{e.StackTrace}.");
-                    cnn.Close();
-                    exc = e;
-                }
-                finally
-                {
-                    Console.WriteLine($"Request Text:\n{cnn.RequestText}\nResponse Text:\n{cnn.ResponseText}");
-                    Console.WriteLine($"Request Encrypted: \n{cnn.EncryptedRequest}\nResponse Encrypted:\n{cnn.EncryptedResponse}");
-                }
-                if (exc != null)
-                {
-                    return;
-                }
-
-                // Just to keep continuity with newUser.
-                newUser = usersWithNameJohnDoe[0];
-            }
-            else
-            {
-                // User does not exist.
-
-                // Insert the User. The Object ID for this User is automatically updated in AtriumConnection.InsertUser.
-                // Additionally, the ObjectID is returned as well.
-                String newUserObjectID = "";
-                try
-                {
-                    newUserObjectID = cnn.InsertUser(newUser);
-                }
-                catch (Exception e)
-                {
-                    Console.WriteLine($"Exception occurred: {e.Message}\n{e.StackTrace}.");
-                    cnn.Close();
-                    exc = e;
-                }
-                finally
-                {
-                    Console.WriteLine($"Request Text:\n{cnn.RequestText}\nResponse Text:\n{cnn.ResponseText}");
-                    Console.WriteLine($"Request Encrypted: \n{cnn.EncryptedRequest}\nResponse Encrypted:\n{cnn.EncryptedResponse}");
-                }
-                if (exc != null)
-                {
-                    return;
-                }
-
-                // If the returned Object ID is null, then the insertion failed.
-                userInsertedOrUpdated = newUserObjectID != null;
-            }
-
-            // We also want a card attached to this User.
-            Card newCard = new Card
-            {
-                DisplayName = newUser.ToString() + " Card", // John Doe Card
-                // static AtriumController.To26BitCardNumber takes a Family Number and a Member Number and does the correct bit manipulation to make it
-                // the correct 26-bit integer.
-                CardNumber = AtriumController.To26BitCardNumber(77, 4033),
-                ActivationDate = newUser.ActivationDate,
-                ExpirationDate = newUser.ExpirationDate,
-                ObjectGuid = cnn.GenerateGuid,
-                // Specify the related item so they are logically attached to eachother.
-                EntityRelationshipId = newUser.ObjectId,
-                EntityRelationshipGuid = newUser.ObjectGuid
+                DisplayName = "John Doe Card",
+                CardNumberLo = AtriumController.To26BitCardNumber(r.Next(0, 100), r.Next(0, 8000)),
+                ActivationDate = DateTime.Now,
+                ExpirationDate = DateTime.Now.AddYears(3).AddDays(7),
             };
 
-            // You can use the FindAll LINQ method to filter what cards you want.
-            // Filter for all attached cards to a User
-            List<Card> cardsAttachedToJohnDoe = cards.FindAll(card => card.EntityRelationshipId == newUser.ObjectId);
-
-            // Filter for all cards that have the same card number (should be 0 or 1, if 1, then the card exists and cannot be inserted.
-            List<Card> cardsWithSameCardNumber = cards.FindAll(card => card.CardNumber == newCard.CardNumber );
-
-            if(cardsWithSameCardNumber.Count > 0)
+            Func<User, bool> userPred = (user => user.FirstName == "Jerry" && user.LastName == u.LastName);
+            // Update the card if the FirstName and LastName are equal.
+            if(users.Any(userPred))
             {
-                // Card already exists.
-
-                cardsWithSameCardNumber[0].Update(newCard);
-                try
+                User existingUser = users.Where(userPred).First();
+                existingUser.Copy(u, true);
+                Console.WriteLine($"User exists. Updating {existingUser} (Object ID: {existingUser.ObjectId}).");
+                if (cnn.Update(existingUser))
                 {
-                    cardInsertedOrUpdated = cnn.UpdateCard(cardsWithSameCardNumber[0]);
+                    Console.WriteLine($"User successfully updated. Object ID: {u.ObjectId}");
+                    c.EntityRelationshipId = u.ObjectId;
+                    c.EntityRelationshipGuid = u.ObjectGuid;
                 }
-                catch (Exception e)
+                else
                 {
-                    Console.WriteLine($"Exception occurred: {e.Message}\n{e.StackTrace}.");
-                    cnn.Close();
-                    exc = e;
+                    Console.WriteLine($"User update unsuccessful.\nRequest Text:\n{cnn.RequestText}\nResponse Text:\n{cnn.ResponseText}\n{u.Jsonify()}");
                 }
-                finally
-                {
-                    Console.WriteLine($"Request Text:\n{cnn.RequestText}\nResponse Text:\n{cnn.ResponseText}");
-                    Console.WriteLine($"Request Encrypted: \n{cnn.EncryptedRequest}\nResponse Encrypted:\n{cnn.EncryptedResponse}");
-                }
-                if (exc != null)
-                {
-                    return;
-                }
-                newCard = cardsWithSameCardNumber[0];
             }
             else
             {
-                // Card does not exist.
+                Console.WriteLine($"User does not exist. Inserting {u}.");
+                cnn.Insert(u);
+                if(u.ObjectId != null)
+                {
+                    Console.WriteLine($"User successfully inserted. Object ID: {u.ObjectId}");
+                    c.EntityRelationshipId = u.ObjectId;
+                    c.EntityRelationshipGuid = u.ObjectGuid;
+                }
+                else
+                {
+                    Console.WriteLine($"User insert unsuccessful.\nRequest Text:\n{cnn.RequestText}\nResponse Text:\n{cnn.ResponseText}\n{u.Jsonify()}");
+                }
+            }
 
-                // Insert the Card. Just like inserting a User, the Card's Object ID is attached upon insertion.
-                String newCardObjectId = "";
-                try
+            Func<Card, bool> cardPred = (card => card.EntityRelationshipGuid == u.ObjectGuid);
+            bool checkForUpdate = true;
+            // Update all cards where the Card and User are related.
+            if(cards.Any(cardPred) && checkForUpdate)
+            {
+                foreach(Card existingCard in cards.Where(cardPred))
                 {
-                    newCardObjectId = cnn.InsertCard(newCard);
+                    Console.WriteLine($"Card exists. Updating {existingCard} (Object ID: {existingCard.ObjectId}).");
+                    existingCard.Copy(c, true, false);
+                    if (cnn.Update(existingCard))
+                    {
+                        Console.WriteLine($"Card successfully updated. Object ID: {c.ObjectId}");
+                    }
+                    else
+                    {
+                        Console.WriteLine($"Card update unsuccessful.\nRequest Text:\n{cnn.RequestText}\nResponse Text:\n{cnn.ResponseText}\n{c.Jsonify()}");
+                    }
                 }
-                catch (Exception e)
+            }
+            else
+            {
+                Console.WriteLine($"Card does not exist. Object ID. Inserting {c}");
+                cnn.Insert(c);
+                if (c.ObjectId != null)
                 {
-                    Console.WriteLine($"Exception occurred: {e.Message}\n{e.StackTrace}.");
-                    cnn.Close();
-                    exc = e;
+                    Console.WriteLine($"Card successfully inserted. Object ID: {c.ObjectId}");
                 }
-                finally
+                else
                 {
-                    Console.WriteLine($"Request Text:\n{cnn.RequestText}\nResponse Text:\n{cnn.ResponseText}");
-                    Console.WriteLine($"Request Encrypted: \n{cnn.EncryptedRequest}\nResponse Encrypted:\n{cnn.EncryptedResponse}");
+                    Console.WriteLine($"Card insert unsuccessful.\nRequest Text:\n{cnn.RequestText}\nResponse Text:\n{cnn.ResponseText}\n{c.Jsonify()}");
                 }
-                if (exc != null)
-                {
-                    return;
-                }
-
-                // Just like User, if the returned Object Id is null, then the insertion failed.
-                cardInsertedOrUpdated = newCardObjectId == null;
-
-                // Alternatively, with both User and Card, you can insert with just the fields, instead of creating a brand new Object every time.
-                //cnn.InsertCard(
-                //    newCard.DisplayName, 
-                //    newCard.ObjectGuid, 
-                //    newCard.EntityRelationshipGuid.Value, 
-                //    newCard.EntityRelationshipId, 
-                //    newCard.CardNumber,
-                //    newCard.ActivationDate, 
-                //    newCard.ExpirationDate);
             }
 
             cnn.Close();

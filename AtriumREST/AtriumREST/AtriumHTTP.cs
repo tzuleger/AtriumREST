@@ -7,6 +7,7 @@ using System.Xml.Linq;
 
 using ThreeRiversTech.Zuleger.Atrium.REST.Security;
 using ThreeRiversTech.Zuleger.Atrium.REST.Exceptions;
+using System.Text;
 
 namespace ThreeRiversTech.Zuleger.Atrium.REST
 {
@@ -19,9 +20,9 @@ namespace ThreeRiversTech.Zuleger.Atrium.REST
             String attr = "err",
             bool throwException = true)
         {
-            var e = xml.Element(elementName);
-            var res = e.Attribute(attr);
-            if (res.Value != "ok")
+            var e = elementName != null ? xml.Element(elementName) : xml;
+            var res = e?.Attribute(attr);
+            if (res == null || res.Value != "ok")
             {
                 if (throwException)
                 {
@@ -57,17 +58,34 @@ namespace ThreeRiversTech.Zuleger.Atrium.REST
             String subdomain,
             Dictionary<String, String> parameters,
             bool setSessionCookie = false,
-            bool encryptedExchange = false)
+            bool encryptedExchange = false,
+            String contentType="application/xml")
         {
-            var encodedContent = new FormUrlEncodedContent(parameters);
-            // Address is specifically: ".../sdk.xml?_=<UNIXTIMENOW>&sid=<SESSIONID>
-            var addr = _address
-                + subdomain
-                + "?_=" + Convert.ToString(((DateTimeOffset)DateTime.UtcNow).ToUnixTimeSeconds())
-                + "&sid=" + _sessionId;
+            HttpContent encodedContent;
+            
+            if(contentType == "text/plain")
+            {
+                String content = "";
+                int paramsIdx = 0;
+                foreach(var kvp in parameters)
+                {
+                    content += $"{kvp.Key}={kvp.Value}" + (paramsIdx++ < (parameters.Count-1) ? "&" : "");
+                }
+                encodedContent = new StringContent(content, Encoding.UTF8, "text/plain");
+            }
+            else if(contentType == "application/xml")
+            {
+                encodedContent = new FormUrlEncodedContent(parameters);
+            }
+            else
+            {
+                encodedContent = new FormUrlEncodedContent(parameters);
+            }
+
+            var addr = _address + subdomain;
             if (setSessionCookie)
             {
-                _cookies.Add(new Uri(addr), new Cookie("Session", $"{_sessionId}-{AtriumController.PadLeft(_userId, '0', 2)}"));
+                _cookies.Add(new Uri(addr), new Cookie($"Session", $"{_sessionId}-{AtriumController.PadLeft(_userId, '0', 2)}"));
             }
             var response = await _client.PostAsync(addr, encodedContent);
             String responseString = null;
@@ -76,12 +94,14 @@ namespace ThreeRiversTech.Zuleger.Atrium.REST
                 responseString = await response.Content.ReadAsStringAsync();
                 if (encryptedExchange)
                 {
+                    int i = 1;
                     this.EncryptedResponse = responseString;
                     var postEnc = responseString.Replace("post_enc=", "");
                     postEnc = postEnc.Substring(0, postEnc.IndexOf("&"));
-                    var checkSum = responseString.Substring(responseString.IndexOf("&") + 1, responseString.Length);
+                    var checkSum = responseString.Substring(responseString.IndexOf("&") + 1, 13).Replace("post_chk=", "");
 
                     responseString = RC4.Decrypt(_sessionKey, postEnc);
+                    this.ResponseText = responseString;
                     if (RC4.CheckSum(responseString) != checkSum)
                     {
                         throw new IntegrityException();
@@ -93,11 +113,11 @@ namespace ThreeRiversTech.Zuleger.Atrium.REST
                 this.ResponseText = await response.Content.ReadAsStringAsync();
                 throw new ThreeRiversTech.Zuleger.Atrium.REST.Exceptions.HttpRequestException(responseString);
             }
-
             var xml = XElement.Parse(responseString);
             _transactionNum++;
 
-            ResponseText = xml.ToString();
+            this.ResponseText = xml.ToString();
+
             return xml;
         }
 
@@ -154,7 +174,7 @@ namespace ThreeRiversTech.Zuleger.Atrium.REST
             parameters.Add("post_enc", postEnc);
             parameters.Add("post_chk", postChk);
 
-            this.EncryptedRequest = $"sid={_sessionId}&post_enc={postEnc}&post_chk={postChk}";
+            this.EncryptedRequest = $"post_enc={postEnc}&post_chk={postChk}";
 
             return parameters;
         }
