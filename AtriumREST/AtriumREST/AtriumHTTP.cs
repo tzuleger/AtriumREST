@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Linq;
 using System.Collections.Generic;
 using System.Net;
 using System.Net.Http;
@@ -82,41 +83,52 @@ namespace ThreeRiversTech.Zuleger.Atrium.REST
                 encodedContent = new FormUrlEncodedContent(parameters);
             }
 
-            var addr = _address + subdomain;
+            var addr = _address 
+                + subdomain 
+                + $"?_={((DateTimeOffset)DateTime.Now).ToUnixTimeSeconds().ToString()}" 
+                + (_sessionKey != null ? $"&sid={_sessionKey}" : "");
+
             if (setSessionCookie)
             {
-                _cookies.Add(new Uri(addr), new Cookie($"Session", $"{_sessionId}-{AtriumController.PadLeft(_userId, '0', 2)}"));
+                _cookies.Add(new Uri(addr), new Cookie($"Session", $"{_sessionCookie}"));
             }
             var response = await _client.PostAsync(addr, encodedContent);
+            if(response.Headers.TryGetValues("Set-Cookie", out _))
+            {
+                _sessionCookie = response
+                    .Headers
+                    .GetValues("Set-Cookie")
+                    .Where(cookie => cookie.Contains("Session="))
+                    ?.First()
+                    .ToString()
+                    .Replace("Session=", "");
+            }
+
             String responseString = null;
             if (response.IsSuccessStatusCode)
             {
                 responseString = await response.Content.ReadAsStringAsync();
                 if (encryptedExchange)
                 {
-                    int i = 1;
                     this.EncryptedResponse = responseString;
+
                     var postEnc = responseString.Replace("post_enc=", "");
                     postEnc = postEnc.Substring(0, postEnc.IndexOf("&"));
                     var checkSum = responseString.Substring(responseString.IndexOf("&") + 1, 13).Replace("post_chk=", "");
 
                     responseString = RC4.Decrypt(_sessionKey, postEnc);
-                    this.ResponseText = responseString;
                     if (RC4.CheckSum(responseString) != checkSum)
                     {
-                        throw new IntegrityException();
+                        throw new ThreeRiversTech.Zuleger.Atrium.REST.Exceptions.IntegrityException();
                     }
                 }
             }
             else
             {
-                this.ResponseText = await response.Content.ReadAsStringAsync();
                 throw new ThreeRiversTech.Zuleger.Atrium.REST.Exceptions.HttpRequestException(responseString);
             }
             var xml = XElement.Parse(responseString);
             _transactionNum++;
-
-            this.ResponseText = xml.ToString();
 
             return xml;
         }
@@ -124,15 +136,28 @@ namespace ThreeRiversTech.Zuleger.Atrium.REST
         // Performs a GET request to the specified Subdomain (under the Address provided from construction)
         private async Task<XElement> DoGETAsync(String subdomain, bool encryptedExchange = true)
         {
-            RequestText = "GET " + _address + subdomain;
-            var response = await _client.GetAsync(_address + subdomain);
+            var addr = _address
+                + subdomain
+                + $"?_={((DateTimeOffset)DateTime.Now).ToUnixTimeSeconds().ToString()}"
+                + (_sessionKey != null ? $"&sid={_sessionKey}" : "");
+
+            var response = await _client.GetAsync(addr);
             var responseString = await response.Content.ReadAsStringAsync();
+            _sessionCookie = response
+                .Headers
+                .GetValues("Set-Cookie")
+                .Where(cookie => cookie.Contains("Session="))
+                ?.First()
+                .ToString()
+                .Replace("Session=", "");
+
             if (response.IsSuccessStatusCode)
             {
                 responseString = await response.Content.ReadAsStringAsync();
                 if (encryptedExchange)
                 {
                     this.EncryptedResponse = responseString;
+
                     var postEnc = responseString.Replace("post_enc=", "");
                     postEnc = postEnc.Substring(0, postEnc.IndexOf("&"));
                     var checkSum = responseString.Substring(responseString.IndexOf("&") + 1, responseString.Length);
@@ -146,7 +171,6 @@ namespace ThreeRiversTech.Zuleger.Atrium.REST
             }
             else
             {
-                this.ResponseText = await response.Content.ReadAsStringAsync();
                 throw new ThreeRiversTech.Zuleger.Atrium.REST.Exceptions.HttpRequestException(responseString);
             }
             var xml = XElement.Parse(responseString);
@@ -166,15 +190,14 @@ namespace ThreeRiversTech.Zuleger.Atrium.REST
                 fileContent = fileContent.Replace(args[i], args[i + 1]);
             }
 
-            RequestText = fileContent;
-
             var postEnc = RC4.Encrypt(_sessionKey, fileContent);
             var postChk = RC4.CheckSum(fileContent);
-            parameters.Add("sid", _sessionId);
+            //parameters.Add("sid", _sessionId);
             parameters.Add("post_enc", postEnc);
             parameters.Add("post_chk", postChk);
 
-            this.EncryptedRequest = $"post_enc={postEnc}&post_chk={postChk}";
+            this.EncryptedRequest = (parameters.ContainsKey("sid") ? $"sid={_sessionId}&" : "") 
+                + $"post_enc={postEnc}&post_chk={postChk}";
 
             return parameters;
         }

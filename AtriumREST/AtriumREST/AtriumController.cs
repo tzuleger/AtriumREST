@@ -31,16 +31,20 @@ namespace ThreeRiversTech.Zuleger.Atrium.REST
         {
             _cookies = new CookieContainer();
             _handler = new HttpClientHandler() { CookieContainer=_cookies};
+            _handler.UseCookies = true;
             _client = new HttpClient(_handler);
             _client.DefaultRequestHeaders.Add("Connection", "keep-alive");
             _client.DefaultRequestHeaders.Add("Accept-Language", "fr-FR,fr;q=0.9,en-US;q=0.8,en;q=0.7");
             _client.DefaultRequestHeaders.Add("Accept-Encoding", "gzip, deflate");
             _client.DefaultRequestHeaders.Add("Accept", "*/*");
+            _client.Timeout = TimeSpan.FromMinutes(Timeout);
 
             _address = address;
 
             // Fetch Session info to establish temporary Session Key
-            var xml = DoGETAsync(AtriumController.LOGIN_URL, encryptedExchange: false).Result;
+            var response = DoGETAsync(AtriumController.LOGIN_URL, encryptedExchange: false);
+            response.Wait();
+            var xml = response.Result;
             CheckAnswer(xml, AtriumController.XML_EL_CONNECTION);
 
             // Get device information from the response.
@@ -63,7 +67,6 @@ namespace ThreeRiversTech.Zuleger.Atrium.REST
             {
                 var parameters = new Dictionary<String, String>
                 {
-                    { "sid", _sessionId },
                     { "cmd", "login" },
                     { "login_user", loginUser },
                     { "login_pass", loginPass }
@@ -111,15 +114,13 @@ namespace ThreeRiversTech.Zuleger.Atrium.REST
                 { "cmd", "logout" }
             };
 
-            var req = DoPOSTAsync(AtriumController.LOGIN_URL, parameters);
+            var req = DoPOSTAsync(AtriumController.LOGIN_URL, parameters, setSessionCookie: true);
             req.Wait();
             var xml = req.Result;
 
             return CheckAnswer(xml, AtriumController.XML_EL_CONNECTION, throwException: false);
         }
         #endregion
-
-
 
         #region Public Class Attributes
         /// <summary>
@@ -130,8 +131,10 @@ namespace ThreeRiversTech.Zuleger.Atrium.REST
         /// The time in seconds to wait for the next attempt to log into the controller. (by default: 10 seconds)
         /// </summary>
         public static int DelayBetweenAttempts { get; set; } = 10;
-
-
+        /// <summary>
+        /// Time for the HTTP Requests to live. If the connection is poor or big requests are expected, then Timeout should be higher.
+        /// </summary>
+        public static int Timeout { get; set; } = 5;
         #endregion
 
         #region Private Class Attributes
@@ -149,15 +152,6 @@ namespace ThreeRiversTech.Zuleger.Atrium.REST
         private static XName XML_EL_DEVICE = "DEVICE";
         private static XName XML_EL_SDK_CFG = "SDK_CFG";
 
-        // XML File Templates
-        private const String ADD_USER = "<?xml version=\"1.0\" encoding=\"utf-8\"?><SDK xmlns='https://www.cdvi.ca/'><RECORDS><REC trans_id='@tid' cmd='add' sernum='@SerialNo' type='user' id='0' rec='cfg'><DATA valid='1' guid2='@UserID' label3='@FirstName' label4='@LastName' utc_time22='@ActivationDate' utc_time23='@ExpirationDate' word24_0='@AccessLevel1' word24_1='@AccessLevel2' word24_2='@AccessLevel3' word24_3='@AccessLevel4' word24_4='@AccessLevel5'/></REC></RECORDS></SDK>";
-        private const String ADD_CARD = "<?xml version=\"1.0\" encoding=\"utf-8\"?><SDK xmlns='https://www.cdvi.ca/'><RECORDS><REC trans_id='@tid' cmd='add' sernum='@SerialNo' type='card' id='0' rec='cfg'><DATA valid='1' dword4='@ObjectID' guid2='@CardID' label3='@DisplayName' hexv5='@MemberNumber' utc_time24='@ActivationDate' utc_time25='@ExpirationDate' guid26='@UserID'/></REC></RECORDS></SDK>";
-        private const String UPDATE_USER = "<?xml version=\"1.0\" encoding=\"utf-8\"?><SDK xmlns='https://www.cdvi.ca/'><RECORDS><REC trans_id='@tid' cmd='write' sernum='@SerialNo' type='user' id='@ObjectID' rec='cfg'><DATA label3='@FirstName' label4='@LastName' utc_time22='@ActivationDate' utc_time23='@ExpirationDate'/></REC></RECORDS></SDK>";
-        private const String UPDATE_CARD = "<?xml version=\"1.0\" encoding=\"utf-8\"?><SDK xmlns='https://www.cdvi.ca/'><RECORDS><REC trans_id='@tid' cmd='write' sernum='@SerialNo' type='user' id='@ObjectID' rec='cfg'><DATA label3='@DisplayName' utc_time22='@ActivationDate' utc_time23='@ExpirationDate'/></REC><RECORDS></SDK>";
-        private const String READ_USER = "<?xml version=\"1.0\" encoding=\"utf-8\"?><SDK xmlns='https://www.cdvi.ca/'><RECORDS><REC trans_id='@tid' cmd='read' sernum='@SerialNo' type='user' id_min='@min' id_max='@max' rec='cfg'></REC></RECORDS></SDK>";
-        private const String READ_CARD = "<?xml version=\"1.0\" encoding=\"utf-8\"?><SDK xmlns='https://www.cdvi.ca/'><RECORDS><REC trans_id='@tid' cmd='read' sernum='@SerialNo' type='card' id_min='@min' id_max='@max' rec='cfg'></REC></RECORDS></SDK>";
-        
-        // Atrium SDK Subdomain URLs
         private const String LOGIN_URL = "login_sdk.xml";
         private const String DATA_URL = "sdk.xml";
         #endregion
@@ -228,8 +222,6 @@ namespace ThreeRiversTech.Zuleger.Atrium.REST
         }
         #endregion
 
-
-
         #region Public Instance Attributes
         // Other
         /// <summary>
@@ -270,6 +262,10 @@ namespace ThreeRiversTech.Zuleger.Atrium.REST
         /// Session ID of the Atrium Controller that the AtriumController object is connected to.
         /// </summary>
         public String SessionID { get => _sessionId; }
+        /// <summary>
+        /// Session Key of the Atrium Controller that was computed using MD5(Serial Number (concatenated) Session ID #1)
+        /// </summary>
+        public String SessionKey { get => _sessionKey; }
 
         /// <summary>
         /// Generates a random Guid (128-bit ID) in the format of "########-####-####-####-############".
@@ -292,9 +288,10 @@ namespace ThreeRiversTech.Zuleger.Atrium.REST
         private readonly String _version;
 
         // Session info
+        private readonly String _userId;
         private readonly String _sessionKey;
         private readonly String _sessionId;
-        private readonly String _userId;
+        private String _sessionCookie;
 
         // Keeps track of the number of transactions being sent over the current Connection.
         private int _transactionNum = 1;
@@ -327,11 +324,26 @@ namespace ThreeRiversTech.Zuleger.Atrium.REST
 
             rec.Add(GetDataElement(o));
 
+            if (rec.Element(XML_EL_DATA).Attribute("id")?.Value != null)
+            {
+                var attr = rec.Element(XML_EL_DATA).Attribute("id");
+                if (attr != null)
+                {
+                    rec.SetAttributeValue("id", attr.Value);
+                    attr.Remove();
+                }
+            }
+
             var xml = $"{doc.Declaration}\n{doc.ToString().Replace("\"", "'")}";
+
+            this.RequestText = xml;
+
             var postEncParams = FetchAndEncryptXML(xml);
             var req = DoPOSTAsync(DATA_URL, postEncParams, setSessionCookie:true, encryptedExchange:true);
             req.Wait();
             var res = req.Result;
+
+            this.ResponseText = res.ToString();
 
             var insertedRecords = from e
                                   in res.Elements(AtriumController.XML_EL_RECORDS)
@@ -385,11 +397,15 @@ namespace ThreeRiversTech.Zuleger.Atrium.REST
             }
 
             var xml = $"{doc.Declaration}\n{doc.ToString().Replace("\"", "'")}";
-            
+
+            this.RequestText = xml;
+
             var postEncParams = FetchAndEncryptXML(xml);
             var req = DoPOSTAsync(DATA_URL, postEncParams, setSessionCookie: true, encryptedExchange: true);
             req.Wait();
             var res = req.Result;
+
+            this.ResponseText = res.ToString();
 
             var updatedRecords = from e
                                   in res.Elements(AtriumController.XML_EL_RECORDS)
@@ -452,12 +468,17 @@ namespace ThreeRiversTech.Zuleger.Atrium.REST
                 data.SetAttributeValue(sdkAttr.Name, "");
             }
 
-
             var xml = $"{doc.Declaration}\n{doc.ToString().Replace("\"", "'")}";
+            
+            this.RequestText = xml;
+
             var postEncParams = FetchAndEncryptXML(xml);
             var req = DoPOSTAsync(DATA_URL, postEncParams, setSessionCookie:true, encryptedExchange: true);
             req.Wait();
             var res = req.Result;
+
+            this.ResponseText = res.ToString();
+
             var records = from e in res.Elements(AtriumController.XML_EL_RECORDS)
                           select e.Element(AtriumController.XML_EL_RECORD);
 
@@ -493,7 +514,7 @@ namespace ThreeRiversTech.Zuleger.Atrium.REST
                         {
                             // If the PI does not have Write Access, it may be a referential attribute.
                             var relatedPi = props.Where(prop => prop.Name == sdkAttr.RelatedAttribute).First();
-                            if(sdkAttr.RelatedType == "DateTime")
+                            if(relatedPi.PropertyType.Name == "DateTime")
                             {
                                 relatedPi.SetValue(t, FromUTC(record.Attribute(sdkAttr.Name)?.Value));
                             }
@@ -545,30 +566,6 @@ namespace ThreeRiversTech.Zuleger.Atrium.REST
             }
 
             return data;
-        }
-        #endregion
-       
-
-
-        #region TEST - Validate Encryption
-        /// <summary>
-        /// Tests for Encryption given the Session ID, Serial Number, XML (or data to encrypt), username (optional), and password (optional).
-        /// </summary>
-        /// <param name="sid"></param>
-        /// <param name="sno"></param>
-        /// <param name="xml"></param>
-        /// <param name="username"></param>
-        /// <param name="password"></param>
-        public static void CHECK_ENCRYPTION(String sid, String sno, String xml, String username="admin", String password="admin")
-        {
-            var skey = MD5.Hash(sno + sid);
-            var postEnc = RC4.Encrypt(skey, xml);
-            var postChk = RC4.CheckSum(xml);
-            var userEnc = RC4.Encrypt(skey, username);
-            var passEnc = MD5.Hash(skey + password);
-
-            Console.WriteLine($"Session ID={sid}\nSession Key={skey}\nPOST (enc)={postEnc}\nPOST (chk)={postChk}");
-            Console.WriteLine($"Username={userEnc}, Password={passEnc}");
         }
         #endregion
     }

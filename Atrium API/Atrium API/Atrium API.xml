@@ -114,6 +114,11 @@
             Session ID of the Atrium Controller that the AtriumController object is connected to.
             </summary>
         </member>
+        <member name="P:ThreeRiversTech.Zuleger.Atrium.REST.AtriumController.SessionKey">
+            <summary>
+            Session Key of the Atrium Controller that was computed using MD5(Serial Number (concatenated) Session ID #1)
+            </summary>
+        </member>
         <member name="P:ThreeRiversTech.Zuleger.Atrium.REST.AtriumController.GenerateGuid">
             <summary>
             Generates a random Guid (128-bit ID) in the format of "########-####-####-####-############".
@@ -141,121 +146,6 @@
             <param name="startIndex">Start index of what objects to grab from in the Controller.</param>
             <param name="endIndex">End index of what objects to grab from in the Controller.</param>
             <returns>List of the specified AtriumObject objects that were grabbed from the Controller.</returns>
-        </member>
-        <member name="M:ThreeRiversTech.Zuleger.Atrium.REST.AtriumController.CHECK_ENCRYPTION(System.String,System.String,System.String,System.String,System.String)">
-            <summary>
-            Tests for Encryption given the Session ID, Serial Number, XML (or data to encrypt), username (optional), and password (optional).
-            </summary>
-            <param name="sid"></param>
-            <param name="sno"></param>
-            <param name="xml"></param>
-            <param name="username"></param>
-            <param name="password"></param>
-        </member>
-        <member name="M:ThreeRiversTech.Zuleger.Atrium.REST.AtriumController.GetAllCards(System.Int32)">
-            <summary>
-            Gets all Users that exist in the Atrium database in increments. Best used when the number of Users in the database is unknown.
-            Larger increments increases speed through HTTP but could be worse if the number of records that actually exist are on the short end of the increment.
-            (e.g. 1034 records exist with a 1000 increment would force two HTTP requests searching for 2000 total records.
-            An increment of 1035 or better would be best here)
-            By default 100.
-            </summary>
-            <param name="increment">Increment of users to grab.
-            Larger numbers increases speed through HTTP but could be worse if the number of records that actually exist are on the short end of the increment.
-            (e.g. 1034 records exist with a 1000 increment would force two HTTP requests searching for 2000 total records.
-            An increment of 1035 or better would be best here)
-            By default 100.</param>
-            <returns>List of all Cards that are in the Atrium Controller</returns>
-        </member>
-        <member name="M:ThreeRiversTech.Zuleger.Atrium.REST.AtriumController.InsertCard(System.String,System.String,System.String,System.String,System.String,System.DateTime,System.DateTime)">
-            <summary>
-            Inserts a new Card into Atrium under the provided information.
-            </summary>
-            <param name="displayName">Display Name that the card should be under.</param>
-            <param name="cardId">Card GUID that the card should be under.</param>
-            <param name="userId">User GUID that the card is attached to.</param>
-            <param name="objectId">Atrium ObjectID that the Card should be attached to.</param>
-            <param name="cardNum">Number of the card that is to be used.</param>
-            <param name="actDate">Activation Date of the card.</param>
-            <param name="expDate">Expiration Date of the card.</param>
-            <returns>String object that is of real type int representing the Object ID as assigned by the Atrium Controller when card is inserted.</returns>
-        </member>
-        <member name="M:ThreeRiversTech.Zuleger.Atrium.REST.AtriumController.InsertCard(ThreeRiversTech.Zuleger.Atrium.REST.Objects.Card)">
-            <summary>
-            Inserts a Card C# object into the Atrium Controller's database.
-            </summary>
-            <param name="card">The Card object to be inserted into the Atrium Controller's database.</param>
-            <returns>String object that is of real type int representing the Object ID as assigned by the Atrium Controller when user is inserted.</returns>
-        </member>
-        <member name="M:ThreeRiversTech.Zuleger.Atrium.REST.AtriumController.UpdateCard(System.String,System.String,System.DateTime,System.DateTime)">
-            <summary>
-            Updates a User, specified by the Atrium Controller's defined Object ID, to a new First Name, Last Name, Activation Date, and Expiration Date.
-            </summary>
-            <param name="objectId">Object ID, as defined by the Atrium Controller, of what User to update.</param>
-            <param name="displayName">The new name to replace current Display Name on the card.</param>
-            <param name="actDate">New expiration date of the User to update.</param>
-            <param name="expDate">New activation date of the User to update.</param>
-            <returns>Boolean indicating whether the card was successfully updated or not.</returns>
-        </member>
-        <member name="M:ThreeRiversTech.Zuleger.Atrium.REST.AtriumController.UpdateCard(ThreeRiversTech.Zuleger.Atrium.REST.Objects.Card)">
-            <summary>
-            Updates a User given a C# Card Object. Object ID must already exist in the database.
-            </summary>
-            <param name="card">Card object to update</param>
-            <returns>Boolean indicating whether the card was updated successfully or not.</returns>
-        </member>
-        <member name="M:ThreeRiversTech.Zuleger.Atrium.REST.AtriumController.GetAllUsers(System.Int32)">
-            <summary>
-            Gets all Users that exist in the Atrium database in increments. Best used when the number of Users in the database is unknown.
-            Larger increments increases speed through HTTP but could be worse if the number of records that actually exist are on the short end of the increment.
-            (e.g. 1034 records exist with a 1000 increment would force two HTTP requests searching for 2000 total records.
-            An increment of 1035 or better would be best here)
-            By default 100.
-            </summary>
-            <param name="increment">Increment of users to grab.
-            Larger numbers increases speed through HTTP but could be worse if the number of records that actually exist are on the short end of the increment.
-            (e.g. 1034 records exist with a 1000 increment would force two HTTP requests searching for 2000 total records.
-            An increment of 1035 or better would be best here)
-            By default 100.</param>
-            <returns>List of all Users that are in the Atrium Controller</returns>
-        </member>
-        <member name="M:ThreeRiversTech.Zuleger.Atrium.REST.AtriumController.InsertUser(System.String,System.String,System.String,System.DateTime,System.DateTime,System.Int32[])">
-            <summary>
-            Inserts a new User into the Atrium Controller with the provided information.
-            </summary>
-            <param name="firstName">First name of the user to be inserted.</param>
-            <param name="lastName">Last name of the user to be inserted.</param>
-            <param name="id">User GUID that is to be attached to the user.</param>
-            <param name="actDate">Activation date of the User.</param>
-            <param name="expDate">Expiration date of the User.</param>
-            <param name="accessLevels">Array of 5 integers between 0-9,999 (inclusive) that represent the Object ID for each Access Level.</param>
-            <returns>String object that is of real type int representing the Object ID as assigned by the Atrium Controller when user is inserted.</returns>
-        </member>
-        <member name="M:ThreeRiversTech.Zuleger.Atrium.REST.AtriumController.InsertUser(ThreeRiversTech.Zuleger.Atrium.REST.Objects.User)">
-            <summary>
-            Inserts a User C# object into the Atrium Controller's database.
-            </summary>
-            <param name="user">The User object to insert into the Atrium database.</param>
-            <returns>String object that is of real type int representing the Object ID as assigned by the Atrium Controller when user is inserted.</returns>
-        </member>
-        <member name="M:ThreeRiversTech.Zuleger.Atrium.REST.AtriumController.UpdateUser(System.String,System.String,System.String,System.DateTime,System.DateTime,System.Int32[])">
-            <summary>
-            Updates a User, specified by the Atrium Controller's defined Object ID, to a new First Name, Last Name, Activation Date, and Expiration Date.
-            </summary>
-            <param name="objectId">Object ID, as defined by the Atrium Controller, of what User to update.</param>
-            <param name="firstName">New first name of the User to update.</param>
-            <param name="lastName">New last name of the User to update.</param>
-            <param name="actDate">New expiration date of the User to update.</param>
-            <param name="expDate">New activation date of the User to update.</param>
-            <param name="accessLevels">Array of 5 integers between 0-9,999 (inclusive) that represent the Object ID for each Access Level.</param>
-            <returns>Boolean indicating whether the user was successfully updated or not.</returns>
-        </member>
-        <member name="M:ThreeRiversTech.Zuleger.Atrium.REST.AtriumController.UpdateUser(ThreeRiversTech.Zuleger.Atrium.REST.Objects.User)">
-            <summary>
-            Updates a User based off an already existing User C# object.
-            </summary>
-            <param name="user">User object that is to be updated. (Object ID of "user" must already exist in the Controller as a User)</param>
-            <returns>Boolean indicating whether the user was successfully updated or not.</returns>
         </member>
         <member name="T:ThreeRiversTech.Zuleger.Atrium.REST.Example.Example">
             <summary>
@@ -316,22 +206,17 @@
         </member>
         <member name="T:ThreeRiversTech.Zuleger.Atrium.REST.Objects.SdkDataType">
             <summary>
-            
+            Custom attribute that assists with mapping Object Attributes to XML SDK Datatypes.
             </summary>
         </member>
         <member name="P:ThreeRiversTech.Zuleger.Atrium.REST.Objects.SdkDataType.Name">
             <summary>
-            
+            Name of the SDK DatatType.
             </summary>
         </member>
         <member name="P:ThreeRiversTech.Zuleger.Atrium.REST.Objects.SdkDataType.RelatedAttribute">
             <summary>
-            
-            </summary>
-        </member>
-        <member name="P:ThreeRiversTech.Zuleger.Atrium.REST.Objects.SdkDataType.RelatedType">
-            <summary>
-            
+            The related Attribute that is to be used
             </summary>
         </member>
         <member name="T:ThreeRiversTech.Zuleger.Atrium.REST.Objects.AtriumObject">
@@ -361,12 +246,12 @@
         </member>
         <member name="P:ThreeRiversTech.Zuleger.Atrium.REST.Objects.AtriumObject.IsReadOnly">
             <summary>
-            
+            Read Only attribute
             </summary>
         </member>
         <member name="P:ThreeRiversTech.Zuleger.Atrium.REST.Objects.AtriumObject.CannotBeDeleted">
             <summary>
-            
+            Object cannot be deleted (except by an InstalleR)
             </summary>
         </member>
         <member name="P:ThreeRiversTech.Zuleger.Atrium.REST.Objects.AtriumObject.ObjectGuid">
@@ -383,15 +268,6 @@
             <summary>
             Related Entity's GUID
             </summary>
-        </member>
-        <member name="M:ThreeRiversTech.Zuleger.Atrium.REST.Objects.AtriumObject.Copy(ThreeRiversTech.Zuleger.Atrium.REST.Objects.AtriumObject,System.Boolean,System.Boolean)">
-            <summary>
-            Update this object's attributes to be the same as o's attributes.
-            </summary>
-            <param name="o">The Atrium Object that its attributes are to be copied to this object.</param>
-            <param name="overwrite">Boolean specifying whether overwriting should occur on parameters on "this" object where values already exist. By default: false./param>
-            <param name="overwriteIds"/>Boolean specifying whether overwriting should occur on Id type parameters. By default: true.</param>
-            <returns>"this" after copying has finished.</returns>
         </member>
         <member name="M:ThreeRiversTech.Zuleger.Atrium.REST.Objects.AtriumObject.Jsonify(System.Boolean)">
             <summary>

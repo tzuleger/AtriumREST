@@ -4,22 +4,18 @@ using System.Linq;
 namespace ThreeRiversTech.Zuleger.Atrium.REST.Objects
 {
     /// <summary>
-    /// 
+    /// Custom attribute that assists with mapping Object Attributes to XML SDK Datatypes.
     /// </summary>
     public class SdkDataType : Attribute
     {
         /// <summary>
-        /// 
+        /// Name of the SDK DatatType.
         /// </summary>
         public String Name { get; set; }
         /// <summary>
-        /// 
+        /// The related Attribute that is to be used
         /// </summary>
         public String RelatedAttribute { get; set; } = null;
-        /// <summary>
-        /// 
-        /// </summary>
-        public String RelatedType { get; set; } = null;
     }
 
     /// <summary>
@@ -47,12 +43,12 @@ namespace ThreeRiversTech.Zuleger.Atrium.REST.Objects
         [SdkDataType(Name = "valid")]
         public int IsValid { get; set; } = 1;
         /// <summary>
-        /// 
+        /// Read Only attribute
         /// </summary>
         [SdkDataType(Name = "ro")]
         public int IsReadOnly { get; set; }
         /// <summary>
-        /// 
+        /// Object cannot be deleted (except by an InstalleR)
         /// </summary>
         [SdkDataType(Name = "protect")]
         public int CannotBeDeleted { get; set; }
@@ -60,7 +56,8 @@ namespace ThreeRiversTech.Zuleger.Atrium.REST.Objects
         /// Object's GUID.
         /// </summary>
         [SdkDataType(Name = "guid2")]
-        public String ObjectGuid { get; set; } = Guid.NewGuid().ToString();
+        public String ObjectGuid { get => _objectGuid; set => _objectGuid = value?.ToUpper().Replace("-", ""); }
+        private String _objectGuid = Guid.NewGuid().ToString().ToUpper().Replace("-", "");
         /// <summary>
         /// Related Entity's Object ID.
         /// </summary>
@@ -71,48 +68,6 @@ namespace ThreeRiversTech.Zuleger.Atrium.REST.Objects
         /// </summary>
         [SdkDataType(Name = "guid26")]
         public String EntityRelationshipGuid { get; set; }
-
-        /// <summary>
-        /// Update this object's attributes to be the same as o's attributes.
-        /// </summary>
-        /// <param name="o">The Atrium Object that its attributes are to be copied to this object.</param>
-        /// <param name="overwrite">Boolean specifying whether overwriting should occur on parameters on "this" object where values already exist. By default: false./param>
-        /// <param name="overwriteIds"/>Boolean specifying whether overwriting should occur on Id type parameters. By default: true.</param>
-        /// <returns>"this" after copying has finished.</returns>
-        public AtriumObject Copy(AtriumObject o, bool overwrite = false, bool overwriteIds = true)
-        {
-            var props = this.GetType().GetProperties();
-            foreach (var pi in props)
-            {
-                if (pi.GetValue(this) == (pi.PropertyType.IsValueType ? Activator.CreateInstance(pi.PropertyType) : null) || overwrite)
-                {
-                    if (pi.GetValue(o) != (pi.PropertyType.IsValueType ? Activator.CreateInstance(pi.PropertyType) : null))
-                    {
-                        if((pi.Name == "ObjectId" 
-                            || pi.Name == "ObjectGuid"
-                            || pi.Name == "EntityRelationshipId"
-                            || pi.Name == "EntityRelationshipGuid") && !overwriteIds)
-                        {
-                            continue;
-                        }
-                        SdkDataType sdkAttr = (SdkDataType)Attribute.GetCustomAttribute(pi, typeof(SdkDataType));
-                        if (pi.CanWrite)
-                        {
-                            pi.SetValue(this, pi.GetValue(o));
-                        }
-                        else if (sdkAttr?.RelatedAttribute != null)
-                        {
-                            var relatedPi = props.Where(prop => prop.Name == sdkAttr.RelatedAttribute).First();
-                            if (sdkAttr.RelatedType == "DateTime")
-                            {
-                                relatedPi.SetValue(this, relatedPi.GetValue(o, null));
-                            }
-                        }
-                    }
-                }
-            }
-            return this;
-        }
 
         /// <summary>
         /// Returns all Properties separated by a newline character and in format of "PropertyName: Value"
