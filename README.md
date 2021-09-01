@@ -1,4 +1,4 @@
-# Atrium-API C#
+# AtriumREST C#
 
 This library provides API functionality for a User to interact with a CDVI Atrium Controller using the Atrium SDK as provided by CDVI (https://mrdltd.atlassian.net/wiki/spaces/PUB/overview?homepageId=32014396)
 
