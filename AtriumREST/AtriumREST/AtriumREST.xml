@@ -124,10 +124,12 @@
             Session Key of the Atrium Controller that was computed using MD5(Serial Number (concatenated) Session ID #1)
             </summary>
         </member>
-        <member name="P:ThreeRiversTech.Zuleger.Atrium.REST.AtriumController.GenerateGuid">
+        <member name="P:ThreeRiversTech.Zuleger.Atrium.REST.AtriumController.FragmentSize">
             <summary>
-            Generates a random Guid (128-bit ID) in the format of "########-####-####-####-############".
-            This should never be the same string when called.
+            Fragment size of HTTP Requests when using the GetAll method.
+            The larger this variable is, the less efficient the GetAll method MAY run. If fragmentations are to be expected, then this
+            drawback is worth it, but if fragmentations do not exist often or are small, then this number should be smaller.
+            The smallest the fragment size can be is 25. (By default: 100)
             </summary>
         </member>
         <member name="M:ThreeRiversTech.Zuleger.Atrium.REST.AtriumController.Insert(ThreeRiversTech.Zuleger.Atrium.REST.Objects.AtriumObject)">
@@ -143,7 +145,38 @@
             <param name="o">Object to be updated in the controller.</param>
             <returns>True if the object was successfully updated. False otherwise.</returns>
         </member>
-        <member name="M:ThreeRiversTech.Zuleger.Atrium.REST.AtriumController.GetAll``1(System.Int32,System.Int32)">
+        <member name="M:ThreeRiversTech.Zuleger.Atrium.REST.AtriumController.Delete``1(ThreeRiversTech.Zuleger.Atrium.REST.Objects.AtriumObject,System.Int32)">
+            <summary>
+            Deletes a specified AtriumObject that exists in the Atrium Controller by ObjectID or ObjectGUID.
+            This is first done by ID but if the specified AtriumObject does not have an ObjectID, then it will look for an ObjectGUID.
+            </summary>
+            <param name="o">AtriumObject to delete from the Atrium Controller.</param>
+            <returns>Boolean value that represents whether the AtriumObjet, o, was deleted in the controller or not.</returns>
+        </member>
+        <member name="M:ThreeRiversTech.Zuleger.Atrium.REST.AtriumController.Delete``1(System.Func{``0,System.Boolean},System.Int32)">
+            <summary>
+            Deletes all specified AtriumObjects that exist in the Atrium Controller and meet the condition from the passed Predicate.
+            </summary>
+            <typeparam name="T">Type of AtriumObject to grab from the Atrium Controller.</typeparam>
+            <param name="pred">Predicate that determines what objects are to be deleted.</param>
+            <param name="fragmentSize">Integer specifying the fragment size. 
+            If the specified size is less than 25, then the current value of FragmentSize is used.
+            This can also be changed using the Instance parameter, FragmentSize. (by default: -1 or the FragmentSize variable)</param>
+            <returns>List of T generic AtriumObject type objects that were deleted.</returns>
+        </member>
+        <member name="M:ThreeRiversTech.Zuleger.Atrium.REST.AtriumController.GetAll``1">
+            <summary>
+            Grabs all objects of type T until a fragment result of a request results with No Used Objects.
+            e.g. Objects 0-100 are all used, Objects 100-200 have 80 used and 20 deleted, Objects 200-300 have a mix of deleted and free...
+            In the increment of 200-300, a list of count 0 would be constructed, which ends the process of grabbing more objects, returning
+            what has already been grabbed.
+            WARNING: Fragmentations larger than the default 100 may exist, if you believe your controller may have this case, 
+            please set the Fragment Size to a larger number.
+            </summary>
+            <typeparam name="T">Type of AtriumObject to grab from the Atrium Controller.</typeparam>
+            <returns>List of Atrium Objects that are in the Controller.</returns>
+        </member>
+        <member name="M:ThreeRiversTech.Zuleger.Atrium.REST.AtriumController.GetAllByIndex``1(System.Int32,System.Int32)">
             <summary>
             Grabs all records between the specified minimum and maximum object IDs in the controller.
             </summary>
@@ -155,6 +188,16 @@
         <member name="T:ThreeRiversTech.Zuleger.Atrium.REST.Example.Example">
             <summary>
             In-depth example on how to use the Atrium API.
+            </summary>
+        </member>
+        <member name="T:ThreeRiversTech.Zuleger.Atrium.REST.Exceptions.DuplicateGuidException">
+            <summary>
+            Thrown when multiple objects exist in the Atrium Controller with duplicate Guids.
+            </summary>
+        </member>
+        <member name="M:ThreeRiversTech.Zuleger.Atrium.REST.Exceptions.DuplicateGuidException.#ctor(System.String)">
+            <summary>
+            Thrown when multiple objects exist in the Atrium Controller with duplicate Guids.
             </summary>
         </member>
         <member name="T:ThreeRiversTech.Zuleger.Atrium.REST.Exceptions.FailedToLoginException">

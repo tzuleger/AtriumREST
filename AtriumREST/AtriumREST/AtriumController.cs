@@ -268,10 +268,16 @@ namespace ThreeRiversTech.Zuleger.Atrium.REST
         public String SessionKey { get => _sessionKey; }
 
         /// <summary>
-        /// Generates a random Guid (128-bit ID) in the format of "########-####-####-####-############".
-        /// This should never be the same string when called.
+        /// Fragment size of HTTP Requests when using the GetAll method.
+        /// The larger this variable is, the less efficient the GetAll method MAY run. If fragmentations are to be expected, then this
+        /// drawback is worth it, but if fragmentations do not exist often or are small, then this number should be smaller.
+        /// The smallest the fragment size can be is 25. (By default: 100)
         /// </summary>
-        public String GenerateGuid { get => Guid.NewGuid().ToString().Replace("-", "").ToUpper(); }
+        public int FragmentSize 
+        { 
+            get => Math.Max(25, _fragmentSize); 
+            set => _fragmentSize = value; 
+        }
         #endregion
 
         #region Private Instance Attributes
@@ -295,6 +301,9 @@ namespace ThreeRiversTech.Zuleger.Atrium.REST
 
         // Keeps track of the number of transactions being sent over the current Connection.
         private int _transactionNum = 1;
+
+        // Fragment size for the GetAll method, see FragmentSize for more info.
+        private int _fragmentSize = 100;
         #endregion
 
         #region Public Instance Methods
@@ -420,13 +429,190 @@ namespace ThreeRiversTech.Zuleger.Atrium.REST
         }
 
         /// <summary>
+        /// Deletes a specified AtriumObject that exists in the Atrium Controller by ObjectID or ObjectGUID.
+        /// This is first done by ID but if the specified AtriumObject does not have an ObjectID, then it will look for an ObjectGUID.
+        /// </summary>
+        /// <param name="o">AtriumObject to delete from the Atrium Controller.</param>
+        /// <returns>Boolean value that represents whether the AtriumObjet, o, was deleted in the controller or not.</returns>
+        public bool Delete<T>(AtriumObject o, int fragmentSize = -1) where T : AtriumObject, new()
+        {
+            bool isSuccessful = false;
+            var temp = FragmentSize;
+            FragmentSize = fragmentSize >= 25 ? fragmentSize : FragmentSize; 
+
+            var rec = new XElement(XML_EL_RECORD);
+            rec.SetAttributeValue("trans_id", _transactionNum);
+            rec.SetAttributeValue("cmd", "delete");
+            rec.SetAttributeValue("sernum", _serialNo);
+            rec.SetAttributeValue("type", o.SdkType);
+            rec.SetAttributeValue("rec", "cfg");
+
+            XDocument doc = new XDocument(
+                new XDeclaration("1.0", "utf-8", null),
+                new XElement(
+                    XML_EL_SDK,
+                    new XElement(XML_EL_RECORDS,
+                        rec
+                    )
+                )
+            );
+
+            if(o.ObjectId != default) goto DeleteByObjectId;
+
+            if (o.ObjectGuid != default)
+            {
+                List<T> ts = GetAll<T>();
+
+                if (ts.Any((t => t.ObjectGuid == o.ObjectGuid)))
+                {
+                    List<T> filteredTs = ts.Where((t => t.ObjectGuid == o.ObjectGuid)).ToList();
+                    if (filteredTs.Count > 1)
+                    {
+                        throw new ThreeRiversTech.Zuleger.Atrium.REST.Exceptions.DuplicateGuidException(o.ObjectGuid);
+                    }
+                    else
+                    {
+                        o.ObjectId = filteredTs[0].ObjectId;
+                    }
+                }
+            }
+
+            DeleteByObjectId:
+            if (o.ObjectId != default)
+            {
+                rec.Add(GetDataElement(o));
+                if (rec.Element(XML_EL_DATA).Attribute("id")?.Value != null)
+                {
+                    var attr = rec.Element(XML_EL_DATA).Attribute("id");
+                    if (attr != null)
+                    {
+                        rec.SetAttributeValue("id", attr.Value);
+                        attr.Remove();
+                    }
+                }
+
+                var xml = $"{doc.Declaration}\n{doc.ToString().Replace("\"", "'")}";
+
+                this.RequestText = xml;
+
+                var postEncParams = FetchAndEncryptXML(xml);
+                var req = DoPOSTAsync(DATA_URL, postEncParams, setSessionCookie: true, encryptedExchange: true);
+                req.Wait();
+                var res = req.Result;
+
+                this.ResponseText = res.ToString();
+
+                var records = from e in res.Elements(AtriumController.XML_EL_RECORDS)
+                              select e.Element(AtriumController.XML_EL_RECORD);
+
+                isSuccessful = CheckAllAnswers(records, null, throwException: false);
+            }
+
+            FragmentSize = temp;
+            return isSuccessful;
+        }
+
+        /// <summary>
+        /// Deletes all specified AtriumObjects that exist in the Atrium Controller and meet the condition from the passed Predicate.
+        /// </summary>
+        /// <typeparam name="T">Type of AtriumObject to grab from the Atrium Controller.</typeparam>
+        /// <param name="pred">Predicate that determines what objects are to be deleted.</param>
+        /// <param name="fragmentSize">Integer specifying the fragment size. 
+        /// If the specified size is less than 25, then the current value of FragmentSize is used.
+        /// This can also be changed using the Instance parameter, FragmentSize. (by default: -1 or the FragmentSize variable)</param>
+        /// <returns>List of T generic AtriumObject type objects that were deleted.</returns>
+        public List<T> Delete<T>(Func<T, bool> pred, int fragmentSize=-1) where T : AtriumObject, new()
+        {
+            var temp = FragmentSize;
+            FragmentSize = fragmentSize >= 25 ? fragmentSize : FragmentSize; 
+            var recs = new XElement(XML_EL_RECORDS);
+
+            XDocument doc = new XDocument(
+                new XDeclaration("1.0", "utf-8", null),
+                new XElement(
+                    XML_EL_SDK,
+                    recs
+                )
+            );
+
+            List<T> deletedObjects = new List<T>();
+            if (pred != null)
+            {
+                List<T> ts = GetAll<T>();
+
+                if (ts.Any(pred))
+                {
+                    List<T> filteredTs = ts.Where(pred).ToList();
+                    foreach (var t in filteredTs)
+                    {
+                        var rec = new XElement(XML_EL_RECORD);
+                        rec.SetAttributeValue("trans_id", _transactionNum);
+                        rec.SetAttributeValue("cmd", "delete");
+                        rec.SetAttributeValue("sernum", _serialNo);
+                        rec.SetAttributeValue("type", t.SdkType);
+                        rec.SetAttributeValue("rec", "cfg");
+                        rec.SetAttributeValue("id", t.ObjectId);
+                        recs.Add(rec);
+
+                        deletedObjects.Add((T)t);
+                    }
+
+                    var xml = $"{doc.Declaration}\n{doc.ToString().Replace("\"", "'")}";
+
+                    this.RequestText = xml;
+
+                    var postEncParams = FetchAndEncryptXML(xml);
+                    var req = DoPOSTAsync(DATA_URL, postEncParams, setSessionCookie: true, encryptedExchange: true);
+                    req.Wait();
+                    var res = req.Result;
+
+                    this.ResponseText = res.ToString();
+
+                    var records = from e in res.Elements(AtriumController.XML_EL_RECORDS)
+                                  select e.Element(AtriumController.XML_EL_RECORD);
+                }
+            }
+
+            FragmentSize = temp;
+            return deletedObjects;
+        }
+
+        /// <summary>
+        /// Grabs all objects of type T until a fragment result of a request results with No Used Objects.
+        /// e.g. Objects 0-100 are all used, Objects 100-200 have 80 used and 20 deleted, Objects 200-300 have a mix of deleted and free...
+        /// In the increment of 200-300, a list of count 0 would be constructed, which ends the process of grabbing more objects, returning
+        /// what has already been grabbed.
+        /// WARNING: Fragmentations larger than the default 100 may exist, if you believe your controller may have this case, 
+        /// please set the Fragment Size to a larger number.
+        /// </summary>
+        /// <typeparam name="T">Type of AtriumObject to grab from the Atrium Controller.</typeparam>
+        /// <returns>List of Atrium Objects that are in the Controller.</returns>
+        public List<T> GetAll<T>() where T : AtriumObject, new()
+        {
+            List<T> os = new List<T>();
+            List<T> grab = null;
+
+            int sIdx = 0;
+            int eIdx = FragmentSize - 1;
+            while (grab == null || grab.Count > 0)
+            {
+                grab = GetAllByIndex<T>(sIdx, eIdx);
+                os = os.Concat(grab).ToList();
+                sIdx = eIdx + 1;
+                eIdx += FragmentSize;
+            }
+
+            return os;
+        }
+
+        /// <summary>
         /// Grabs all records between the specified minimum and maximum object IDs in the controller.
         /// </summary>
         /// <typeparam name="T">AtriumObject child that is to be grabbed from the Controller</typeparam>
         /// <param name="startIndex">Start index of what objects to grab from in the Controller.</param>
         /// <param name="endIndex">End index of what objects to grab from in the Controller.</param>
         /// <returns>List of the specified AtriumObject objects that were grabbed from the Controller.</returns>
-        public List<T> GetAll<T>(int startIndex=0, int endIndex=100) where T : AtriumObject, new()
+        public List<T> GetAllByIndex<T>(int startIndex, int endIndex) where T : AtriumObject, new()
         {
             var rec = new XElement(XML_EL_RECORD);
             rec.SetAttributeValue("trans_id", _transactionNum);
