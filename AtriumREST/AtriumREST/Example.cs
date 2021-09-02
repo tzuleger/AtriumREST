@@ -43,13 +43,6 @@ namespace ThreeRiversTech.Zuleger.Atrium.REST.Example
                     {
                         address = args[++i];
                     }
-                    else if(arg == "-hrg")
-                    {
-                        username = "admin";
-                        password = "Holmen2019";
-                        address = "http://192.168.1.218:2000/";
-                        break;
-                    }
                     else if(arg == "-pub")
                     {
                         username = "admin";
