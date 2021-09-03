@@ -9,6 +9,11 @@
             Used to communicate with an Atrium Controller using Atrium SDK and HTTP.
             </summary>
         </member>
+        <member name="M:ThreeRiversTech.Zuleger.Atrium.REST.AtriumController.#ctor">
+            <summary>
+            Creates an AtriumController with no connections and requires "Open" to be called yet.
+            </summary>
+        </member>
         <member name="M:ThreeRiversTech.Zuleger.Atrium.REST.AtriumController.#ctor(System.String,System.String,System.String)">
             <summary>
             Creates an AtriumController object connected to the specified address under the specified username and password.
@@ -17,9 +22,33 @@
             <param name="password">Password to log into Atrium under specified username</param>
             <param name="address">Atrium Controller Address to connect to</param>
         </member>
+        <member name="M:ThreeRiversTech.Zuleger.Atrium.REST.AtriumController.Open(System.String,System.String,System.String)">
+            <summary>
+            Opens a connection to the Atrium Controller with the given Username, Password, and Address (URI)
+            </summary>
+            <param name="username">Username to the account with SDK access</param>
+            <param name="password">Password to the account with SDK access</param>
+            <param name="address">URI to the Atrium Controller's Web Software.</param>
+            <returns>Boolean value specifying whether the connection was successful or not.</returns>
+        </member>
+        <member name="M:ThreeRiversTech.Zuleger.Atrium.REST.AtriumController.OpenAsync(System.String,System.String,System.String)">
+            <summary>
+            Asynchronously opens a connection to the Atrium Controller with the given Username, Password, and Address (URI)
+            </summary>
+            <param name="username">Username to the account with SDK access</param>
+            <param name="password">Password to the account with SDK access</param>
+            <param name="address">URI to the Atrium Controller's Web Software.</param>
+            <returns>Boolean value specifying whether the connection was successful or not.</returns>
+        </member>
         <member name="M:ThreeRiversTech.Zuleger.Atrium.REST.AtriumController.Close">
             <summary>
             Closes the AtriumController's connection. If this function is called, the connection cannot be reopened.
+            </summary>
+            <returns>Boolean indicating whether the Controller closed the connection or not.</returns>
+        </member>
+        <member name="M:ThreeRiversTech.Zuleger.Atrium.REST.AtriumController.CloseAsync">
+            <summary>
+            Asynchronously closes the AtriumController's connection. If this function is called, the connection cannot be reopened.
             </summary>
             <returns>Boolean indicating whether the Controller closed the connection or not.</returns>
         </member>
@@ -72,6 +101,11 @@
             </summary>
             <param name="utc">UTC String that is to be converted to a DateTime.</param>
             <returns>DateTime representing local time of converted UTC string. If the String cannot be parsed, then default is returned.</returns>
+        </member>
+        <member name="P:ThreeRiversTech.Zuleger.Atrium.REST.AtriumController.IsConnected">
+            <summary>
+            Specifies whether the Connection is currently up or not.
+            </summary>
         </member>
         <member name="P:ThreeRiversTech.Zuleger.Atrium.REST.AtriumController.RequestText">
             <summary>
@@ -138,9 +172,22 @@
             </summary>
             <param name="o">Atrium Object to be inserted.</param>
         </member>
+        <member name="M:ThreeRiversTech.Zuleger.Atrium.REST.AtriumController.InsertAsync(ThreeRiversTech.Zuleger.Atrium.REST.Objects.AtriumObject)">
+            <summary>
+            Asynchronously nserts a single Atrium Object into the controller.
+            </summary>
+            <param name="o">Atrium Object to be inserted.</param>
+        </member>
         <member name="M:ThreeRiversTech.Zuleger.Atrium.REST.AtriumController.Update(ThreeRiversTech.Zuleger.Atrium.REST.Objects.AtriumObject)">
             <summary>
             Updates a single Atrium Object into the controller. If the object does not exist (defined by GUID being equal) then no update occurs.
+            </summary>
+            <param name="o">Object to be updated in the controller.</param>
+            <returns>True if the object was successfully updated. False otherwise.</returns>
+        </member>
+        <member name="M:ThreeRiversTech.Zuleger.Atrium.REST.AtriumController.UpdateAsync(ThreeRiversTech.Zuleger.Atrium.REST.Objects.AtriumObject)">
+            <summary>
+            Asynchronously updates a single Atrium Object into the controller. If the object does not exist (defined by GUID being equal) then no update occurs.
             </summary>
             <param name="o">Object to be updated in the controller.</param>
             <returns>True if the object was successfully updated. False otherwise.</returns>
@@ -151,20 +198,21 @@
             This is first done by ID but if the specified AtriumObject does not have an ObjectID, then it will look for an ObjectGUID.
             </summary>
             <param name="o">AtriumObject to delete from the Atrium Controller.</param>
+            <param name="fragmentSize">Size of how many records the GetAll function should grab per HTTP packet.</param>
             <returns>Boolean value that represents whether the AtriumObjet, o, was deleted in the controller or not.</returns>
         </member>
-        <member name="M:ThreeRiversTech.Zuleger.Atrium.REST.AtriumController.Delete``1(System.Func{``0,System.Boolean},System.Int32)">
+        <member name="M:ThreeRiversTech.Zuleger.Atrium.REST.AtriumController.DeleteAsync``1(ThreeRiversTech.Zuleger.Atrium.REST.Objects.AtriumObject,System.Int32)">
             <summary>
-            Deletes all specified AtriumObjects that exist in the Atrium Controller and meet the condition from the passed Predicate.
+            Deletes a specified AtriumObject that exists in the Atrium Controller by ObjectID or ObjectGUID.
+            This is first done by ID but if the specified AtriumObject does not have an ObjectID, then it will look for an ObjectGUID.
             </summary>
-            <typeparam name="T">Type of AtriumObject to grab from the Atrium Controller.</typeparam>
-            <param name="pred">Predicate that determines what objects are to be deleted.</param>
-            <param name="fragmentSize">Integer specifying the fragment size. 
-            If the specified size is less than 25, then the current value of FragmentSize is used.
-            This can also be changed using the Instance parameter, FragmentSize. (by default: -1 or the FragmentSize variable)</param>
-            <returns>List of T generic AtriumObject type objects that were deleted.</returns>
+            <param name="o">AtriumObject to delete from the Atrium Controller.</param>
+            <param name="fragmentSize">Size of how many records the GetAll function should grab per HTTP packet.</param>
+            <returns>Boolean value that represents whether the AtriumObjet, o, was deleted in the controller or not.</returns>
         </member>
-        <member name="M:ThreeRiversTech.Zuleger.Atrium.REST.AtriumController.GetAll``1">
+        <!-- Badly formed XML comment ignored for member "M:ThreeRiversTech.Zuleger.Atrium.REST.AtriumController.Delete``1(System.Func{``0,System.Boolean},System.Int32)" -->
+        <!-- Badly formed XML comment ignored for member "M:ThreeRiversTech.Zuleger.Atrium.REST.AtriumController.DeleteAsync``1(System.Func{``0,System.Boolean},System.Int32)" -->
+        <member name="M:ThreeRiversTech.Zuleger.Atrium.REST.AtriumController.GetAll``1(System.Int32)">
             <summary>
             Grabs all objects of type T until a fragment result of a request results with No Used Objects.
             e.g. Objects 0-100 are all used, Objects 100-200 have 80 used and 20 deleted, Objects 200-300 have a mix of deleted and free...
@@ -174,9 +222,32 @@
             please set the Fragment Size to a larger number.
             </summary>
             <typeparam name="T">Type of AtriumObject to grab from the Atrium Controller.</typeparam>
+            <param name="fragmentSize">Size of how many records the function should grab per HTTP packet.</param>
+            <returns>List of Atrium Objects that are in the Controller.</returns>
+        </member>
+        <member name="M:ThreeRiversTech.Zuleger.Atrium.REST.AtriumController.GetAllAsync``1(System.Int32)">
+            <summary>
+            Grabs all objects of type T until a fragment result of a request results with No Used Objects.
+            e.g. Objects 0-100 are all used, Objects 100-200 have 80 used and 20 deleted, Objects 200-300 have a mix of deleted and free...
+            In the increment of 200-300, a list of count 0 would be constructed, which ends the process of grabbing more objects, returning
+            what has already been grabbed.
+            WARNING: Fragmentations larger than the default 100 may exist, if you believe your controller may have this case, 
+            please set the Fragment Size to a larger number.
+            </summary>
+            <typeparam name="T">Type of AtriumObject to grab from the Atrium Controller.</typeparam>
+            <param name="fragmentSize">Size of how many records the function should grab per HTTP packet.</param>
             <returns>List of Atrium Objects that are in the Controller.</returns>
         </member>
         <member name="M:ThreeRiversTech.Zuleger.Atrium.REST.AtriumController.GetAllByIndex``1(System.Int32,System.Int32)">
+            <summary>
+            Grabs all records between the specified minimum and maximum object IDs in the controller.
+            </summary>
+            <typeparam name="T">AtriumObject child that is to be grabbed from the Controller</typeparam>
+            <param name="startIndex">Start index of what objects to grab from in the Controller.</param>
+            <param name="endIndex">End index of what objects to grab from in the Controller.</param>
+            <returns>List of the specified AtriumObject objects that were grabbed from the Controller.</returns>
+        </member>
+        <member name="M:ThreeRiversTech.Zuleger.Atrium.REST.AtriumController.GetAllByIndexAsync``1(System.Int32,System.Int32)">
             <summary>
             Grabs all records between the specified minimum and maximum object IDs in the controller.
             </summary>
@@ -251,6 +322,26 @@
             Thrown when an SDK Request returns back with err not equaling "ok".
             </summary>
             <param name="errcode">Error Code that was given instead of "ok"</param>
+        </member>
+        <member name="T:ThreeRiversTech.Zuleger.Atrium.REST.Objects.AccessLevel">
+            <summary>
+            
+            </summary>
+        </member>
+        <member name="P:ThreeRiversTech.Zuleger.Atrium.REST.Objects.AccessLevel.SdkType">
+            <summary>
+            
+            </summary>
+        </member>
+        <member name="P:ThreeRiversTech.Zuleger.Atrium.REST.Objects.AccessLevel.DisplayName">
+            <summary>
+            
+            </summary>
+        </member>
+        <member name="P:ThreeRiversTech.Zuleger.Atrium.REST.Objects.AccessLevel.ScheduleIndex">
+            <summary>
+            
+            </summary>
         </member>
         <member name="T:ThreeRiversTech.Zuleger.Atrium.REST.Objects.SdkDataType">
             <summary>

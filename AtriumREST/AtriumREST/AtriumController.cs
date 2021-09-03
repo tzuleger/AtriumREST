@@ -9,6 +9,7 @@ using System.Xml.Linq;
 using ThreeRiversTech.Zuleger.Atrium.REST.Security;
 using ThreeRiversTech.Zuleger.Atrium.REST.Objects;
 using ThreeRiversTech.Zuleger.Atrium.REST.Exceptions;
+using System.Threading.Tasks;
 
 namespace ThreeRiversTech.Zuleger.Atrium.REST
 {
@@ -18,6 +19,23 @@ namespace ThreeRiversTech.Zuleger.Atrium.REST
     public partial class AtriumController
     {
         #region Constructor / Deconstructor
+
+        /// <summary>
+        /// Creates an AtriumController with no connections and requires "Open" to be called yet.
+        /// </summary>
+        public AtriumController()
+        {
+            _cookies = new CookieContainer();
+            _handler = new HttpClientHandler() { CookieContainer = _cookies };
+            _handler.UseCookies = true;
+            _client = new HttpClient(_handler);
+            _client.DefaultRequestHeaders.Add("Connection", "keep-alive");
+            _client.DefaultRequestHeaders.Add("Accept-Language", "fr-FR,fr;q=0.9,en-US;q=0.8,en;q=0.7");
+            _client.DefaultRequestHeaders.Add("Accept-Encoding", "gzip, deflate");
+            _client.DefaultRequestHeaders.Add("Accept", "*/*");
+            _client.Timeout = TimeSpan.FromMinutes(Timeout);
+        }
+        
         /// <summary>
         /// Creates an AtriumController object connected to the specified address under the specified username and password.
         /// </summary>
@@ -30,7 +48,7 @@ namespace ThreeRiversTech.Zuleger.Atrium.REST
             String address)
         {
             _cookies = new CookieContainer();
-            _handler = new HttpClientHandler() { CookieContainer=_cookies};
+            _handler = new HttpClientHandler() { CookieContainer=_cookies };
             _handler.UseCookies = true;
             _client = new HttpClient(_handler);
             _client.DefaultRequestHeaders.Add("Connection", "keep-alive");
@@ -39,13 +57,35 @@ namespace ThreeRiversTech.Zuleger.Atrium.REST
             _client.DefaultRequestHeaders.Add("Accept", "*/*");
             _client.Timeout = TimeSpan.FromMinutes(Timeout);
 
-            _address = address;
+            if(!Open(username, password, address))
+            {
+                throw new FailedToLoginException();
+            }
+        }
 
+        /// <summary>
+        /// Opens a connection to the Atrium Controller with the given Username, Password, and Address (URI)
+        /// </summary>
+        /// <param name="username">Username to the account with SDK access</param>
+        /// <param name="password">Password to the account with SDK access</param>
+        /// <param name="address">URI to the Atrium Controller's Web Software.</param>
+        /// <returns>Boolean value specifying whether the connection was successful or not.</returns>
+        public bool Open(String username, String password, String address)
+        {
+            // If User ID is established, then Opening is redundant and unnecessary
+            if(_userId != "-1")
+            {
+                return false;
+            }
+
+            _address = address;
+            
             // Fetch Session info to establish temporary Session Key
             var response = DoGETAsync(AtriumController.LOGIN_URL, encryptedExchange: false);
             response.Wait();
             var xml = response.Result;
             CheckAnswer(xml, AtriumController.XML_EL_CONNECTION);
+
 
             // Get device information from the response.
             _serialNo = xml.Element(AtriumController.XML_EL_DEVICE).Attribute("serial")?.Value;
@@ -57,7 +97,7 @@ namespace ThreeRiversTech.Zuleger.Atrium.REST
             _sessionId = xml.Element(AtriumController.XML_EL_CONNECTION).Attribute("session")?.Value;
 
             // Use MD5 and RC4 to get Session Key. Use Session Key to get loginUser and loginPass.
-            _sessionKey   = MD5.Hash(_serialNo + _sessionId);
+            _sessionKey = MD5.Hash(_serialNo + _sessionId);
             var loginUser = RC4.Encrypt(_sessionKey, username);
             var loginPass = MD5.Hash(_sessionKey + password);
 
@@ -76,7 +116,7 @@ namespace ThreeRiversTech.Zuleger.Atrium.REST
                 xml = req.Result;
 
                 // If "ok" then break the loop, otherwise, keep trying. (Sessions may not be available).
-                if (CheckAnswer(xml, AtriumController.XML_EL_CONNECTION, throwException:false))
+                if (CheckAnswer(xml, AtriumController.XML_EL_CONNECTION, throwException: false))
                 {
                     break;
                 }
@@ -93,13 +133,82 @@ namespace ThreeRiversTech.Zuleger.Atrium.REST
             // Get user info
             _userId = xml.Element(AtriumController.XML_EL_SDK_CFG).Attribute("user_id")?.Value;
 
-            if(_userId == "-1")
+            // Officially logged in.
+            _transactionNum = 0;
+
+            return this.IsConnected;
+        }
+
+        /// <summary>
+        /// Asynchronously opens a connection to the Atrium Controller with the given Username, Password, and Address (URI)
+        /// </summary>
+        /// <param name="username">Username to the account with SDK access</param>
+        /// <param name="password">Password to the account with SDK access</param>
+        /// <param name="address">URI to the Atrium Controller's Web Software.</param>
+        /// <returns>Boolean value specifying whether the connection was successful or not.</returns>
+        public async Task<bool> OpenAsync(String username, String password, String address)
+        {
+            // If User ID is established, then Opening is redundant and unnecessary
+            if (_userId != "-1")
             {
-                throw new FailedToLoginException();
+                return false;
             }
+
+            _address = address;
+
+            // Fetch Session info to establish temporary Session Key
+            var xml = await DoGETAsync(AtriumController.LOGIN_URL, encryptedExchange: false);
+            CheckAnswer(xml, AtriumController.XML_EL_CONNECTION);
+
+
+            // Get device information from the response.
+            _serialNo = xml.Element(AtriumController.XML_EL_DEVICE).Attribute("serial")?.Value;
+            _product = xml.Element(AtriumController.XML_EL_DEVICE).Attribute("product")?.Value;
+            _label = xml.Element(AtriumController.XML_EL_DEVICE).Attribute("mdl_label")?.Value;
+            _version = xml.Element(AtriumController.XML_EL_DEVICE).Attribute("version")?.Value;
+
+            // Get session id from the response.
+            _sessionId = xml.Element(AtriumController.XML_EL_CONNECTION).Attribute("session")?.Value;
+
+            // Use MD5 and RC4 to get Session Key. Use Session Key to get loginUser and loginPass.
+            _sessionKey = MD5.Hash(_serialNo + _sessionId);
+            var loginUser = RC4.Encrypt(_sessionKey, username);
+            var loginPass = MD5.Hash(_sessionKey + password);
+
+            // Post login information.
+            int i = Math.Min(MaxAttempts, 50);
+            while (i > 0) // Attempt to establish a session up to Max number of attempts.
+            {
+                var parameters = new Dictionary<String, String>
+                {
+                    { "cmd", "login" },
+                    { "login_user", loginUser },
+                    { "login_pass", loginPass }
+                };
+                xml = await DoPOSTAsync(AtriumController.LOGIN_URL, parameters);
+
+                // If "ok" then break the loop, otherwise, keep trying. (Sessions may not be available).
+                if (CheckAnswer(xml, AtriumController.XML_EL_CONNECTION, throwException: false))
+                {
+                    break;
+                }
+                else
+                {
+                    Thread.Sleep(DelayBetweenAttempts * 1000);
+                    i--;
+                }
+            }
+
+            // Update session ID
+            _sessionId = xml.Element(AtriumController.XML_EL_CONNECTION).Attribute("session")?.Value;
+
+            // Get user info
+            _userId = xml.Element(AtriumController.XML_EL_SDK_CFG).Attribute("user_id")?.Value;
 
             // Officially logged in.
             _transactionNum = 0;
+
+            return this.IsConnected;
         }
 
         /// <summary>
@@ -118,7 +227,32 @@ namespace ThreeRiversTech.Zuleger.Atrium.REST
             req.Wait();
             var xml = req.Result;
 
-            return CheckAnswer(xml, AtriumController.XML_EL_CONNECTION, throwException: false);
+            bool isCloseSuccessful = CheckAnswer(xml, AtriumController.XML_EL_CONNECTION, throwException: false);
+
+            _userId = isCloseSuccessful ? "-1" : _userId;
+
+            return isCloseSuccessful;
+        }
+
+        /// <summary>
+        /// Asynchronously closes the AtriumController's connection. If this function is called, the connection cannot be reopened.
+        /// </summary>
+        /// <returns>Boolean indicating whether the Controller closed the connection or not.</returns>
+        public async Task<bool> CloseAsync()
+        {
+            var parameters = new Dictionary<String, String>
+            {
+                { "sid", _sessionId },
+                { "cmd", "logout" }
+            };
+
+            var xml = await DoPOSTAsync(AtriumController.LOGIN_URL, parameters, setSessionCookie: true);
+
+            bool isCloseSuccessful = CheckAnswer(xml, AtriumController.XML_EL_CONNECTION, throwException: false);
+
+            _userId = isCloseSuccessful ? "-1" : _userId;
+
+            return isCloseSuccessful;
         }
         #endregion
 
@@ -225,6 +359,11 @@ namespace ThreeRiversTech.Zuleger.Atrium.REST
         #region Public Instance Attributes
         // Other
         /// <summary>
+        /// Specifies whether the Connection is currently up or not.
+        /// </summary>
+        public bool IsConnected { get => _userId != "-1"; }
+
+        /// <summary>
         /// Stores the Request XML data to the last POST request made.
         /// </summary>
         public String RequestText { get; set; } = "No request made.";
@@ -285,18 +424,18 @@ namespace ThreeRiversTech.Zuleger.Atrium.REST
         private readonly CookieContainer _cookies;
         private readonly HttpClientHandler _handler;
         private readonly HttpClient _client;
-        private readonly String _address;
+        private String _address;
 
         // Controller info
-        private readonly String _serialNo;
-        private readonly String _product;
-        private readonly String _label;
-        private readonly String _version;
+        private String _serialNo;
+        private String _product;
+        private String _label;
+        private String _version;
 
         // Session info
-        private readonly String _userId;
-        private readonly String _sessionKey;
-        private readonly String _sessionId;
+        private String _userId = "-1";
+        private String _sessionKey;
+        private String _sessionId;
         private String _sessionCookie;
 
         // Keeps track of the number of transactions being sent over the current Connection.
@@ -351,6 +490,65 @@ namespace ThreeRiversTech.Zuleger.Atrium.REST
             var req = DoPOSTAsync(DATA_URL, postEncParams, setSessionCookie:true, encryptedExchange:true);
             req.Wait();
             var res = req.Result;
+
+            this.ResponseText = res.ToString();
+
+            var insertedRecords = from e
+                                  in res.Elements(AtriumController.XML_EL_RECORDS)
+                                  select e.Element(AtriumController.XML_EL_RECORD);
+
+            CheckAllAnswers(insertedRecords, XML_EL_DATA);
+
+            var first = insertedRecords?.First()?.Element(AtriumController.XML_EL_DATA);
+
+            o.ObjectId = first?.Attribute("id")?.Value;
+            o.ObjectGuid = first?.Attribute("guid2")?.Value;
+
+            return o.ObjectId;
+        }
+
+        /// <summary>
+        /// Asynchronously nserts a single Atrium Object into the controller.
+        /// </summary>
+        /// <param name="o">Atrium Object to be inserted.</param>
+        public async Task<String> InsertAsync(AtriumObject o)
+        {
+            var type = o.SdkType;
+            var rec = new XElement(XML_EL_RECORD);
+            rec.SetAttributeValue("trans_id", _transactionNum);
+            rec.SetAttributeValue("cmd", "add");
+            rec.SetAttributeValue("sernum", _serialNo);
+            rec.SetAttributeValue("type", type);
+            rec.SetAttributeValue("rec", "cfg");
+
+            XDocument doc = new XDocument(
+                new XDeclaration("1.0", "utf-8", null),
+                new XElement(
+                    XML_EL_SDK,
+                    new XElement(XML_EL_RECORDS,
+                        rec
+                    )
+                )
+            );
+
+            rec.Add(GetDataElement(o));
+
+            if (rec.Element(XML_EL_DATA).Attribute("id")?.Value != null)
+            {
+                var attr = rec.Element(XML_EL_DATA).Attribute("id");
+                if (attr != null)
+                {
+                    rec.SetAttributeValue("id", attr.Value);
+                    attr.Remove();
+                }
+            }
+
+            var xml = $"{doc.Declaration}\n{doc.ToString().Replace("\"", "'")}";
+
+            this.RequestText = xml;
+
+            var postEncParams = FetchAndEncryptXML(xml);
+            var res = await DoPOSTAsync(DATA_URL, postEncParams, setSessionCookie: true, encryptedExchange: true);
 
             this.ResponseText = res.ToString();
 
@@ -429,16 +627,73 @@ namespace ThreeRiversTech.Zuleger.Atrium.REST
         }
 
         /// <summary>
+        /// Asynchronously updates a single Atrium Object into the controller. If the object does not exist (defined by GUID being equal) then no update occurs.
+        /// </summary>
+        /// <param name="o">Object to be updated in the controller.</param>
+        /// <returns>True if the object was successfully updated. False otherwise.</returns>
+        public async Task<bool> UpdateAsync(AtriumObject o)
+        {
+            var type = o.SdkType;
+            var rec = new XElement(XML_EL_RECORD);
+            rec.SetAttributeValue("trans_id", _transactionNum);
+            rec.SetAttributeValue("cmd", "write");
+            rec.SetAttributeValue("sernum", _serialNo);
+            rec.SetAttributeValue("type", type);
+            rec.SetAttributeValue("rec", "cfg");
+
+            XDocument doc = new XDocument(
+                new XDeclaration("1.0", "utf-8", null),
+                new XElement(
+                    XML_EL_SDK,
+                    new XElement(XML_EL_RECORDS,
+                        rec
+                    )
+                )
+            );
+
+            rec.Add(GetDataElement(o));
+
+            if (rec.Element(XML_EL_DATA).Attribute("id")?.Value != null)
+            {
+                var attr = rec.Element(XML_EL_DATA).Attribute("id");
+                if (attr != null)
+                {
+                    rec.SetAttributeValue("id", attr.Value);
+                    attr.Remove();
+                }
+            }
+
+            var xml = $"{doc.Declaration}\n{doc.ToString().Replace("\"", "'")}";
+
+            this.RequestText = xml;
+
+            var postEncParams = FetchAndEncryptXML(xml);
+            var res = await DoPOSTAsync(DATA_URL, postEncParams, setSessionCookie: true, encryptedExchange: true);
+
+            this.ResponseText = res.ToString();
+
+            var updatedRecords = from e
+                                  in res.Elements(AtriumController.XML_EL_RECORDS)
+                                 select e.Element(AtriumController.XML_EL_RECORD);
+
+            var first = updatedRecords?.First()?.Element(AtriumController.XML_EL_DATA);
+
+            o.ObjectId = first?.Attribute("id")?.Value;
+            o.ObjectGuid = first?.Attribute("guid2")?.Value;
+
+            return CheckAllAnswers(updatedRecords, XML_EL_DATA, throwException: false);
+        }
+
+        /// <summary>
         /// Deletes a specified AtriumObject that exists in the Atrium Controller by ObjectID or ObjectGUID.
         /// This is first done by ID but if the specified AtriumObject does not have an ObjectID, then it will look for an ObjectGUID.
         /// </summary>
         /// <param name="o">AtriumObject to delete from the Atrium Controller.</param>
+        /// <param name="fragmentSize">Size of how many records the GetAll function should grab per HTTP packet.</param>
         /// <returns>Boolean value that represents whether the AtriumObjet, o, was deleted in the controller or not.</returns>
         public bool Delete<T>(AtriumObject o, int fragmentSize = -1) where T : AtriumObject, new()
         {
             bool isSuccessful = false;
-            var temp = FragmentSize;
-            FragmentSize = fragmentSize >= 25 ? fragmentSize : FragmentSize; 
 
             var rec = new XElement(XML_EL_RECORD);
             rec.SetAttributeValue("trans_id", _transactionNum);
@@ -461,7 +716,7 @@ namespace ThreeRiversTech.Zuleger.Atrium.REST
 
             if (o.ObjectGuid != default)
             {
-                List<T> ts = GetAll<T>();
+                List<T> ts = GetAll<T>(fragmentSize);
 
                 if (ts.Any((t => t.ObjectGuid == o.ObjectGuid)))
                 {
@@ -508,7 +763,86 @@ namespace ThreeRiversTech.Zuleger.Atrium.REST
                 isSuccessful = CheckAllAnswers(records, null, throwException: false);
             }
 
-            FragmentSize = temp;
+            return isSuccessful;
+        }
+
+        /// <summary>
+        /// Deletes a specified AtriumObject that exists in the Atrium Controller by ObjectID or ObjectGUID.
+        /// This is first done by ID but if the specified AtriumObject does not have an ObjectID, then it will look for an ObjectGUID.
+        /// </summary>
+        /// <param name="o">AtriumObject to delete from the Atrium Controller.</param>
+        /// <param name="fragmentSize">Size of how many records the GetAll function should grab per HTTP packet.</param>
+        /// <returns>Boolean value that represents whether the AtriumObjet, o, was deleted in the controller or not.</returns>
+        public async Task<bool> DeleteAsync<T>(AtriumObject o, int fragmentSize = -1) where T : AtriumObject, new()
+        {
+            bool isSuccessful = false;
+
+            var rec = new XElement(XML_EL_RECORD);
+            rec.SetAttributeValue("trans_id", _transactionNum);
+            rec.SetAttributeValue("cmd", "delete");
+            rec.SetAttributeValue("sernum", _serialNo);
+            rec.SetAttributeValue("type", o.SdkType);
+            rec.SetAttributeValue("rec", "cfg");
+
+            XDocument doc = new XDocument(
+                new XDeclaration("1.0", "utf-8", null),
+                new XElement(
+                    XML_EL_SDK,
+                    new XElement(XML_EL_RECORDS,
+                        rec
+                    )
+                )
+            );
+
+            if (o.ObjectId != default) goto DeleteByObjectId;
+
+            if (o.ObjectGuid != default)
+            {
+                List<T> ts = GetAll<T>(fragmentSize);
+
+                if (ts.Any((t => t.ObjectGuid == o.ObjectGuid)))
+                {
+                    List<T> filteredTs = ts.Where((t => t.ObjectGuid == o.ObjectGuid)).ToList();
+                    if (filteredTs.Count > 1)
+                    {
+                        throw new ThreeRiversTech.Zuleger.Atrium.REST.Exceptions.DuplicateGuidException(o.ObjectGuid);
+                    }
+                    else
+                    {
+                        o.ObjectId = filteredTs[0].ObjectId;
+                    }
+                }
+            }
+
+            DeleteByObjectId:
+            if (o.ObjectId != default)
+            {
+                rec.Add(GetDataElement(o));
+                if (rec.Element(XML_EL_DATA).Attribute("id")?.Value != null)
+                {
+                    var attr = rec.Element(XML_EL_DATA).Attribute("id");
+                    if (attr != null)
+                    {
+                        rec.SetAttributeValue("id", attr.Value);
+                        attr.Remove();
+                    }
+                }
+
+                var xml = $"{doc.Declaration}\n{doc.ToString().Replace("\"", "'")}";
+
+                this.RequestText = xml;
+
+                var postEncParams = FetchAndEncryptXML(xml);
+                var res = await DoPOSTAsync(DATA_URL, postEncParams, setSessionCookie: true, encryptedExchange: true);
+
+                this.ResponseText = res.ToString();
+
+                var records = from e in res.Elements(AtriumController.XML_EL_RECORDS)
+                              select e.Element(AtriumController.XML_EL_RECORD);
+
+                isSuccessful = CheckAllAnswers(records, null, throwException: false);
+            }
+
             return isSuccessful;
         }
 
@@ -517,14 +851,12 @@ namespace ThreeRiversTech.Zuleger.Atrium.REST
         /// </summary>
         /// <typeparam name="T">Type of AtriumObject to grab from the Atrium Controller.</typeparam>
         /// <param name="pred">Predicate that determines what objects are to be deleted.</param>
-        /// <param name="fragmentSize">Integer specifying the fragment size. 
+        /// <param name="fragmentSize">Size of how many records the GetAll function should grab per HTTP packet.</param>
         /// If the specified size is less than 25, then the current value of FragmentSize is used.
         /// This can also be changed using the Instance parameter, FragmentSize. (by default: -1 or the FragmentSize variable)</param>
         /// <returns>List of T generic AtriumObject type objects that were deleted.</returns>
         public List<T> Delete<T>(Func<T, bool> pred, int fragmentSize=-1) where T : AtriumObject, new()
         {
-            var temp = FragmentSize;
-            FragmentSize = fragmentSize >= 25 ? fragmentSize : FragmentSize; 
             var recs = new XElement(XML_EL_RECORDS);
 
             XDocument doc = new XDocument(
@@ -538,7 +870,7 @@ namespace ThreeRiversTech.Zuleger.Atrium.REST
             List<T> deletedObjects = new List<T>();
             if (pred != null)
             {
-                List<T> ts = GetAll<T>();
+                List<T> ts = GetAll<T>(fragmentSize);
 
                 if (ts.Any(pred))
                 {
@@ -573,7 +905,66 @@ namespace ThreeRiversTech.Zuleger.Atrium.REST
                 }
             }
 
-            FragmentSize = temp;
+            return deletedObjects;
+        }
+
+        /// <summary>
+        /// Deletes all specified AtriumObjects that exist in the Atrium Controller and meet the condition from the passed Predicate.
+        /// </summary>
+        /// <typeparam name="T">Type of AtriumObject to grab from the Atrium Controller.</typeparam>
+        /// <param name="pred">Predicate that determines what objects are to be deleted.</param>
+        /// <param name="fragmentSize">Size of how many records the GetAll function should grab per HTTP packet.</param>
+        /// If the specified size is less than 25, then the current value of FragmentSize is used.
+        /// This can also be changed using the Instance parameter, FragmentSize. (by default: -1 or the FragmentSize variable)</param>
+        /// <returns>List of T generic AtriumObject type objects that were deleted.</returns>
+        public async Task<List<T>> DeleteAsync<T>(Func<T, bool> pred, int fragmentSize = -1) where T : AtriumObject, new()
+        {
+            var recs = new XElement(XML_EL_RECORDS);
+
+            XDocument doc = new XDocument(
+                new XDeclaration("1.0", "utf-8", null),
+                new XElement(
+                    XML_EL_SDK,
+                    recs
+                )
+            );
+
+            List<T> deletedObjects = new List<T>();
+            if (pred != null)
+            {
+                List<T> ts = GetAll<T>(fragmentSize);
+
+                if (ts.Any(pred))
+                {
+                    List<T> filteredTs = ts.Where(pred).ToList();
+                    foreach (var t in filteredTs)
+                    {
+                        var rec = new XElement(XML_EL_RECORD);
+                        rec.SetAttributeValue("trans_id", _transactionNum);
+                        rec.SetAttributeValue("cmd", "delete");
+                        rec.SetAttributeValue("sernum", _serialNo);
+                        rec.SetAttributeValue("type", t.SdkType);
+                        rec.SetAttributeValue("rec", "cfg");
+                        rec.SetAttributeValue("id", t.ObjectId);
+                        recs.Add(rec);
+
+                        deletedObjects.Add((T)t);
+                    }
+
+                    var xml = $"{doc.Declaration}\n{doc.ToString().Replace("\"", "'")}";
+
+                    this.RequestText = xml;
+
+                    var postEncParams = FetchAndEncryptXML(xml);
+                    var res = await DoPOSTAsync(DATA_URL, postEncParams, setSessionCookie: true, encryptedExchange: true);
+
+                    this.ResponseText = res.ToString();
+
+                    var records = from e in res.Elements(AtriumController.XML_EL_RECORDS)
+                                  select e.Element(AtriumController.XML_EL_RECORD);
+                }
+            }
+
             return deletedObjects;
         }
 
@@ -586,9 +977,13 @@ namespace ThreeRiversTech.Zuleger.Atrium.REST
         /// please set the Fragment Size to a larger number.
         /// </summary>
         /// <typeparam name="T">Type of AtriumObject to grab from the Atrium Controller.</typeparam>
+        /// <param name="fragmentSize">Size of how many records the function should grab per HTTP packet.</param>
         /// <returns>List of Atrium Objects that are in the Controller.</returns>
-        public List<T> GetAll<T>() where T : AtriumObject, new()
+        public List<T> GetAll<T>(int fragmentSize=-1) where T : AtriumObject, new()
         {
+            var temp = FragmentSize;
+            FragmentSize = fragmentSize >= 25 ? fragmentSize : FragmentSize; 
+
             List<T> os = new List<T>();
             List<T> grab = null;
 
@@ -602,6 +997,40 @@ namespace ThreeRiversTech.Zuleger.Atrium.REST
                 eIdx += FragmentSize;
             }
 
+            FragmentSize = temp;
+            return os;
+        }
+
+        /// <summary>
+        /// Grabs all objects of type T until a fragment result of a request results with No Used Objects.
+        /// e.g. Objects 0-100 are all used, Objects 100-200 have 80 used and 20 deleted, Objects 200-300 have a mix of deleted and free...
+        /// In the increment of 200-300, a list of count 0 would be constructed, which ends the process of grabbing more objects, returning
+        /// what has already been grabbed.
+        /// WARNING: Fragmentations larger than the default 100 may exist, if you believe your controller may have this case, 
+        /// please set the Fragment Size to a larger number.
+        /// </summary>
+        /// <typeparam name="T">Type of AtriumObject to grab from the Atrium Controller.</typeparam>
+        /// <param name="fragmentSize">Size of how many records the function should grab per HTTP packet.</param>
+        /// <returns>List of Atrium Objects that are in the Controller.</returns>
+        public async Task<List<T>> GetAllAsync<T>(int fragmentSize = -1) where T : AtriumObject, new()
+        {
+            var temp = FragmentSize;
+            FragmentSize = fragmentSize >= 25 ? fragmentSize : FragmentSize;
+
+            List<T> os = new List<T>();
+            List<T> grab = null;
+
+            int sIdx = 0;
+            int eIdx = FragmentSize - 1;
+            while (grab == null || grab.Count > 0)
+            {
+                grab = await GetAllByIndexAsync<T>(sIdx, eIdx);
+                os = os.Concat(grab).ToList();
+                sIdx = eIdx + 1;
+                eIdx += FragmentSize;
+            }
+
+            FragmentSize = temp;
             return os;
         }
 
@@ -701,6 +1130,112 @@ namespace ThreeRiversTech.Zuleger.Atrium.REST
                             // If the PI does not have Write Access, it may be a referential attribute.
                             var relatedPi = props.Where(prop => prop.Name == sdkAttr.RelatedAttribute).First();
                             if(relatedPi.PropertyType.Name == "DateTime")
+                            {
+                                relatedPi.SetValue(t, FromUTC(record.Attribute(sdkAttr.Name)?.Value));
+                            }
+                        }
+                    }
+                    ts.Add(t);
+                }
+            }
+
+            return ts;
+        }
+
+        /// <summary>
+        /// Grabs all records between the specified minimum and maximum object IDs in the controller.
+        /// </summary>
+        /// <typeparam name="T">AtriumObject child that is to be grabbed from the Controller</typeparam>
+        /// <param name="startIndex">Start index of what objects to grab from in the Controller.</param>
+        /// <param name="endIndex">End index of what objects to grab from in the Controller.</param>
+        /// <returns>List of the specified AtriumObject objects that were grabbed from the Controller.</returns>
+        public async Task<List<T>> GetAllByIndexAsync<T>(int startIndex, int endIndex) where T : AtriumObject, new()
+        {
+            var rec = new XElement(XML_EL_RECORD);
+            rec.SetAttributeValue("trans_id", _transactionNum);
+            rec.SetAttributeValue("cmd", "read");
+            rec.SetAttributeValue("sernum", _serialNo);
+            rec.SetAttributeValue("type", new T().SdkType);
+            rec.SetAttributeValue("id_min", startIndex);
+            rec.SetAttributeValue("id_max", endIndex);
+            rec.SetAttributeValue("rec", "cfg");
+
+            XDocument doc = new XDocument(
+                new XDeclaration("1.0", "utf-8", null),
+                new XElement(
+                    XML_EL_SDK,
+                    new XElement(XML_EL_RECORDS,
+                        rec
+                    )
+                )
+            );
+
+            var data = new XElement(XML_EL_DATA);
+            var parentProperties = typeof(AtriumObject).GetProperties();
+            foreach (var pi in parentProperties)
+            {
+                SdkDataType sdkAttr = (SdkDataType)Attribute.GetCustomAttribute(pi, typeof(SdkDataType));
+                if (String.IsNullOrWhiteSpace(sdkAttr?.Name))
+                {
+                    continue;
+                }
+                data.SetAttributeValue(sdkAttr.Name, "");
+            }
+            foreach (var pi in typeof(T).GetProperties())
+            {
+                SdkDataType sdkAttr = (SdkDataType)Attribute.GetCustomAttribute(pi, typeof(SdkDataType));
+                if (parentProperties.Contains(pi) || String.IsNullOrWhiteSpace(sdkAttr?.Name))
+                {
+                    continue;
+                }
+                data.SetAttributeValue(sdkAttr.Name, "");
+            }
+
+            var xml = $"{doc.Declaration}\n{doc.ToString().Replace("\"", "'")}";
+
+            this.RequestText = xml;
+
+            var postEncParams = FetchAndEncryptXML(xml);
+            var res = await DoPOSTAsync(DATA_URL, postEncParams, setSessionCookie: true, encryptedExchange: true);
+
+            this.ResponseText = res.ToString();
+
+            var records = from e in res.Elements(AtriumController.XML_EL_RECORDS)
+                          select e.Element(AtriumController.XML_EL_RECORD);
+
+            CheckAllAnswers(records, null, throwException: false);
+
+            List<T> ts = new List<T>();
+            foreach (var r in records)
+            {
+                foreach (var record in r.Elements().Where(theRecord => theRecord.Attribute("obj_status")?.Value == "used"))
+                {
+                    T t = new T();
+                    var props = typeof(T).GetProperties();
+                    foreach (var pi in props)
+                    {
+                        SdkDataType sdkAttr = (SdkDataType)Attribute.GetCustomAttribute(pi, typeof(SdkDataType));
+                        if (String.IsNullOrWhiteSpace(sdkAttr?.Name))
+                        {
+                            continue;
+                        }
+
+                        if (pi.CanWrite)
+                        {
+                            if (pi.PropertyType == typeof(Int32) && Int32.TryParse(record.Attribute(sdkAttr.Name)?.Value, out _))
+                            {
+                                pi.SetValue(t, Int32.Parse(record.Attribute(sdkAttr.Name)?.Value));
+                            }
+                            else
+                            {
+                                pi.SetValue(t, record.Attribute(sdkAttr.Name)?.Value);
+                            }
+                        }
+                        else if (sdkAttr?.RelatedAttribute != null)
+                        {
+                            // If the PI does not have Write Access, it may be a referential attribute.
+                            var relatedPi = props.Where(prop => prop.Name == sdkAttr.RelatedAttribute).First();
+                            if (relatedPi.PropertyType.Name == "DateTime")
                             {
                                 relatedPi.SetValue(t, FromUTC(record.Attribute(sdkAttr.Name)?.Value));
                             }
