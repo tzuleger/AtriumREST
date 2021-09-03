@@ -163,16 +163,19 @@ namespace ThreeRiversTech.Zuleger.Atrium.REST
                 if (encryptedExchange)
                 {
                     this.EncryptedResponse = responseString;
-
                     var postEnc = responseString.Replace("post_enc=", "");
-                    postEnc = postEnc.Substring(0, postEnc.IndexOf("&"));
-                    var checkSum = responseString.Substring(responseString.IndexOf("&") + 1, responseString.Length);
-
-                    responseString = RC4.Decrypt(_sessionKey, postEnc);
-                    if (RC4.CheckSum(responseString) != checkSum)
+                    if (responseString.Contains("&post_chk="))
                     {
-                        throw new IntegrityException();
+                        var split = postEnc.Split('&');
+                        postEnc = split[0];
+                        var postChk = split[1].Replace("post_chk=", "");
+
+                        if (RC4.CheckSum(responseString) != postChk)
+                        {
+                            throw new ThreeRiversTech.Zuleger.Atrium.REST.Exceptions.IntegrityException();
+                        }
                     }
+                    responseString = RC4.Decrypt(_sessionKey, postEnc);
                 }
             }
             else
