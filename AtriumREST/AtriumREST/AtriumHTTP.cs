@@ -114,10 +114,11 @@ namespace ThreeRiversTech.Zuleger.Atrium.REST
                     var postEnc = responseString.Replace("post_enc=", "");
                     if(responseString.Contains("&post_chk="))
                     {
-                        postEnc = postEnc.Substring(0, postEnc.IndexOf("&"));
-                        var checkSum = responseString.Substring(responseString.IndexOf("&") + 1, 13).Replace("post_chk=", "");
+                        var split = postEnc.Split('&');
+                        postEnc = split[0];
+                        var postChk = split[1].Replace("post_chk=", "");
 
-                        if (RC4.CheckSum(responseString) != checkSum)
+                        if (RC4.CheckSum(responseString) != postChk)
                         {
                             throw new ThreeRiversTech.Zuleger.Atrium.REST.Exceptions.IntegrityException();
                         }
