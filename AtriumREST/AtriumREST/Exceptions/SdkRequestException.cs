@@ -5,7 +5,7 @@ namespace ThreeRiversTech.Zuleger.Atrium.REST.Exceptions
     /// <summary>
     /// Thrown when an SDK Request returns back with err not equaling "ok".
     /// </summary>
-    class SdkRequestException : Exception
+    public class SdkRequestException : Exception
     {
         /// <summary>
         /// Message to be printed when thrown.

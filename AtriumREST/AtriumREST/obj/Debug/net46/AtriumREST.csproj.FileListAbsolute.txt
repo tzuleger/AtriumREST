@@ -15,6 +15,5 @@ C:\Users\Travis\Documents\GitHub\Atrium-API\AtriumREST\AtriumREST\obj\Debug\net4
 C:\Users\Travis\Documents\GitHub\Atrium-API\AtriumREST\AtriumREST\obj\Debug\net46\AtriumREST.AssemblyInfo.cs
 C:\Users\Travis\Documents\GitHub\Atrium-API\AtriumREST\AtriumREST\obj\Debug\net46\AtriumREST.csproj.CoreCompileInputs.cache
 C:\Users\Travis\Documents\GitHub\Atrium-API\AtriumREST\AtriumREST\obj\Debug\net46\AtriumREST.pdb
-C:\Users\Travis\Documents\GitHub\Atrium-API\AtriumREST\AtriumREST\bin\Debug\net46\AtriumREST.exe.config
-C:\Users\Travis\Documents\GitHub\Atrium-API\AtriumREST\AtriumREST\bin\Debug\net46\AtriumREST.exe
-C:\Users\Travis\Documents\GitHub\Atrium-API\AtriumREST\AtriumREST\obj\Debug\net46\AtriumREST.exe
+C:\Users\Travis\Documents\GitHub\Atrium-API\AtriumREST\AtriumREST\bin\Debug\net46\AtriumREST.dll
+C:\Users\Travis\Documents\GitHub\Atrium-API\AtriumREST\AtriumREST\obj\Debug\net46\AtriumREST.dll

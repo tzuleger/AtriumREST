@@ -1,8 +1,7 @@
 {
   "version": 3,
   "targets": {
-    ".NETFramework,Version=v4.6": {},
-    ".NETFramework,Version=v4.6/win7-x86": {}
+    ".NETFramework,Version=v4.6": {}
   },
   "libraries": {},
   "projectFileDependencyGroups": {
@@ -51,12 +50,7 @@
     "frameworks": {
       "net46": {
         "targetAlias": "net46",
-        "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\5.0.206\\RuntimeIdentifierGraph.json"
-      }
-    },
-    "runtimes": {
-      "win7-x86": {
-        "#import": []
+        "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\5.0.207\\RuntimeIdentifierGraph.json"
       }
     }
   }

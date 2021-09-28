@@ -9,6 +9,7 @@ using System.Xml.Linq;
 using ThreeRiversTech.Zuleger.Atrium.REST.Security;
 using ThreeRiversTech.Zuleger.Atrium.REST.Exceptions;
 using System.Text;
+using System.Web;
 
 namespace ThreeRiversTech.Zuleger.Atrium.REST
 {
@@ -111,19 +112,17 @@ namespace ThreeRiversTech.Zuleger.Atrium.REST
                 if (encryptedExchange)
                 {
                     this.EncryptedResponse = responseString;
-                    var postEnc = responseString.Replace("post_enc=", "");
-                    if(responseString.Contains("&post_chk="))
+                    var queryString = HttpUtility.ParseQueryString(responseString);
+                    if(queryString.HasKeys())
                     {
-                        var split = postEnc.Split('&');
-                        postEnc = split[0];
-                        var postChk = split[1].Replace("post_chk=", "");
-
-                        if (RC4.CheckSum(responseString) != postChk)
+                        var postEnc = RC4.Decrypt(_sessionKey, queryString["post_enc"]);
+                        var postChk = queryString["post_chk"];
+                        if (RC4.CheckSum(postEnc) != postChk)
                         {
                             throw new ThreeRiversTech.Zuleger.Atrium.REST.Exceptions.IntegrityException();
                         }
+                        responseString = postEnc;
                     }
-                    responseString = RC4.Decrypt(_sessionKey, postEnc);
                 }
             }
             else
@@ -159,7 +158,6 @@ namespace ThreeRiversTech.Zuleger.Atrium.REST
 
             if (response.IsSuccessStatusCode)
             {
-                responseString = await response.Content.ReadAsStringAsync();
                 if (encryptedExchange)
                 {
                     this.EncryptedResponse = responseString;

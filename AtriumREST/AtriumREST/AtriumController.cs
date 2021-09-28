@@ -978,8 +978,9 @@ namespace ThreeRiversTech.Zuleger.Atrium.REST
         /// </summary>
         /// <typeparam name="T">Type of AtriumObject to grab from the Atrium Controller.</typeparam>
         /// <param name="fragmentSize">Size of how many records the function should grab per HTTP packet.</param>
+        /// <param name="feedback">Function of return type void that provides feedback to the application.</param>
         /// <returns>List of Atrium Objects that are in the Controller.</returns>
-        public List<T> GetAll<T>(int fragmentSize=-1) where T : AtriumObject, new()
+        public List<T> GetAll<T>(int fragmentSize=-1, Action feedback=null) where T : AtriumObject, new()
         {
             var temp = FragmentSize;
             FragmentSize = fragmentSize >= 25 ? fragmentSize : FragmentSize; 
@@ -995,6 +996,7 @@ namespace ThreeRiversTech.Zuleger.Atrium.REST
                 os = os.Concat(grab).ToList();
                 sIdx = eIdx + 1;
                 eIdx += FragmentSize;
+                feedback?.Invoke();
             }
 
             FragmentSize = temp;
