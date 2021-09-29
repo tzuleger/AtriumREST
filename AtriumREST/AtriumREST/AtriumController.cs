@@ -556,13 +556,14 @@ namespace ThreeRiversTech.Zuleger.Atrium.REST
                                   in res.Elements(AtriumController.XML_EL_RECORDS)
                                   select e.Element(AtriumController.XML_EL_RECORD);
 
-            CheckAllAnswers(insertedRecords, XML_EL_DATA);
+            var task = CheckAllAnswersAsync(insertedRecords, XML_EL_DATA);
 
             var first = insertedRecords?.First()?.Element(AtriumController.XML_EL_DATA);
 
             o.ObjectId = first?.Attribute("id")?.Value;
             o.ObjectGuid = first?.Attribute("guid2")?.Value;
 
+            await task;
             return o.ObjectId;
         }
 
@@ -681,7 +682,7 @@ namespace ThreeRiversTech.Zuleger.Atrium.REST
             o.ObjectId = first?.Attribute("id")?.Value;
             o.ObjectGuid = first?.Attribute("guid2")?.Value;
 
-            return CheckAllAnswers(updatedRecords, XML_EL_DATA, throwException: false);
+            return await CheckAllAnswersAsync(updatedRecords, XML_EL_DATA, throwException: false);
         }
 
         /// <summary>
@@ -798,7 +799,7 @@ namespace ThreeRiversTech.Zuleger.Atrium.REST
 
             if (o.ObjectGuid != default)
             {
-                List<T> ts = GetAll<T>(fragmentSize);
+                List<T> ts = await GetAllAsync<T>(fragmentSize);
 
                 if (ts.Any((t => t.ObjectGuid == o.ObjectGuid)))
                 {
@@ -840,7 +841,7 @@ namespace ThreeRiversTech.Zuleger.Atrium.REST
                 var records = from e in res.Elements(AtriumController.XML_EL_RECORDS)
                               select e.Element(AtriumController.XML_EL_RECORD);
 
-                isSuccessful = CheckAllAnswers(records, null, throwException: false);
+                isSuccessful = await CheckAllAnswersAsync(records, null, throwException: false);
             }
 
             return isSuccessful;
@@ -932,7 +933,7 @@ namespace ThreeRiversTech.Zuleger.Atrium.REST
             List<T> deletedObjects = new List<T>();
             if (pred != null)
             {
-                List<T> ts = GetAll<T>(fragmentSize);
+                List<T> ts = await GetAllAsync<T>(fragmentSize);
 
                 if (ts.Any(pred))
                 {
@@ -1024,6 +1025,7 @@ namespace ThreeRiversTech.Zuleger.Atrium.REST
 
             int sIdx = 0;
             int eIdx = FragmentSize - 1;
+
             while (grab == null || grab.Count > 0)
             {
                 grab = await GetAllByIndexAsync<T>(sIdx, eIdx);
@@ -1205,7 +1207,7 @@ namespace ThreeRiversTech.Zuleger.Atrium.REST
             var records = from e in res.Elements(AtriumController.XML_EL_RECORDS)
                           select e.Element(AtriumController.XML_EL_RECORD);
 
-            CheckAllAnswers(records, null, throwException: false);
+            var task = CheckAllAnswersAsync(records, null, throwException: false);
 
             List<T> ts = new List<T>();
             foreach (var r in records)
@@ -1247,6 +1249,7 @@ namespace ThreeRiversTech.Zuleger.Atrium.REST
                 }
             }
 
+            await task;
             return ts;
         }
         #endregion

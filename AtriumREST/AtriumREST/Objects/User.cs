@@ -130,27 +130,27 @@ namespace ThreeRiversTech.Zuleger.Atrium.REST
             ///
             /// </summary>
             [SdkDataType(Name = "word24_0")]
-            public String AccessLevel1 { get => AccessLevelObjectIds != null ? AccessLevelObjectIds[0].ToString() : ""; }
+            public String AccessLevel1 { get => AccessLevelObjectIds?[0].ToString(); }
             /// <summary>
             ///
             /// </summary>
             [SdkDataType(Name = "word24_1")]
-            public String AccessLevel2 { get => AccessLevelObjectIds != null ? AccessLevelObjectIds[1].ToString() : ""; }
+            public String AccessLevel2 { get => AccessLevelObjectIds?[1].ToString(); }
             /// <summary>
             ///
             /// </summary>
             [SdkDataType(Name = "word24_2")]
-            public String AccessLevel3 { get => AccessLevelObjectIds != null ? AccessLevelObjectIds[2].ToString() : ""; }
+            public String AccessLevel3 { get => AccessLevelObjectIds?[2].ToString(); }
             /// <summary>
             ///
             /// </summary>
             [SdkDataType(Name = "word24_3")]
-            public String AccessLevel4 { get => AccessLevelObjectIds != null ? AccessLevelObjectIds[3].ToString() : ""; }
+            public String AccessLevel4 { get => AccessLevelObjectIds?[3].ToString(); }
             /// <summary>
             ///
             /// </summary>
             [SdkDataType(Name = "word24_4")]
-            public String AccessLevel5 { get => AccessLevelObjectIds != null ? AccessLevelObjectIds[4].ToString() : ""; }
+            public String AccessLevel5 { get => AccessLevelObjectIds?[4].ToString(); }
             /// <summary>
             /// Language interpreted as. 0=English, 1=French, 2=Spanish, 3=Chinese.
             /// </summary>
@@ -164,27 +164,27 @@ namespace ThreeRiversTech.Zuleger.Atrium.REST
             ///
             /// </summary>
             [SdkDataType(Name = "word25_0")]
-            public String FloorLevel1 { get => FloorLevelObjectIds != null ? FloorLevelObjectIds[0].ToString() : ""; }
+            public String FloorLevel1 { get => FloorLevelObjectIds?[0].ToString(); }
             /// <summary>
             ///
             /// </summary>
             [SdkDataType(Name = "word25_1")]
-            public String FloorLevel2 { get => FloorLevelObjectIds != null ? FloorLevelObjectIds[0].ToString() : ""; }
+            public String FloorLevel2 { get => FloorLevelObjectIds?[1].ToString(); }
             /// <summary>
             ///
             /// </summary>
             [SdkDataType(Name = "word25_2")]
-            public String FloorLevel3 { get => FloorLevelObjectIds != null ? FloorLevelObjectIds[0].ToString() : ""; }
+            public String FloorLevel3 { get => FloorLevelObjectIds?[2].ToString(); }
             /// <summary>
             ///
             /// </summary>
             [SdkDataType(Name = "word25_3")]
-            public String FloorLevel4 { get => FloorLevelObjectIds != null ? FloorLevelObjectIds[0].ToString() : ""; }
+            public String FloorLevel4 { get => FloorLevelObjectIds?[3].ToString(); }
             /// <summary>
             ///
             /// </summary>
             [SdkDataType(Name = "word25_4")]
-            public String FloorLevel5 { get => FloorLevelObjectIds != null ? FloorLevelObjectIds[0].ToString() : ""; }
+            public String FloorLevel5 { get => FloorLevelObjectIds?[4].ToString(); }
             /// <summary>
             /// Overriden ToString() to return FirstName concatenated with LastName separated by a space. (e.g. "John Doe").
             /// </summary>

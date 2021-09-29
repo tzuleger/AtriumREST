@@ -38,6 +38,31 @@ namespace ThreeRiversTech.Zuleger.Atrium.REST
             return true;
         }
 
+        private async Task<bool> CheckAnswerAsync(
+            XElement xml,
+            XName elementName,
+            String attr="err",
+            bool throwException=true)
+        {
+            return await Task.Run(() =>
+            {
+                var e = elementName != null ? xml.Element(elementName) : xml;
+                var res = e?.Attribute(attr);
+                if (res == null || res.Value != "ok")
+                {
+                    if (throwException)
+                    {
+                        throw new SdkRequestException(res.Value);
+                    }
+                    else
+                    {
+                        return false;
+                    }
+                }
+                return true;
+            });
+        }
+
         // Checks a set of elements in an XML Response String that it has an "ok" answer.
         private bool CheckAllAnswers(
             IEnumerable<XElement> xmlElements,
@@ -51,6 +76,32 @@ namespace ThreeRiversTech.Zuleger.Atrium.REST
                 {
                     return false;
                 }
+            }
+            return true;
+        }
+
+        private async Task<bool> CheckAllAnswersAsync(
+            IEnumerable<XElement> xmlElements,
+            XName elementName,
+            String attr="res",
+            bool throwException=true)
+        {
+            var tasks = new List<Task<bool>>();
+            foreach(var el in xmlElements)
+            {
+                tasks.Add(CheckAnswerAsync(el, elementName, attr, throwException));
+            }
+
+            while(tasks.Count > 0)
+            {
+                var completedTask = await Task.WhenAny(tasks);
+                
+                if(!completedTask.Result || completedTask.Exception != null)
+                {
+                    return false;
+                }
+
+                tasks.Remove(completedTask);
             }
             return true;
         }

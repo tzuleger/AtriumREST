@@ -11,7 +11,6 @@ namespace ThreeRiversTech.Zuleger.Atrium.REST.Exceptions
         /// Message to be printed when thrown.
         /// </summary>
         public override String Message { get => _msg; }
-
         private String _msg;
 
         /// <summary>

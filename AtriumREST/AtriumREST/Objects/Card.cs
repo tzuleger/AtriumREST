@@ -156,6 +156,10 @@ namespace ThreeRiversTech.Zuleger.Atrium.REST
             /// </summary>
             [SdkDataType(Name = "bit33")]
             public int OptionDoubleSwipe { get; set; }
+            /// <summary>
+            /// Tansforms the object into a String that can be better understood by using DisplayName and Card Numbers.
+            /// </summary>
+            /// <returns>"{DisplayName} : {CardNumberLo}-{CardNumberHi}"</returns>
             public override String ToString() => $"{DisplayName} : {CardNumberLo}-{CardNumberHi}";
         }
     }

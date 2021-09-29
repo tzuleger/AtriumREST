@@ -111,7 +111,6 @@ namespace ThreeRiversTech.Zuleger.Atrium.REST.Security
                              .ToArray();
         }
         
-
         // Pads a string s to the left with the given character c to the total length of l
         private static String pad(String s, char c, int l)
         {
