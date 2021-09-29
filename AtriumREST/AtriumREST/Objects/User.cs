@@ -1,9 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Xml.Linq;
-
-using ThreeRiversTech.Zuleger.Atrium.REST.Objects;
 
 namespace ThreeRiversTech.Zuleger.Atrium.REST
 {

@@ -14,11 +14,11 @@
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "C:\\Users\\Travis\\Documents\\GitHub\\Atrium-API\\AtriumREST\\AtriumREST\\AtriumREST.csproj",
+      "projectUniqueName": "C:\\Users\\Travis\\Documents\\GitHub\\AtriumREST\\AtriumREST\\AtriumREST\\AtriumREST.csproj",
       "projectName": "AtriumREST",
-      "projectPath": "C:\\Users\\Travis\\Documents\\GitHub\\Atrium-API\\AtriumREST\\AtriumREST\\AtriumREST.csproj",
+      "projectPath": "C:\\Users\\Travis\\Documents\\GitHub\\AtriumREST\\AtriumREST\\AtriumREST\\AtriumREST.csproj",
       "packagesPath": "C:\\Users\\Travis\\.nuget\\packages\\",
-      "outputPath": "C:\\Users\\Travis\\Documents\\GitHub\\Atrium-API\\AtriumREST\\AtriumREST\\obj\\",
+      "outputPath": "C:\\Users\\Travis\\Documents\\GitHub\\AtriumREST\\AtriumREST\\AtriumREST\\obj\\",
       "projectStyle": "PackageReference",
       "fallbackFolders": [
         "C:\\Program Files (x86)\\Microsoft\\Xamarin\\NuGet\\"

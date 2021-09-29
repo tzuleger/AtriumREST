@@ -1,8 +1,8 @@
 {
   "version": 2,
-  "dgSpecHash": "ivvy5Ja7M71QD0fgQiCmintWtNlZGRC6h9GdAfTRqhmUYHUHqdgiJnh1KTXbB5+aZIDT4BXy1mr4TAhKoYKw6Q==",
+  "dgSpecHash": "wmq1niGdJLV9moaNLfnxQZSE6CzVyVfIBc/Ua5L0kkZtv1mvOijLRROkJgaJJX1wBP3J/A1jirXO9ZUl5ZFsKw==",
   "success": true,
-  "projectFilePath": "C:\\Users\\Travis\\Documents\\GitHub\\Atrium-API\\AtriumREST\\AtriumREST\\AtriumREST.csproj",
+  "projectFilePath": "C:\\Users\\Travis\\Documents\\GitHub\\AtriumREST\\AtriumREST\\AtriumREST\\AtriumREST.csproj",
   "expectedPackageFiles": [],
   "logs": []
 }

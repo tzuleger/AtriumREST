@@ -5,11 +5,11 @@ using System.Net;
 using System.Net.Http;
 using System.Threading.Tasks;
 using System.Xml.Linq;
+using System.Text;
+using System.Web;
 
 using ThreeRiversTech.Zuleger.Atrium.REST.Security;
 using ThreeRiversTech.Zuleger.Atrium.REST.Exceptions;
-using System.Text;
-using System.Web;
 
 namespace ThreeRiversTech.Zuleger.Atrium.REST
 {
