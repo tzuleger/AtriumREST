@@ -8,3 +8,7 @@ Atrium API/Atrium API/obj/Release/net46/Atrium API.dll
 AtriumREST/AtriumREST/.vs/AtriumREST/DesignTimeBuild/.dtbcache.v2
 AtriumREST/AtriumREST/.vs/AtriumREST/v16/.suo
 AtriumREST/AtriumREST/.vs/AtriumREST/DesignTimeBuild/.dtbcache.v2
+*.v2
+AtriumREST/AtriumREST/.vs/AtriumREST/DesignTimeBuild/.dtbcache.v2
+AtriumREST/AtriumREST/.vs/AtriumREST/v16/.suo
+AtriumREST/AtriumREST/obj/Debug/net46/AtriumREST.csprojAssemblyReference.cache
