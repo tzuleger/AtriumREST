@@ -1,9 +1,9 @@
 ﻿using System;
 using System.Linq;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 
 using ThreeRiversTech.Zuleger.Atrium.REST.Objects;
-using System.Threading.Tasks;
 
 namespace ThreeRiversTech.Zuleger.Atrium.REST.Example
 {
@@ -24,45 +24,43 @@ namespace ThreeRiversTech.Zuleger.Atrium.REST.Example
             String password = "admin";
             String address = "http://69.70.57.94/";
             AtriumController cnn = new AtriumController(username, password, address); ;
-            cnn.FragmentSize = 10;
+            cnn.BatchSize = 10; // You can set the batch size here so it's static for all batch size needed functions.
+
             Console.WriteLine($"Connecting to {address} as \"{username}\" with password \"{password}\"");
+            // Information on the Controller and the Connection itself is available too!
             Console.WriteLine($"Successfully connected. Device Info: {cnn.ProductName}, {cnn.ProductLabel} (v{cnn.ProductVersion}) - SN: {cnn.SerialNumber}");
             Console.WriteLine($"Credentials - SID: {cnn.SessionID}, Key: {cnn.SessionKey}");
-            Test(cnn);
             try
             {
+                TestAsync(cnn); // asynchronous example
+                Test(cnn); // synchronous example
                 cnn.Close();
             }
             catch(Exception e)
             {
+                // for debugging purposes, the Request and Response Texts (decrypted and encrypted versions) are available at any time.
                 Console.WriteLine($"Request:\n{cnn.RequestText}\nResponse:\n{cnn.ResponseText}");
                 Console.WriteLine($"Encrypted Request:\n{cnn.EncryptedRequest}\nEncrypted Response:\n{cnn.EncryptedResponse}");
                 cnn.Close();
                 throw e;
             }
 
-            // Alternatively, you can use Asynchronous methods.
-            TestAsync(cnn);
         }
 
+        /// <summary>
+        /// Used as an example to show how synchronous programming works on an Atrium Controller using the REST API.
+        /// </summary>
+        /// <param name="cnn">Connection to an AtriumController.</param>
         private static void Test(AtriumController cnn)
         {
-            // Fragmentation retrieval is the process of retrieving a set of data over multiple packets. The retrieval process stops once the last packet returns no data.
-            // Pro: Grabs the almost exact number of records that actually exist.
-            // Pro: No need to know underlying information about the layout of the controller's database.
-            // Con: If a fragment occurs larger than the fragmentSize provided, then all data after that fragment is ignored.
-            // Con: Uses multiple HTTP packet requests which can be bottlenecked by network speed.
+            // Grab all Users from the controller in batches of 5. If a batchSize is not specified, then the static BatchSize is used (set above)
+            List<User> users = cnn.GetAll<User>(batchSize: 5);
+            // If GetAll was called again with no batchSize, then the batchSize of 10 (static BatchSize set above) is used.
 
-            // Index retrieval is the process of retrieving a set of data over one packet specified by indices. The retrieval process stops after the first packet sent.
-            // Pro: Grabs all data in one HTTP packet, keeping local network bandwidth limited.
-            // Pro: Data is guaranteed to be the same every time, no matter how many fragments occur.
-            // Con: Efficiency cost when indices are a larger range and the actual number of records in the controller are smaller.
+            // Grab all Cards from the controller starting from index 0 to index 25.
+            List<Card> cards = cnn.GetAllByIndex<Card>(0, 25);
 
-            // GetAll<AtriumObjectType>([fragmentSize=100]) retrieves all objects of specified generic type using Fragmentation retrieval. The fragment size can be set via passed argument "fragmentSize" or setting the public Instance attribute "FragmentSize".
-            List<User> users = cnn.GetAll<User>();
-
-            // GetAllByIndex<AtriumObjectType>([sIdx=0, eIdx=100]) retrieves all objects of specified generic type using Index retrieval. The indices can be set via the passed arguments "sIdx" for Start Index and "eIdx" for End Index.
-            List<Card> cards = cnn.GetAllByIndex<Card>(startIndex: 0, endIndex: 25);
+            // Create a new User
             User u = new User
             {
                 FirstName = "JANE",
@@ -74,119 +72,67 @@ namespace ThreeRiversTech.Zuleger.Atrium.REST.Example
                     access_level_area_a,
                     access_level_warehouse)
             };
+
+            // Create a new Card.
+            // Note: To26BitCardNumber transforms a "FamilyNumber (10 bits): MemberNumber (16 bits)" card format number to its Hexadecimal Counterpart.
             Card c = new Card
             {
-                DisplayName = "JANE DOE CARD",
-                CardNumberLo = AtriumController.To26BitCardNumber(r.Next(0, 100), r.Next(0, 8000)),
-                ActivationDate = DateTime.Now,
-                ExpirationDate = DateTime.Now.AddYears(3).AddDays(7),
+                DisplayName = u.ToString() + " CARD",
+                CardNumberLo = AtriumController.To26BitCardNumber(r.Next(0, 1023), r.Next(0, 65535)),
+                ActivationDate = u.ActivationDate,
+                ExpirationDate = u.ExpirationDate
             };
 
-            Func<User, bool> userPred = (user => user.FirstName == u.FirstName && user.LastName == u.LastName);
-            // Update the card if the FirstName and LastName are equal.
-            if (users.Any(userPred))
+            // Desired variables
+            string 
+                userId = null, 
+                cardId = null;
+
+            bool 
+                didUserUpdate = false,
+                didCardUpdate = false;
+
+            // If a user does not exist with the same First Name and Last Name
+            if(!users.Any(user => user.ToString() == u.ToString()))
             {
-                User existingUser = users.Where(userPred).First();
+                // Insert the User.
+                userId = cnn.Insert(u);
+            }
+            else
+            {
+                // Update the user. (assuming that there is only one user with that First and Last Name.)
+                // If more than one, then only the first one to be retrieved is updated.
+                User existingUser = users.Where(user => user.ToString() == u.ToString()).First();
                 existingUser.ActivationDate = u.ActivationDate;
                 existingUser.ExpirationDate = u.ExpirationDate;
                 existingUser.AccessLevelObjectIds = u.AccessLevelObjectIds;
-                u = existingUser;
+                didUserUpdate = cnn.Update(existingUser);
+                u = existingUser; // Reassign to the existing version since u is used to check if a Card exists that is attached to the User.
+            }
 
-                Console.WriteLine($"User exists. Updating {existingUser} (Object ID: {existingUser.ObjectId}, Object GUID: {existingUser.ObjectGuid}).");
-                if (cnn.Update(existingUser))
-                {
-                    Console.WriteLine($"User successfully updated. (Object ID: {existingUser.ObjectId}, Object GUID: {existingUser.ObjectGuid})");
-                    c.EntityRelationshipId = existingUser.ObjectId;
-                    c.EntityRelationshipGuid = existingUser.ObjectGuid;
-                }
-                else
-                {
-                    Console.WriteLine($"User update unsuccessful.\nRequest Text:\n{cnn.RequestText}\nResponse Text:\n{cnn.ResponseText}\n{u.Jsonify()}");
-                }
+            // If a card does not already exist that is attached the User.
+            if(!cards.Any(card => card.ObjectGuid == u.EntityRelationshipGuid))
+            {
+                // Insert the Card attached to that User.
+                cardId = cnn.Insert(c);
             }
             else
             {
-                Console.WriteLine($"User does not exist. Inserting {u}.");
-                cnn.Insert(u);
-                if (u.ObjectId != null)
-                {
-                    Console.WriteLine($"User successfully inserted. Object ID: {u.ObjectId}");
-                    c.EntityRelationshipId = u.ObjectId;
-                    c.EntityRelationshipGuid = u.ObjectGuid;
-                }
-                else
-                {
-                    Console.WriteLine($"User insert unsuccessful.\nRequest Text:\n{cnn.RequestText}\nResponse Text:\n{cnn.ResponseText}\n{u.Jsonify()}");
-                }
-            }
-
-            Func<Card, bool> cardPred = (card => card.EntityRelationshipGuid == u.ObjectGuid);
-            bool checkForUpdate = true;
-            // Update all cards where the Card and User are related.
-            if (cards.Any(cardPred) && checkForUpdate)
-            {
-                foreach (Card existingCard in cards.Where(cardPred))
-                {
-                    Console.WriteLine($"Card exists. Updating {existingCard} (Object ID: {existingCard.ObjectId}).");
-
-                    existingCard.ActivationDate = c.ActivationDate;
-                    existingCard.ExpirationDate = c.ExpirationDate;
-                    existingCard.DisplayName = c.DisplayName;
-                    c = existingCard;
-
-                    if (cnn.Update(existingCard))
-                    {
-                        Console.WriteLine($"Card successfully updated. Object ID: {existingCard.ObjectId}");
-                    }
-                    else
-                    {
-                        Console.WriteLine($"Card update unsuccessful.\nRequest Text:\n{cnn.RequestText}\nResponse Text:\n{cnn.ResponseText}\n{c.Jsonify()}");
-                    }
-                }
-            }
-            else
-            {
-                Console.WriteLine($"Card does not exist. Object ID. Inserting {c}");
-                cnn.Insert(c);
-                if (c.ObjectId != null)
-                {
-                    Console.WriteLine($"Card successfully inserted. Object ID: {c.ObjectId}");
-                }
-                else
-                {
-                    Console.WriteLine($"Card insert unsuccessful.\nRequest Text:\n{cnn.RequestText}\nResponse Text:\n{cnn.ResponseText}\n{c.Jsonify()}");
-                }
-            }
-
-            // Known issues of cards being placed in the 60s, a Fragment size of 30 (set at start of program) could cause problems.
-            cnn.FragmentSize = 100;
-            Console.WriteLine($"Cleaning up Cards from this program...");
-            var deletedCards = cnn.Delete<Card>(
-                new Func<Card, bool>(theCard => theCard.EntityRelationshipGuid == u.ObjectGuid));
-
-            if (deletedCards.Count > 0)
-            {
-                Console.WriteLine($"Card cleanup successful!");
-            }
-            else
-            {
-                Console.WriteLine($"Card cleanup unsuccessful!\n{cnn.RequestText}\n{cnn.ResponseText}");
-            }
-
-            Console.WriteLine($"Cleaning up Users from this program...");
-            var deletedUsers = cnn.Delete<User>(
-                new Func<User, bool>(theUser => theUser.FirstName == u.FirstName && theUser.LastName == u.LastName));
-
-            if (deletedUsers.Count > 0)
-            {
-                Console.WriteLine($"User cleanup successful!");
-            }
-            else
-            {
-                Console.WriteLine($"User cleanup unsuccessful!\n{cnn.RequestText}\n{cnn.ResponseText}");
+                // Update the card. (assuming that there is only one card attached to this user)
+                // If more than one, then only the first one to be retrieved is updated.
+                Card existingCard = cards.Where(card => card.ObjectGuid == u.EntityRelationshipGuid).First();
+                existingCard.ActivationDate = c.ActivationDate;
+                existingCard.ExpirationDate = c.ExpirationDate;
+                existingCard.DisplayName = c.DisplayName;
+                didCardUpdate = cnn.Update(existingCard);
+                c = existingCard; // Reassign to the existing version since c could be used later in this function.
             }
         }
-    
+        
+        /// <summary>
+        /// Used as an example to show how Asynchronous programming works on an Atrium Controller using the REST API.
+        /// </summary>
+        /// <param name="cnn">Connection to an AtriumController.</param>
         private async static void TestAsync(AtriumController cnn)
         {
             // You may also provide a feedback function that is to be called on every retrieval. This applies to both Sync and Async GetAll methods.
@@ -242,7 +188,8 @@ namespace ThreeRiversTech.Zuleger.Atrium.REST.Example
                 existingUser.ActivationDate = u.ActivationDate;
                 existingUser.ExpirationDate = u.ExpirationDate;
                 existingUser.AccessLevelObjectIds = u.AccessLevelObjectIds;
-                updateUserTask = cnn.UpdateAsync(u);
+                updateUserTask = cnn.UpdateAsync(existingUser);
+                u = existingUser; // Reassign to the existing version since u is used to check if a Card exists that is attached to the User.
             }
             // If the user does not already have a card assigned to them 
             if (!allCards0to25.Any(card => card.ObjectGuid == u.EntityRelationshipGuid))
@@ -259,6 +206,7 @@ namespace ThreeRiversTech.Zuleger.Atrium.REST.Example
                 existingCard.ExpirationDate = c.ExpirationDate;
                 existingCard.DisplayName = c.DisplayName;
                 updateCardTask = cnn.UpdateAsync(existingCard);
+                c = existingCard; // Reassign to the existing version since c could be used later in this function.
             }
 
             // Desired variables.

@@ -412,7 +412,7 @@ namespace ThreeRiversTech.Zuleger.Atrium.REST
         /// drawback is worth it, but if fragmentations do not exist often or are small, then this number should be smaller.
         /// The smallest the fragment size can be is 25. (By default: 100)
         /// </summary>
-        public int FragmentSize 
+        public int BatchSize 
         { 
             get => Math.Max(25, _fragmentSize); 
             set => _fragmentSize = value; 
@@ -978,29 +978,29 @@ namespace ThreeRiversTech.Zuleger.Atrium.REST
         /// please set the Fragment Size to a larger number.
         /// </summary>
         /// <typeparam name="T">Type of AtriumObject to grab from the Atrium Controller.</typeparam>
-        /// <param name="fragmentSize">Size of how many records the function should grab per HTTP packet.</param>
+        /// <param name="batchSize">Size of how many records the function should grab per HTTP packet.</param>
         /// <param name="feedback">Function of return type void that provides feedback to the application.</param>
         /// <returns>List of Atrium Objects that are in the Controller.</returns>
-        public List<T> GetAll<T>(int fragmentSize=-1, Action feedback=null) where T : AtriumObject, new()
+        public List<T> GetAll<T>(int batchSize=-1, Action feedback=null) where T : AtriumObject, new()
         {
-            var temp = FragmentSize;
-            FragmentSize = fragmentSize >= 25 ? fragmentSize : FragmentSize; 
+            var temp = BatchSize;
+            BatchSize = batchSize >= 25 ? batchSize : BatchSize; 
 
             List<T> os = new List<T>();
             List<T> grab = null;
 
             int sIdx = 0;
-            int eIdx = FragmentSize - 1;
+            int eIdx = BatchSize - 1;
             while (grab == null || grab.Count > 0)
             {
                 grab = GetAllByIndex<T>(sIdx, eIdx);
                 os = os.Concat(grab).ToList();
                 sIdx = eIdx + 1;
-                eIdx += FragmentSize;
+                eIdx += BatchSize;
                 feedback?.Invoke();
             }
 
-            FragmentSize = temp;
+            BatchSize = temp;
             return os;
         }
 
@@ -1018,25 +1018,25 @@ namespace ThreeRiversTech.Zuleger.Atrium.REST
         /// <returns>List of Atrium Objects that are in the Controller.</returns>
         public async Task<List<T>> GetAllAsync<T>(int fragmentSize = -1, Action feedback=null) where T : AtriumObject, new()
         {
-            var temp = FragmentSize;
-            FragmentSize = fragmentSize >= 25 ? fragmentSize : FragmentSize;
+            var temp = BatchSize;
+            BatchSize = fragmentSize >= 25 ? fragmentSize : BatchSize;
 
             List<T> os = new List<T>();
             List<T> grab = null;
 
             int sIdx = 0;
-            int eIdx = FragmentSize - 1;
+            int eIdx = BatchSize - 1;
 
             while (grab == null || grab.Count > 0)
             {
                 grab = await GetAllByIndexAsync<T>(sIdx, eIdx);
                 os = os.Concat(grab).ToList();
                 sIdx = eIdx + 1;
-                eIdx += FragmentSize;
+                eIdx += BatchSize;
                 feedback?.Invoke();
             }
 
-            FragmentSize = temp;
+            BatchSize = temp;
             return os;
         }
 
