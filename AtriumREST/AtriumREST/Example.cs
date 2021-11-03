@@ -238,7 +238,10 @@ namespace ThreeRiversTech.Zuleger.Atrium.REST.Example
             {
                 // Update the user. (assuming that there is only one user with that First and Last Name.)
                 // If more than one, then only the first one to be retrieved is updated.
-                u = allUsers.Where(user => user.FirstName == u.FirstName && user.LastName == u.LastName).First();
+                User existingUser = allUsers.Where(user => user.FirstName == u.FirstName && user.LastName == u.LastName).First();
+                existingUser.ActivationDate = u.ActivationDate;
+                existingUser.ExpirationDate = u.ExpirationDate;
+                existingUser.AccessLevelObjectIds = u.AccessLevelObjectIds;
                 updateUserTask = cnn.UpdateAsync(u);
             }
             // If the user does not already have a card assigned to them 
@@ -251,8 +254,11 @@ namespace ThreeRiversTech.Zuleger.Atrium.REST.Example
             {
                 // Update the card. (assuming that there is only one card attached to this user)
                 // If more than one, then only the first one to be retrieved is updated.
-                c = allCards0to25.Where(card => card.ObjectGuid == u.EntityRelationshipGuid).First();
-                updateCardTask = cnn.UpdateAsync(c);
+                Card existingCard = allCards0to25.Where(card => card.ObjectGuid == u.EntityRelationshipGuid).First();
+                existingCard.ActivationDate = c.ActivationDate;
+                existingCard.ExpirationDate = c.ExpirationDate;
+                existingCard.DisplayName = c.DisplayName;
+                updateCardTask = cnn.UpdateAsync(existingCard);
             }
 
             // Desired variables.
