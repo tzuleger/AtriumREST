@@ -270,9 +270,12 @@ namespace ThreeRiversTech.Zuleger.Atrium.REST.Example
                 didCardUpdate = false;
 
             // Await our applicable tasks.
+
+            // User first, since the Card is dependent on User being in Controller.
             if(insertUserTask != null) userId = await insertUserTask;
-            if(insertCardTask != null) cardId = await insertCardTask;
             if(updateUserTask != null) didUserUpdate = await updateUserTask;
+            // Card following.
+            if(insertCardTask != null) cardId = await insertCardTask;
             if(updateCardTask != null) didCardUpdate = await updateCardTask;
 
             // Do what we want with the variables.
