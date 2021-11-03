@@ -563,7 +563,7 @@ namespace ThreeRiversTech.Zuleger.Atrium.REST
             o.ObjectId = first?.Attribute("id")?.Value;
             o.ObjectGuid = first?.Attribute("guid2")?.Value;
 
-            await task;
+            await task; // We await and not use the boolean since the CheckAllAnswersAsync method is throwing an exception on an error, instead of returning a boolean.
             return o.ObjectId;
         }
 

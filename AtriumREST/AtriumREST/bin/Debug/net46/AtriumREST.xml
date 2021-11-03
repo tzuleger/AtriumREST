@@ -158,7 +158,7 @@
             Session Key of the Atrium Controller that was computed using MD5(Serial Number (concatenated) Session ID #1)
             </summary>
         </member>
-        <member name="P:ThreeRiversTech.Zuleger.Atrium.REST.AtriumController.FragmentSize">
+        <member name="P:ThreeRiversTech.Zuleger.Atrium.REST.AtriumController.BatchSize">
             <summary>
             Fragment size of HTTP Requests when using the GetAll method.
             The larger this variable is, the less efficient the GetAll method MAY run. If fragmentations are to be expected, then this
@@ -222,7 +222,7 @@
             please set the Fragment Size to a larger number.
             </summary>
             <typeparam name="T">Type of AtriumObject to grab from the Atrium Controller.</typeparam>
-            <param name="fragmentSize">Size of how many records the function should grab per HTTP packet.</param>
+            <param name="batchSize">Size of how many records the function should grab per HTTP packet.</param>
             <param name="feedback">Function of return type void that provides feedback to the application.</param>
             <returns>List of Atrium Objects that are in the Controller.</returns>
         </member>
@@ -262,6 +262,18 @@
             <summary>
             In-depth example on how to use the Atrium API.
             </summary>
+        </member>
+        <member name="M:ThreeRiversTech.Zuleger.Atrium.REST.Example.Example.Test(ThreeRiversTech.Zuleger.Atrium.REST.AtriumController)">
+            <summary>
+            Used as an example to show how synchronous programming works on an Atrium Controller using the REST API.
+            </summary>
+            <param name="cnn">Connection to an AtriumController.</param>
+        </member>
+        <member name="M:ThreeRiversTech.Zuleger.Atrium.REST.Example.Example.TestAsync(ThreeRiversTech.Zuleger.Atrium.REST.AtriumController)">
+            <summary>
+            Used as an example to show how Asynchronous programming works on an Atrium Controller using the REST API.
+            </summary>
+            <param name="cnn">Connection to an AtriumController.</param>
         </member>
         <member name="T:ThreeRiversTech.Zuleger.Atrium.REST.Exceptions.DuplicateGuidException">
             <summary>
