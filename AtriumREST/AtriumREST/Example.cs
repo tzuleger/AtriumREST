@@ -1,10 +1,8 @@
 ﻿using System;
 using System.Linq;
 using System.Collections.Generic;
-using System.IO;
 
 using ThreeRiversTech.Zuleger.Atrium.REST.Objects;
-using ThreeRiversTech.Zuleger.Atrium.REST.Security;
 using System.Threading.Tasks;
 
 namespace ThreeRiversTech.Zuleger.Atrium.REST.Example
