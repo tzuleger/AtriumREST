@@ -8,11 +8,11 @@ using ThreeRiversTech.Zuleger.Atrium.REST.Objects;
 namespace ThreeRiversTech.Zuleger.Atrium.REST.Example
 {
     /// <summary>
-    /// In-depth example on how to use the Atrium API.
+    /// Simple example on how to use Atrium API. Includes Synchronous example and Asynchronous example.
     /// </summary>
     class Example
     {
-        private static Random r = new Random();
+        private static readonly Random r = new Random();
 
         const int access_level_door_1_only = 0;
         const int access_level_area_a = 9;
@@ -127,8 +127,13 @@ namespace ThreeRiversTech.Zuleger.Atrium.REST.Example
                 didCardUpdate = cnn.Update(existingCard);
                 c = existingCard; // Reassign to the existing version since c could be used later in this function.
             }
+
+            // By the end of this function, either a User named "Jane Doe" will be inserted with the respective card
+            // Or the User Jane Doe will be updated with their new attributes.
+            // and/or the User Jane Doe will have a card inserted attached to them.
+            // (dependent on above) or User Jane Doe will have their attached card updated with their new attributes.
         }
-        
+
         /// <summary>
         /// Used as an example to show how Asynchronous programming works on an Atrium Controller using the REST API.
         /// </summary>
