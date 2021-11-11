@@ -260,7 +260,7 @@
         </member>
         <member name="T:ThreeRiversTech.Zuleger.Atrium.REST.Example.Example">
             <summary>
-            In-depth example on how to use the Atrium API.
+            Simple example on how to use Atrium API. Includes Synchronous example and Asynchronous example.
             </summary>
         </member>
         <member name="M:ThreeRiversTech.Zuleger.Atrium.REST.Example.Example.Test(ThreeRiversTech.Zuleger.Atrium.REST.AtriumController)">
@@ -321,9 +321,19 @@
             Thrown when an SDK Request returns back with err not equaling "ok".
             </summary>
         </member>
+        <member name="F:ThreeRiversTech.Zuleger.Atrium.REST.Exceptions.SdkRequestException.ERR_ALREADY_EXIST">
+            <summary>
+            Error message from an XML answer that states that the Object being inserted already exists with some unique value.
+            </summary>
+        </member>
         <member name="P:ThreeRiversTech.Zuleger.Atrium.REST.Exceptions.SdkRequestException.Message">
             <summary>
             Message to be printed when thrown.
+            </summary>
+        </member>
+        <member name="P:ThreeRiversTech.Zuleger.Atrium.REST.Exceptions.SdkRequestException.SdkError">
+            <summary>
+            Error Code from the XML answer.
             </summary>
         </member>
         <member name="M:ThreeRiversTech.Zuleger.Atrium.REST.Exceptions.SdkRequestException.#ctor">
