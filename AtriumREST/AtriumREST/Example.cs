@@ -160,7 +160,8 @@ namespace ThreeRiversTech.Zuleger.Atrium.REST.Example
                 AccessLevelObjectIds = AtriumController.ACCESS_LEVELS(
                     access_level_door_1_only,
                     access_level_area_a,
-                    access_level_warehouse)
+                    access_level_warehouse
+                )
             };
 
             // Create the potentially new Card for the User.

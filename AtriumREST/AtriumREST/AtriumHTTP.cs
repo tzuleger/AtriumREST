@@ -191,7 +191,7 @@ namespace ThreeRiversTech.Zuleger.Atrium.REST
         {
             var addr = _address
                 + subdomain
-                + $"?_={((DateTimeOffset)DateTime.Now).ToUnixTimeSeconds().ToString()}"
+                + $"?_={((DateTimeOffset)DateTime.Now).ToUnixTimeSeconds()}"
                 + (_sessionKey != null ? $"&sid={_sessionKey}" : "");
 
             var response = await _client.GetAsync(addr);

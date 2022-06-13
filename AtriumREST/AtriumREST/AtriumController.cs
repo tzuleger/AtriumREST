@@ -273,18 +273,18 @@ namespace ThreeRiversTech.Zuleger.Atrium.REST
 
         #region Private Class Attributes
         // Namespace used when grabbing certain XElements.
-        private static XNamespace XmlNameSpace = "https://www.cdvi.ca/";
+        private static readonly XNamespace XmlNameSpace = "https://www.cdvi.ca/";
 
         // Elements used when interacting with data inside Atrium Controller
-        private static XName XML_EL_SDK = AtriumController.XmlNameSpace + "SDK";
-        private static XName XML_EL_RECORDS = AtriumController.XmlNameSpace + "RECORDS";
-        private static XName XML_EL_RECORD = AtriumController.XmlNameSpace + "REC";
-        private static XName XML_EL_DATA = AtriumController.XmlNameSpace + "DATA";
+        private static readonly XName XML_EL_SDK = AtriumController.XmlNameSpace + "SDK";
+        private static readonly XName XML_EL_RECORDS = AtriumController.XmlNameSpace + "RECORDS";
+        private static readonly XName XML_EL_RECORD = AtriumController.XmlNameSpace + "REC";
+        private static readonly XName XML_EL_DATA = AtriumController.XmlNameSpace + "DATA";
 
         // Elements used when logging in
-        private static XName XML_EL_CONNECTION = "CONNECTION";
-        private static XName XML_EL_DEVICE = "DEVICE";
-        private static XName XML_EL_SDK_CFG = "SDK_CFG";
+        private static readonly XName XML_EL_CONNECTION = "CONNECTION";
+        private static readonly XName XML_EL_DEVICE = "DEVICE";
+        private static readonly XName XML_EL_SDK_CFG = "SDK_CFG";
 
         private const String LOGIN_URL = "login_sdk.xml";
         private const String DATA_URL = "sdk.xml";
@@ -414,8 +414,8 @@ namespace ThreeRiversTech.Zuleger.Atrium.REST
         /// </summary>
         public int BatchSize 
         { 
-            get => Math.Max(25, _fragmentSize); 
-            set => _fragmentSize = value; 
+            get => Math.Max(25, _batchSize); 
+            set => _batchSize = value; 
         }
         #endregion
 
@@ -442,7 +442,7 @@ namespace ThreeRiversTech.Zuleger.Atrium.REST
         private int _transactionNum = 1;
 
         // Fragment size for the GetAll method, see FragmentSize for more info.
-        private int _fragmentSize = 100;
+        private int _batchSize = 100;
         #endregion
 
         #region Public Instance Methods
@@ -724,7 +724,7 @@ namespace ThreeRiversTech.Zuleger.Atrium.REST
                     List<T> filteredTs = ts.Where((t => t.ObjectGuid == o.ObjectGuid)).ToList();
                     if (filteredTs.Count > 1)
                     {
-                        throw new ThreeRiversTech.Zuleger.Atrium.REST.Exceptions.DuplicateGuidException(o.ObjectGuid);
+                        throw new DuplicateGuidException(o.ObjectGuid);
                     }
                     else
                     {
@@ -806,7 +806,7 @@ namespace ThreeRiversTech.Zuleger.Atrium.REST
                     List<T> filteredTs = ts.Where((t => t.ObjectGuid == o.ObjectGuid)).ToList();
                     if (filteredTs.Count > 1)
                     {
-                        throw new ThreeRiversTech.Zuleger.Atrium.REST.Exceptions.DuplicateGuidException(o.ObjectGuid);
+                        throw new DuplicateGuidException(o.ObjectGuid);
                     }
                     else
                     {
