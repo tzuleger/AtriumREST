@@ -29,7 +29,7 @@ namespace ThreeRiversTech.Zuleger.Atrium.REST
             _handler = new HttpClientHandler() { CookieContainer = _cookies };
             _handler.UseCookies = true;
             _client = new HttpClient(_handler);
-            _client.DefaultRequestHeaders.Add("Connection", "keep-alive");
+            //_client.DefaultRequestHeaders.Add("Connection", "keep-alive");
             _client.DefaultRequestHeaders.Add("Accept-Language", "fr-FR,fr;q=0.9,en-US;q=0.8,en;q=0.7");
             _client.DefaultRequestHeaders.Add("Accept-Encoding", "gzip, deflate");
             _client.DefaultRequestHeaders.Add("Accept", "*/*");
@@ -51,7 +51,7 @@ namespace ThreeRiversTech.Zuleger.Atrium.REST
             _handler = new HttpClientHandler() { CookieContainer=_cookies };
             _handler.UseCookies = true;
             _client = new HttpClient(_handler);
-            _client.DefaultRequestHeaders.Add("Connection", "keep-alive");
+            //_client.DefaultRequestHeaders.Add("Connection", "keep-alive");
             _client.DefaultRequestHeaders.Add("Accept-Language", "fr-FR,fr;q=0.9,en-US;q=0.8,en;q=0.7");
             _client.DefaultRequestHeaders.Add("Accept-Encoding", "gzip, deflate");
             _client.DefaultRequestHeaders.Add("Accept", "*/*");
@@ -1090,7 +1090,7 @@ namespace ThreeRiversTech.Zuleger.Atrium.REST
             }
 
             var xml = $"{doc.Declaration}\n{doc.ToString().Replace("\"", "'")}";
-            
+            Console.WriteLine(xml);
             this.RequestText = xml;
 
             var postEncParams = FetchAndEncryptXML(xml);

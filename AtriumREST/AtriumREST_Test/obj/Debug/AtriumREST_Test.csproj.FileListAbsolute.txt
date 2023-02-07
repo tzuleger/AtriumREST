@@ -1,0 +1,11 @@
+C:\Users\Travis\Documents\GitHub\AtriumREST\AtriumREST\AtriumREST_Test\bin\Debug\AtriumREST_Test.exe.config
+C:\Users\Travis\Documents\GitHub\AtriumREST\AtriumREST\AtriumREST_Test\bin\Debug\AtriumREST_Test.exe
+C:\Users\Travis\Documents\GitHub\AtriumREST\AtriumREST\AtriumREST_Test\bin\Debug\AtriumREST_Test.pdb
+C:\Users\Travis\Documents\GitHub\AtriumREST\AtriumREST\AtriumREST_Test\obj\Debug\AtriumREST_Test.csproj.CoreCompileInputs.cache
+C:\Users\Travis\Documents\GitHub\AtriumREST\AtriumREST\AtriumREST_Test\obj\Debug\AtriumREST_Test.csproj.CopyComplete
+C:\Users\Travis\Documents\GitHub\AtriumREST\AtriumREST\AtriumREST_Test\obj\Debug\AtriumREST_Test.exe
+C:\Users\Travis\Documents\GitHub\AtriumREST\AtriumREST\AtriumREST_Test\obj\Debug\AtriumREST_Test.pdb
+C:\Users\Travis\Documents\GitHub\AtriumREST\AtriumREST\AtriumREST_Test\bin\Debug\AtriumREST.dll
+C:\Users\Travis\Documents\GitHub\AtriumREST\AtriumREST\AtriumREST_Test\bin\Debug\AtriumREST.pdb
+C:\Users\Travis\Documents\GitHub\AtriumREST\AtriumREST\AtriumREST_Test\bin\Debug\AtriumREST.xml
+C:\Users\Travis\Documents\GitHub\AtriumREST\AtriumREST\AtriumREST_Test\obj\Debug\AtriumREST_Test.csprojAssemblyReference.cache

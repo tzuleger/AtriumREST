@@ -135,17 +135,16 @@ namespace ThreeRiversTech.Zuleger.Atrium.REST
                 encodedContent = new FormUrlEncodedContent(parameters);
             }
 
-            var addr = _address 
-                + subdomain 
-                + $"?_={((DateTimeOffset)DateTime.Now).ToUnixTimeSeconds().ToString()}" 
-                + (_sessionKey != null ? $"&sid={_sessionKey}" : "");
+            var addr = _address
+                + subdomain
+                + $"?_={((DateTimeOffset)DateTime.Now).ToUnixTimeSeconds()}";
 
             if (setSessionCookie)
             {
                 _cookies.Add(new Uri(addr), new Cookie($"Session", $"{_sessionCookie}"));
             }
             var response = await _client.PostAsync(addr, encodedContent);
-            if(response.Headers.TryGetValues("Set-Cookie", out _))
+            if (response.Headers.TryGetValues("Set-Cookie", out _))
             {
                 _sessionCookie = response
                     .Headers
